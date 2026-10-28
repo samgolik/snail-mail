@@ -11,23 +11,28 @@ struct ComposeView: View {
 
     var body: some View {
         Form {
-            Section("To") {
-                LabeledContent(store.otherProfile.name, value: store.otherProfile.city)
+            Section("to") {
+                LabeledContent(
+                    store.otherProfile.name.lowercased(),
+                    value: store.otherProfile.city.lowercased()
+                )
             }
-            Section("Your letter") {
+            Section("your letter") {
                 TextEditor(text: $bodyText)
                     .frame(minHeight: 180)
-                    .accessibilityLabel("Letter message")
+                    .scrollContentBackground(.hidden)
+                    .background(Color.paper.opacity(0.5), in: RoundedRectangle(cornerRadius: 16))
+                    .accessibilityLabel("letter message")
                 Text("\(bodyText.count)/500")
                     .font(.caption)
                     .foregroundStyle(bodyText.count > 500 ? .red : .secondary)
                     .frame(maxWidth: .infinity, alignment: .trailing)
             }
-            Section("Journey") {
-                LabeledContent("Distance", value: "\(estimate.distanceMiles) miles")
-                LabeledContent("Snail time", value: "\(estimate.snailDays) days")
+            Section("the little journey") {
+                LabeledContent("distance", value: "\(estimate.distanceMiles) miles")
+                LabeledContent("snail time", value: "\(estimate.snailDays) days")
 #if DEBUG
-                Text("Demo mode: one snail day takes 3 seconds.")
+                Text("demo magic: one snail day takes 3 seconds ✨")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 #endif
@@ -38,16 +43,21 @@ struct ComposeView: View {
                     showingSent = true
                 }
             } label: {
-                Label("Send by snail", systemImage: "paperplane.fill")
+                Label("send by snail  🐌", systemImage: "paperplane.fill")
                     .frame(maxWidth: .infinity)
+                    .font(.headline)
+                    .padding(.vertical, 6)
             }
             .disabled(bodyText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || bodyText.count > 500)
         }
-        .navigationTitle("Write a Letter")
-        .alert("Your snail is on its way!", isPresented: $showingSent) {
-            Button("OK", role: .cancel) { }
+        .scrollContentBackground(.hidden)
+        .background(PastelBackground())
+        .foregroundStyle(Color.berryInk)
+        .navigationTitle("write a letter")
+        .alert("your snail is on its way!", isPresented: $showingSent) {
+            Button("ok", role: .cancel) { }
         } message: {
-            Text("Switch demo users to watch it arrive.")
+            Text("switch demo users to watch it arrive ♡")
         }
     }
 }

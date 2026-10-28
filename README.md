@@ -2,6 +2,9 @@
 
 A local SwiftUI vertical slice for delayed messages. It includes two demo profiles, a mailbox, composition, distance-based travel time, sealed letters, accelerated debug delivery, JSON persistence, and unit tests.
 
+The interface uses a soft pastel palette, rounded paper-like cards, playful snail details,
+and lowercase copy throughout.
+
 ## Run it
 
 1. Open `SnailMail.xcodeproj` in Xcode 16 or newer.

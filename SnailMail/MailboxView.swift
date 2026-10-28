@@ -7,20 +7,21 @@ struct MailboxView: View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 22) {
                 greeting
-                section("Traveling", letters: store.travelingLetters, empty: "No snails on the road")
-                section("Arrived", letters: store.arrivedLetters, empty: "No letters yet")
+                section("traveling", letters: store.travelingLetters, empty: "no snails on the road yet 𓆏")
+                section("arrived", letters: store.arrivedLetters, empty: "no little letters yet ♡")
             }
             .padding()
         }
-        .background(Color.paper.opacity(0.45))
-        .navigationTitle("Snail Mail")
+        .background(PastelBackground())
+        .navigationTitle("snail mail")
+        .foregroundStyle(Color.berryInk)
     }
 
     private var greeting: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text("Hello, \(store.activeProfile.name)")
+            Text("hello, \(store.activeProfile.name.lowercased()) ♡")
                 .font(.title2.bold())
-            Text("Your mailbox in \(store.activeProfile.city)")
+            Text("your tiny mailbox in \(store.activeProfile.city.lowercased())")
                 .foregroundStyle(.secondary)
         }
     }
@@ -28,15 +29,20 @@ struct MailboxView: View {
     @ViewBuilder
     private func section(_ title: String, letters: [Letter], empty: String) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(title.uppercased())
+            Text(title)
                 .font(.caption.weight(.bold))
+                .tracking(1.2)
                 .foregroundStyle(.secondary)
             if letters.isEmpty {
                 Text(empty)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(24)
                     .foregroundStyle(.secondary)
-                    .background(.white.opacity(0.65), in: RoundedRectangle(cornerRadius: 18))
+                    .background(.white.opacity(0.72), in: RoundedRectangle(cornerRadius: 24))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 24)
+                            .stroke(Color.lavender.opacity(0.55), lineWidth: 1)
+                    }
             } else {
                 ForEach(letters) { letter in
                     NavigationLink(value: letter) { LetterRow(letter: letter) }
@@ -57,13 +63,14 @@ private struct LetterRow: View {
             Text(letter.hasArrived(at: store.now) ? "💌" : "🐌")
                 .font(.largeTitle)
             VStack(alignment: .leading, spacing: 5) {
-                Text("From \(store.profile(id: letter.senderID).name)")
+                Text("from \(store.profile(id: letter.senderID).name.lowercased())")
                     .font(.headline)
                 if letter.hasArrived(at: store.now) {
-                    Text("Ready to open")
+                    Text("ready to open ♡")
                 } else {
                     ProgressView(value: letter.progress(at: store.now))
-                    Text("Traveling from \(letter.originCity)")
+                        .tint(.snailGreen)
+                    Text("traveling from \(letter.originCity.lowercased())")
                         .font(.caption)
                 }
             }
@@ -72,7 +79,12 @@ private struct LetterRow: View {
                 .foregroundStyle(.tertiary)
         }
         .padding()
-        .background(.white, in: RoundedRectangle(cornerRadius: 18))
+        .background(.white.opacity(0.88), in: RoundedRectangle(cornerRadius: 24))
+        .overlay {
+            RoundedRectangle(cornerRadius: 24)
+                .stroke(Color.peach.opacity(0.7), lineWidth: 1)
+        }
+        .shadow(color: Color.lavender.opacity(0.22), radius: 12, y: 5)
         .accessibilityElement(children: .combine)
     }
 }

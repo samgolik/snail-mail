@@ -6,24 +6,27 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            Section("Viewing as") {
-                Picker("Demo user", selection: $store.activeProfile) {
+            Section("viewing as") {
+                Picker("demo user", selection: $store.activeProfile) {
                     ForEach(store.profiles) { profile in
-                        Text("\(profile.name) · \(profile.city)").tag(profile)
+                        Text("\(profile.name.lowercased()) · \(profile.city.lowercased())").tag(profile)
                     }
                 }
                 .pickerStyle(.inline)
             }
-            Section("How to test") {
-                Text("Write a letter as Sam, switch to Justin, then watch the traveling snail. The DC-to-Columbus demo arrives in about one minute.")
+            Section("how to test") {
+                Text("write a letter as sam, switch to justin, then watch the traveling snail. the dc-to-columbus demo arrives in about one minute ♡")
             }
             Section {
-                Button("Reset demo", role: .destructive) { confirmReset = true }
+                Button("reset demo", role: .destructive) { confirmReset = true }
             }
         }
-        .navigationTitle("Demo Controls")
-        .confirmationDialog("Delete all demo letters?", isPresented: $confirmReset) {
-            Button("Reset", role: .destructive) { store.resetDemo() }
+        .scrollContentBackground(.hidden)
+        .background(PastelBackground())
+        .foregroundStyle(Color.berryInk)
+        .navigationTitle("demo controls")
+        .confirmationDialog("delete all demo letters?", isPresented: $confirmReset) {
+            Button("reset", role: .destructive) { store.resetDemo() }
         }
     }
 }

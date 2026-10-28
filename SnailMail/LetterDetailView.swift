@@ -12,26 +12,34 @@ struct LetterDetailView: View {
                     Text(letter.body)
                         .font(.title3)
                     Divider()
-                    Text("From \(store.profile(id: letter.senderID).name) in \(letter.originCity)")
+                    Text("from \(store.profile(id: letter.senderID).name.lowercased()) in \(letter.originCity.lowercased())")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
                 .padding(24)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.paper, in: RoundedRectangle(cornerRadius: 20))
+                .background(Color.paper, in: RoundedRectangle(cornerRadius: 26))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 26)
+                        .stroke(Color.peach.opacity(0.8), lineWidth: 1)
+                }
+                .shadow(color: Color.lavender.opacity(0.25), radius: 14, y: 6)
             } else {
                 Text("🐌").font(.system(size: 72))
-                Text("Still on the way")
+                Text("still on the way...")
                     .font(.title.bold())
                 ProgressView(value: letter.progress(at: store.now))
-                Text("This letter is traveling from \(letter.originCity) to \(letter.destinationCity). Its contents stay sealed until it arrives.")
+                    .tint(.snailGreen)
+                Text("this little letter is traveling from \(letter.originCity.lowercased()) to \(letter.destinationCity.lowercased()). its contents stay sealed until it arrives ♡")
                     .multilineTextAlignment(.center)
                     .foregroundStyle(.secondary)
             }
             Spacer()
         }
         .padding()
-        .navigationTitle("Letter")
+        .background(PastelBackground())
+        .foregroundStyle(Color.berryInk)
+        .navigationTitle("letter")
         .navigationBarTitleDisplayMode(.inline)
     }
 }
