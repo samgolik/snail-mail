@@ -7,8 +7,8 @@ struct MailboxView: View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 22) {
                 greeting
-                section("traveling", letters: store.travelingLetters, empty: "no snails on the road yet 𓆏")
-                section("arrived", letters: store.arrivedLetters, empty: "no little letters yet ♡")
+                section("traveling", letters: store.travelingLetters, empty: "no snails on the road yet")
+                section("arrived", letters: store.arrivedLetters, empty: "no letters yet")
             }
             .padding()
         }
@@ -19,7 +19,7 @@ struct MailboxView: View {
 
     private var greeting: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text("hello, \(store.activeProfile.name.lowercased()) ♡")
+            Text("hello, \(store.activeProfile.name.lowercased())")
                 .font(.title2.bold())
             Text("your tiny mailbox in \(store.activeProfile.city.lowercased())")
                 .foregroundStyle(.secondary)
@@ -41,7 +41,7 @@ struct MailboxView: View {
                     .background(.white.opacity(0.72), in: RoundedRectangle(cornerRadius: 24))
                     .overlay {
                         RoundedRectangle(cornerRadius: 24)
-                            .stroke(Color.lavender.opacity(0.55), lineWidth: 1)
+                            .stroke(Color.powderBlue.opacity(0.65), lineWidth: 1)
                     }
             } else {
                 ForEach(letters) { letter in
@@ -66,7 +66,7 @@ private struct LetterRow: View {
                 Text("from \(store.profile(id: letter.senderID).name.lowercased())")
                     .font(.headline)
                 if letter.hasArrived(at: store.now) {
-                    Text("ready to open ♡")
+                    Text("ready to open")
                 } else {
                     ProgressView(value: letter.progress(at: store.now))
                         .tint(.snailGreen)
@@ -82,9 +82,9 @@ private struct LetterRow: View {
         .background(.white.opacity(0.88), in: RoundedRectangle(cornerRadius: 24))
         .overlay {
             RoundedRectangle(cornerRadius: 24)
-                .stroke(Color.peach.opacity(0.7), lineWidth: 1)
+                .stroke(Color.sand.opacity(0.9), lineWidth: 1)
         }
-        .shadow(color: Color.lavender.opacity(0.22), radius: 12, y: 5)
+        .shadow(color: Color.powderBlue.opacity(0.20), radius: 12, y: 5)
         .accessibilityElement(children: .combine)
     }
 }

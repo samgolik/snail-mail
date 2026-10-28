@@ -2,8 +2,8 @@
 
 A local SwiftUI vertical slice for delayed messages. It includes two demo profiles, a mailbox, composition, distance-based travel time, sealed letters, accelerated debug delivery, JSON persistence, and unit tests.
 
-The interface uses a soft pastel palette, rounded paper-like cards, playful snail details,
-and lowercase copy throughout.
+The interface uses a muted sage, powder-blue, cream, and clay palette with rounded
+paper-like cards, restrained snail details, and lowercase copy throughout.
 
 ## Run it
 

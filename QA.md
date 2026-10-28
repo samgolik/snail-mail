@@ -21,7 +21,7 @@
 - Relaunch while a letter is traveling and after it should have arrived.
 - Test Light Mode, Dark Mode, and the largest accessibility text size.
 - Confirm all visible app copy follows the lowercase visual style.
-- Confirm pastel cards and text remain legible in both Light and Dark Mode.
+- Confirm muted cards and text remain legible in both Light and Dark Mode.
 - Turn on VoiceOver and verify mailbox rows describe the sender and state.
 - Test on a small iPhone simulator and a current large iPhone simulator.
 - Install on a physical iPhone, accept the trust prompt if shown, and verify launch.

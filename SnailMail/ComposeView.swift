@@ -32,7 +32,7 @@ struct ComposeView: View {
                 LabeledContent("distance", value: "\(estimate.distanceMiles) miles")
                 LabeledContent("snail time", value: "\(estimate.snailDays) days")
 #if DEBUG
-                Text("demo magic: one snail day takes 3 seconds ✨")
+                Text("demo mode: one snail day takes 3 seconds")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 #endif
@@ -57,7 +57,7 @@ struct ComposeView: View {
         .alert("your snail is on its way!", isPresented: $showingSent) {
             Button("ok", role: .cancel) { }
         } message: {
-            Text("switch demo users to watch it arrive ♡")
+            Text("switch demo users to watch it arrive")
         }
     }
 }
