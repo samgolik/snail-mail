@@ -35,10 +35,10 @@ enum DemoData {
         name: "Sam", username: "@sam", city: "Washington, DC",
         latitude: 38.9072, longitude: -77.0369
     )
-    static let alex = Profile(
+    static let justin = Profile(
         id: UUID(uuidString: "71FD08E1-7E43-49AE-95F9-11D651F16222")!,
-        name: "Alex", username: "@alex", city: "New York, NY",
-        latitude: 40.7128, longitude: -74.0060
+        name: "Justin", username: "@justin", city: "Columbus, OH",
+        latitude: 39.9612, longitude: -82.9988
     )
-    static let profiles = [sam, alex]
+    static let profiles = [sam, justin]
 }

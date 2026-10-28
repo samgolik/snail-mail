@@ -3,12 +3,12 @@ import XCTest
 
 @MainActor
 final class SnailMailTests: XCTestCase {
-    func testDCToNYCEstimateIsBoundedAndFutureDated() {
+    func testDCToColumbusEstimateIsBoundedAndFutureDated() {
         let sentAt = Date(timeIntervalSince1970: 1_700_000_000)
-        let estimate = DeliveryCalculator.estimate(from: DemoData.sam, to: DemoData.alex, sentAt: sentAt)
+        let estimate = DeliveryCalculator.estimate(from: DemoData.sam, to: DemoData.justin, sentAt: sentAt)
 
-        XCTAssertGreaterThan(estimate.distanceMiles, 190)
-        XCTAssertLessThan(estimate.distanceMiles, 250)
+        XCTAssertGreaterThan(estimate.distanceMiles, 300)
+        XCTAssertLessThan(estimate.distanceMiles, 400)
         XCTAssertTrue((1...30).contains(estimate.snailDays))
         XCTAssertGreaterThan(estimate.arrivesAt, sentAt)
     }
@@ -16,9 +16,9 @@ final class SnailMailTests: XCTestCase {
     func testLetterCannotBeReadAsArrivedBeforeArrival() {
         let sentAt = Date(timeIntervalSince1970: 100)
         let letter = Letter(
-            id: UUID(), senderID: DemoData.sam.id, recipientID: DemoData.alex.id,
+            id: UUID(), senderID: DemoData.sam.id, recipientID: DemoData.justin.id,
             body: "Secret", sentAt: sentAt, arrivesAt: sentAt.addingTimeInterval(30),
-            originCity: DemoData.sam.city, destinationCity: DemoData.alex.city
+            originCity: DemoData.sam.city, destinationCity: DemoData.justin.city
         )
 
         XCTAssertFalse(letter.hasArrived(at: sentAt.addingTimeInterval(29)))
@@ -29,6 +29,6 @@ final class SnailMailTests: XCTestCase {
     func testWhitespaceOnlyLetterIsRejected() {
         let url = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
         let store = MailStore(storageURL: url)
-        XCTAssertNil(store.send(body: "   \n", to: DemoData.alex))
+        XCTAssertNil(store.send(body: "   \n", to: DemoData.justin))
     }
 }

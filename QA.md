@@ -3,12 +3,12 @@
 ## Happy path
 
 - Launch as Sam and confirm both mailbox sections are empty.
-- Write a letter to Alex and verify blank messages cannot be sent.
+- Write a letter to Justin and verify blank messages cannot be sent.
 - Confirm the counter prevents messages longer than 500 characters.
-- Send, switch to Alex in **Demo**, and open **Mailbox**.
+- Send, switch to Justin in **Demo**, and open **Mailbox**.
 - Confirm the letter is under **Traveling** and its body is not visible.
 - Open it while traveling and confirm only journey information appears.
-- Wait about 48 seconds; confirm it moves to **Arrived** without relaunching.
+- Wait about 66 seconds; confirm it moves to **Arrived** without relaunching.
 - Open it and verify the exact message and sender.
 - Quit and relaunch; confirm the letter is still present.
 - Tap **Reset demo** and confirm all mail disappears.
@@ -22,6 +22,7 @@
 - Test Light Mode, Dark Mode, and the largest accessibility text size.
 - Turn on VoiceOver and verify mailbox rows describe the sender and state.
 - Test on a small iPhone simulator and a current large iPhone simulator.
+- Install on a physical iPhone, accept the trust prompt if shown, and verify launch.
 
 ## Known MVP limits
 

@@ -15,7 +15,7 @@ struct SettingsView: View {
                 .pickerStyle(.inline)
             }
             Section("How to test") {
-                Text("Write a letter as Sam, switch to Alex, then watch the traveling snail. The DC-to-NYC demo arrives in about one minute.")
+                Text("Write a letter as Sam, switch to Justin, then watch the traveling snail. The DC-to-Columbus demo arrives in about one minute.")
             }
             Section {
                 Button("Reset demo", role: .destructive) { confirmReset = true }
