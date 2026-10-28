@@ -32,3 +32,13 @@
 - No account system, server, friend search, or push notifications yet.
 - Debug builds accelerate delivery; Release builds use real 24-hour days.
 - Message secrecy is a UI simulation until delivery moves to a server.
+
+## Backend security checks
+
+- Unauthenticated callers cannot send or open letters.
+- Only accepted friends can send letters to each other.
+- Neither sender nor recipient can read `sealedLetters` directly.
+- The sender cannot call `openLetter` on a sent letter.
+- The recipient cannot open a letter before the server-side `arrivesAt` value.
+- Changing device time does not affect server delivery.
+- Letter bodies longer than 500 characters are rejected by the server.

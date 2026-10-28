@@ -1,0 +1,21 @@
+{
+  "name": "snail-mail-functions",
+  "private": true,
+  "engines": {
+    "node": "22"
+  },
+  "main": "lib/index.js",
+  "scripts": {
+    "build": "tsc",
+    "check": "tsc --noEmit",
+    "serve": "npm run build && firebase emulators:start --only auth,firestore,functions",
+    "deploy": "firebase deploy --only firestore,functions"
+  },
+  "dependencies": {
+    "firebase-admin": "^14.5.0",
+    "firebase-functions": "^7.4.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}

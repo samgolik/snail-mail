@@ -4,3 +4,9 @@ DerivedData/
 work/
 *.xcuserstate
 xcuserdata/
+firebase/functions/node_modules/
+firebase/functions/lib/
+firebase-debug.log
+.firebase/
+.firebaserc
+GoogleService-Info.plist

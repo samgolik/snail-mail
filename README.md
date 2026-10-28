@@ -78,3 +78,40 @@ xcodebuild test -project SnailMail.xcodeproj -scheme SnailMail \
 ## Production note
 
 Release builds use real days. Before inviting real users, replace local persistence with authentication and a server that withholds message bodies until arrival. Client-side hiding alone is not secure.
+
+## Firebase backend foundation
+
+The `firebase/` directory contains the first production backend boundary:
+
+- Firestore rules that make letter metadata readable only to participants
+- Completely private `sealedLetters` documents
+- A callable `sendLetter` function that verifies friendship and calculates arrival using server time
+- A callable `openLetter` function that releases the body only to the recipient after arrival
+- Firestore indexes for sender and recipient mailboxes
+- Local Auth, Firestore, and Functions emulator configuration
+
+The Swift app still uses its local demo store while Firebase account configuration is pending.
+That keeps the Simulator build runnable and prevents project credentials from entering Git.
+
+### Local backend setup
+
+Install Node.js 22 and the Firebase CLI, then:
+
+```sh
+cd firebase/functions
+npm install
+npm run check
+cd ../..
+firebase emulators:start
+```
+
+To connect a real project later:
+
+1. Create or select a Firebase project.
+2. Add an iOS app with bundle ID `com.samgolik.snailmail`.
+3. Download `GoogleService-Info.plist` into the local project without committing it.
+4. Enable Authentication and Firestore.
+5. Run `firebase use --add` to create the ignored `.firebaserc` mapping.
+6. Deploy rules/functions only after reviewing billing and production settings.
+
+Cloud configuration and deployment are intentional account-level actions and are not performed by this repository automatically.
