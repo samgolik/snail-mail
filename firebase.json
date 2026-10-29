@@ -3,6 +3,13 @@
     "source": "firebase/functions",
     "runtime": "nodejs22"
   },
+  "auth": {
+    "authorizedDomains": ["localhost"],
+    "providers": {
+      "anonymous": true,
+      "emailPassword": true
+    }
+  },
   "firestore": {
     "rules": "firebase/firestore.rules",
     "indexes": "firebase/firestore.indexes.json"

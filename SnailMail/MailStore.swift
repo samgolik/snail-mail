@@ -1,4 +1,83 @@
 import Foundation
+import FirebaseAuth
+
+@MainActor
+final class AuthManager: ObservableObject {
+    @Published private(set) var user: User?
+    @Published private(set) var isWorking = false
+    @Published var errorMessage: String?
+
+    private var listener: AuthStateDidChangeListenerHandle?
+
+    init() {
+        listener = Auth.auth().addStateDidChangeListener { [weak self] _, user in
+            Task { @MainActor in self?.user = user }
+        }
+        Task { await ensureSignedIn() }
+    }
+
+    var isAnonymous: Bool { user?.isAnonymous ?? true }
+    var email: String? { user?.email }
+    var betaCode: String {
+        guard let uid = user?.uid else { return "connecting" }
+        return String(uid.prefix(8)).uppercased()
+    }
+
+    func ensureSignedIn() async {
+        guard Auth.auth().currentUser == nil else { return }
+        await perform { try await Auth.auth().signInAnonymously() }
+    }
+
+    func createAccount(email: String, password: String) async -> Bool {
+        let cleanEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !cleanEmail.isEmpty, password.count >= 6 else {
+            errorMessage = "use a valid email and at least 6 characters for your password"
+            return false
+        }
+        return await perform {
+            let credential = EmailAuthProvider.credential(withEmail: cleanEmail, password: password)
+            if let current = Auth.auth().currentUser, current.isAnonymous {
+                try await current.link(with: credential)
+            } else {
+                try await Auth.auth().createUser(withEmail: cleanEmail, password: password)
+            }
+        }
+    }
+
+    func signIn(email: String, password: String) async -> Bool {
+        let cleanEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return await perform {
+            try await Auth.auth().signIn(withEmail: cleanEmail, password: password)
+        }
+    }
+
+    func signOut() async {
+        do {
+            try Auth.auth().signOut()
+            await ensureSignedIn()
+        } catch {
+            errorMessage = error.localizedDescription.lowercased()
+        }
+    }
+
+    @discardableResult
+    private func perform(_ work: () async throws -> AuthDataResult) async -> Bool {
+        isWorking = true
+        errorMessage = nil
+        defer { isWorking = false }
+        do {
+            _ = try await work()
+            return true
+        } catch {
+            errorMessage = error.localizedDescription.lowercased()
+            return false
+        }
+    }
+
+    deinit {
+        if let listener { Auth.auth().removeStateDidChangeListener(listener) }
+    }
+}
 
 @MainActor
 final class MailStore: ObservableObject {

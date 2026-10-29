@@ -10,7 +10,7 @@ struct RootView: View {
             NavigationStack { ComposeView() }
                 .tabItem { Label("write", systemImage: "square.and.pencil") }
             NavigationStack { SettingsView() }
-                .tabItem { Label("demo", systemImage: "person.2") }
+                .tabItem { Label("you", systemImage: "person.crop.circle") }
         }
     }
 }

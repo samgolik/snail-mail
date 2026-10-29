@@ -2,6 +2,10 @@
 
 ## Happy path
 
+- Launch on a fresh simulator and confirm **You** shows `guest` and a beta ID.
+- Save the guest with an email and password of at least six characters.
+- Relaunch and confirm the saved email remains signed in.
+- Sign out and confirm the app returns to a fresh guest without blocking the demo.
 - Launch as Sam and confirm both mailbox sections are empty.
 - Write a letter to Justin and verify blank messages cannot be sent.
 - Confirm the counter prevents messages longer than 500 characters.
@@ -28,8 +32,9 @@
 
 ## Known MVP limits
 
-- Two hard-coded local demo users only.
-- No account system, server, friend search, or push notifications yet.
+- Two hard-coded local demo correspondents only.
+- Firebase identity is live, but letters are still stored locally.
+- No friend search, cross-device delivery, or push notifications yet.
 - Debug builds accelerate delivery; Release builds use real 24-hour days.
 - Message secrecy is a UI simulation until delivery moves to a server.
 

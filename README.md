@@ -1,6 +1,8 @@
 # Snail Mail MVP
 
-A local SwiftUI vertical slice for delayed messages. It includes two demo profiles, a mailbox, composition, distance-based travel time, sealed letters, accelerated debug delivery, JSON persistence, and unit tests.
+A SwiftUI vertical slice for delayed messages. It includes two demo profiles, a
+mailbox, composition, distance-based travel time, sealed letters, accelerated
+debug delivery, JSON persistence, Firebase identity, and unit tests.
 
 The interface uses a muted sage, powder-blue, cream, and clay palette with rounded
 paper-like cards, restrained snail details, and lowercase copy throughout.
@@ -103,6 +105,12 @@ Current Firebase registration:
 - Firebase Apple SDK: `12.19.3` (pinned for Xcode 16.4 / Swift 6.1 compatibility)
 - Products linked: Core, Authentication, Firestore, and Functions
 - Firestore rules and mailbox indexes: deployed
+- Firebase Authentication: anonymous and email/password enabled
+
+The app signs a new installation in as a private guest automatically. Under
+**You**, a tester can save that guest as an email/password account or restore an
+existing beta account. Letter content remains in the local demo store for this
+checkpoint; cross-device friend delivery is the next product milestone.
 
 `GoogleService-Info.plist` is required locally but intentionally ignored by Git.
 After a fresh clone, download it for the registered iOS app before building.
@@ -126,3 +134,16 @@ The remaining production setup is:
 3. Deploy Functions only after reviewing billing and production settings.
 
 Cloud configuration and deployment are intentional account-level actions and are not performed by this repository automatically.
+
+## TestFlight readiness
+
+Run the local preflight check with:
+
+```sh
+./testflight-check.sh
+```
+
+Uploading to TestFlight still requires an active Apple Developer Program
+membership, an Apple Distribution signing identity, and an App Store Connect
+app record for bundle ID `com.samgolik.snailmail`. The repository can be built
+and tested in the simulator without those credentials.
