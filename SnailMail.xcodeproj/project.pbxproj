@@ -1,94 +1,460 @@
 // !$*UTF8*$!
 {
 	archiveVersion = 1;
-	classes = {};
+	classes = {
+	};
 	objectVersion = 56;
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A001 /* SnailMailApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001; };
-		A002 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = B002; };
-		A003 /* DeliveryCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B003; };
-		A004 /* MailStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B004; };
-		A005 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B005; };
-		A006 /* MailboxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B006; };
-		A007 /* ComposeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B007; };
-		A008 /* LetterDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B008; };
-		A009 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B009; };
-		A010 /* SnailMailTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B010; };
-		A011 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B013; };
-		A012 /* SnailMail.app in Test Dependencies */ = {isa = PBXBuildFile; fileRef = B011; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		8C4F0FAC3FE7F10800EE9B12 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 8BE5BEE6354BEDEF3F6A6554 /* FirebaseFirestore */; };
+		A001 /* SnailMailApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001 /* SnailMailApp.swift */; };
+		A002 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = B002 /* Models.swift */; };
+		A003 /* DeliveryCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B003 /* DeliveryCalculator.swift */; };
+		A004 /* MailStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = B004 /* MailStore.swift */; };
+		A005 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B005 /* RootView.swift */; };
+		A006 /* MailboxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B006 /* MailboxView.swift */; };
+		A007 /* ComposeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B007 /* ComposeView.swift */; };
+		A008 /* LetterDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B008 /* LetterDetailView.swift */; };
+		A009 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B009 /* SettingsView.swift */; };
+		A010 /* SnailMailTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B010 /* SnailMailTests.swift */; };
+		A011 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B013 /* XCTest.framework */; };
+		E2A882EFC38527AEBD445E2E /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 23EE1DB1A3F92E6EED7D2204 /* GoogleService-Info.plist */; };
+		E62A4B3BEB6E724D911C5B67 /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = 3BAC272D4C4AA5F0FB138329 /* FirebaseFunctions */; };
+		EFCF7E3201C476F215B260AF /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 1ED9BB875E5EA8243665EDE8 /* FirebaseCore */; };
+		F66CFE26C8474789E2880D04 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 4913BA8AD85FC7AFB2DD4019 /* FirebaseAuth */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		C001 = {isa = PBXContainerItemProxy; containerPortal = D001; proxyType = 1; remoteGlobalIDString = E001; remoteInfo = SnailMail; };
+		C001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E001;
+			remoteInfo = SnailMail;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		B001 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnailMailApp.swift; sourceTree = "<group>"; };
-		B002 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
-		B003 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveryCalculator.swift; sourceTree = "<group>"; };
-		B004 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MailStore.swift; sourceTree = "<group>"; };
-		B005 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
-		B006 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MailboxView.swift; sourceTree = "<group>"; };
-		B007 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposeView.swift; sourceTree = "<group>"; };
-		B008 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LetterDetailView.swift; sourceTree = "<group>"; };
-		B009 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		B010 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnailMailTests.swift; sourceTree = "<group>"; };
-		B011 = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SnailMail.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		B012 = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SnailMailTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		B013 = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = System/Library/Frameworks/XCTest.framework; sourceTree = SDKROOT; };
+		23EE1DB1A3F92E6EED7D2204 /* GoogleService-Info.plist */ = {isa = PBXFileReference; explicitFileType = text.plist; lastKnownFileType = text.plist; name = "GoogleService-Info.plist"; path = "../SnailMail/GoogleService-Info.plist"; sourceTree = "<group>"; };
+		B001 /* SnailMailApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnailMailApp.swift; sourceTree = "<group>"; };
+		B002 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		B003 /* DeliveryCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveryCalculator.swift; sourceTree = "<group>"; };
+		B004 /* MailStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MailStore.swift; sourceTree = "<group>"; };
+		B005 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		B006 /* MailboxView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MailboxView.swift; sourceTree = "<group>"; };
+		B007 /* ComposeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposeView.swift; sourceTree = "<group>"; };
+		B008 /* LetterDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LetterDetailView.swift; sourceTree = "<group>"; };
+		B009 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		B010 /* SnailMailTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnailMailTests.swift; sourceTree = "<group>"; };
+		B011 /* SnailMail.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SnailMail.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B012 /* SnailMailTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SnailMailTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B013 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = System/Library/Frameworks/XCTest.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		F001 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
-		F002 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (A011, ); runOnlyForDeploymentPostprocessing = 0; };
+		F001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EFCF7E3201C476F215B260AF /* FirebaseCore in Frameworks */,
+				F66CFE26C8474789E2880D04 /* FirebaseAuth in Frameworks */,
+				8C4F0FAC3FE7F10800EE9B12 /* FirebaseFirestore in Frameworks */,
+				E62A4B3BEB6E724D911C5B67 /* FirebaseFunctions in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A011 /* XCTest.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		G001 = {isa = PBXGroup; children = (G002, G003, G004, ); sourceTree = "<group>"; };
-		G002 = {isa = PBXGroup; path = SnailMail; sourceTree = "<group>"; children = (B001, B002, B003, B004, B005, B006, B007, B008, B009, ); };
-		G003 = {isa = PBXGroup; path = SnailMailTests; sourceTree = "<group>"; children = (B010, ); };
-		G004 = {isa = PBXGroup; name = Products; sourceTree = "<group>"; children = (B011, B012, ); };
+		G001 = {
+			isa = PBXGroup;
+			children = (
+				G002 /* SnailMail */,
+				G003 /* SnailMailTests */,
+				G004 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		G002 /* SnailMail */ = {
+			isa = PBXGroup;
+			children = (
+				B001 /* SnailMailApp.swift */,
+				B002 /* Models.swift */,
+				B003 /* DeliveryCalculator.swift */,
+				B004 /* MailStore.swift */,
+				B005 /* RootView.swift */,
+				B006 /* MailboxView.swift */,
+				B007 /* ComposeView.swift */,
+				B008 /* LetterDetailView.swift */,
+				B009 /* SettingsView.swift */,
+			);
+			path = SnailMail;
+			sourceTree = "<group>";
+		};
+		G003 /* SnailMailTests */ = {
+			isa = PBXGroup;
+			children = (
+				B010 /* SnailMailTests.swift */,
+				23EE1DB1A3F92E6EED7D2204 /* GoogleService-Info.plist */,
+			);
+			path = SnailMailTests;
+			sourceTree = "<group>";
+		};
+		G004 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				B011 /* SnailMail.app */,
+				B012 /* SnailMailTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		E001 = {isa = PBXNativeTarget; buildConfigurationList = H002; buildPhases = (S001, F001, R001, ); buildRules = (); dependencies = (); name = SnailMail; productName = SnailMail; productReference = B011; productType = "com.apple.product-type.application"; };
-		E002 = {isa = PBXNativeTarget; buildConfigurationList = H003; buildPhases = (S002, F002, R002, ); buildRules = (); dependencies = (T001, ); name = SnailMailTests; productName = SnailMailTests; productReference = B012; productType = "com.apple.product-type.bundle.unit-test"; };
+		E001 /* SnailMail */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = H002 /* Build configuration list for PBXNativeTarget "SnailMail" */;
+			buildPhases = (
+				S001 /* Sources */,
+				F001 /* Frameworks */,
+				R001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = SnailMail;
+			packageProductDependencies = (
+				1ED9BB875E5EA8243665EDE8 /* FirebaseCore */,
+				4913BA8AD85FC7AFB2DD4019 /* FirebaseAuth */,
+				8BE5BEE6354BEDEF3F6A6554 /* FirebaseFirestore */,
+				3BAC272D4C4AA5F0FB138329 /* FirebaseFunctions */,
+			);
+			productName = SnailMail;
+			productReference = B011 /* SnailMail.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E002 /* SnailMailTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = H003 /* Build configuration list for PBXNativeTarget "SnailMailTests" */;
+			buildPhases = (
+				S002 /* Sources */,
+				F002 /* Frameworks */,
+				R002 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				T001 /* PBXTargetDependency */,
+			);
+			name = SnailMailTests;
+			packageProductDependencies = (
+			);
+			productName = SnailMailTests;
+			productReference = B012 /* SnailMailTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		D001 = {isa = PBXProject; attributes = {BuildIndependentTargetsInParallel = 1; LastSwiftUpdateCheck = 1640; LastUpgradeCheck = 1640; TargetAttributes = {E001 = {CreatedOnToolsVersion = 16.4; }; E002 = {CreatedOnToolsVersion = 16.4; TestTargetID = E001; }; }; }; buildConfigurationList = H001; compatibilityVersion = "Xcode 14.0"; developmentRegion = en; hasScannedForEncodings = 0; knownRegions = (en, Base, ); mainGroup = G001; productRefGroup = G004; projectDirPath = ""; projectRoot = ""; targets = (E001, E002, ); };
+		D001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1640;
+				LastUpgradeCheck = 1640;
+				TargetAttributes = {
+					E001 = {
+						CreatedOnToolsVersion = 16.4;
+					};
+					E002 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = E001;
+					};
+				};
+			};
+			buildConfigurationList = H001 /* Build configuration list for PBXProject "SnailMail" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = G001;
+			packageReferences = (
+				4D78C99AF0DEF2097460450C /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+			);
+			productRefGroup = G004 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				E001 /* SnailMail */,
+				E002 /* SnailMailTests */,
+			);
+		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		R001 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
-		R002 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		R001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E2A882EFC38527AEBD445E2E /* GoogleService-Info.plist in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		R002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		S001 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A001, A002, A003, A004, A005, A006, A007, A008, A009, ); runOnlyForDeploymentPostprocessing = 0; };
-		S002 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A010, ); runOnlyForDeploymentPostprocessing = 0; };
+		S001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A001 /* SnailMailApp.swift in Sources */,
+				A002 /* Models.swift in Sources */,
+				A003 /* DeliveryCalculator.swift in Sources */,
+				A004 /* MailStore.swift in Sources */,
+				A005 /* RootView.swift in Sources */,
+				A006 /* MailboxView.swift in Sources */,
+				A007 /* ComposeView.swift in Sources */,
+				A008 /* LetterDetailView.swift in Sources */,
+				A009 /* SettingsView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		S002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A010 /* SnailMailTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		T001 = {isa = PBXTargetDependency; target = E001; targetProxy = C001; };
+		T001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E001 /* SnailMail */;
+			targetProxy = C001 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		I001 = {isa = XCBuildConfiguration; buildSettings = {ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; CLANG_ENABLE_OBJC_ARC = YES; ENABLE_STRICT_OBJC_MSGSEND = YES; GCC_C_LANGUAGE_STANDARD = gnu17; SWIFT_VERSION = 5.0; }; name = Debug; };
-		I002 = {isa = XCBuildConfiguration; buildSettings = {ALWAYS_SEARCH_USER_PATHS = NO; CLANG_ENABLE_MODULES = YES; CLANG_ENABLE_OBJC_ARC = YES; ENABLE_NS_ASSERTIONS = NO; GCC_C_LANGUAGE_STANDARD = gnu17; SWIFT_COMPILATION_MODE = wholemodule; SWIFT_VERSION = 5.0; }; name = Release; };
-		I003 = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; ENABLE_PREVIEWS = YES; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "snail mail"; INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking"; INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES; INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES; INFOPLIST_KEY_UILaunchScreen_Generation = YES; INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait; IPHONEOS_DEPLOYMENT_TARGET = 17.0; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.example.SnailMail; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SUPPORTS_MACCATALYST = NO; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = 1; }; name = Debug; };
-		I004 = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES; CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; ENABLE_PREVIEWS = YES; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "snail mail"; INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking"; INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES; INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES; INFOPLIST_KEY_UILaunchScreen_Generation = YES; INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait; IPHONEOS_DEPLOYMENT_TARGET = 17.0; MARKETING_VERSION = 1.0; PRODUCT_BUNDLE_IDENTIFIER = com.example.SnailMail; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SUPPORTS_MACCATALYST = NO; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = 1; VALIDATE_PRODUCT = YES; }; name = Release; };
-		I005 = {isa = XCBuildConfiguration; buildSettings = {BUNDLE_LOADER = "$(TEST_HOST)"; CODE_SIGN_STYLE = Automatic; GENERATE_INFOPLIST_FILE = YES; IPHONEOS_DEPLOYMENT_TARGET = 17.0; PRODUCT_BUNDLE_IDENTIFIER = com.example.SnailMailTests; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = 1; TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SnailMail.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SnailMail"; }; name = Debug; };
-		I006 = {isa = XCBuildConfiguration; buildSettings = {BUNDLE_LOADER = "$(TEST_HOST)"; CODE_SIGN_STYLE = Automatic; GENERATE_INFOPLIST_FILE = YES; IPHONEOS_DEPLOYMENT_TARGET = 17.0; PRODUCT_BUNDLE_IDENTIFIER = com.example.SnailMailTests; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = iphoneos; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = 1; TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SnailMail.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SnailMail"; }; name = Release; };
+		I001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		I002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		I003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "snail mail";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"-ObjC",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.samgolik.snailmail;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		I004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "snail mail";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.social-networking";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = UIInterfaceOrientationPortrait;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MARKETING_VERSION = 1.0;
+				OTHER_LDFLAGS = (
+					"-ObjC",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.samgolik.snailmail;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		I005 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				OTHER_LDFLAGS = (
+					"-ObjC",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.SnailMailTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SnailMail.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SnailMail";
+			};
+			name = Debug;
+		};
+		I006 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				OTHER_LDFLAGS = (
+					"-ObjC",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.example.SnailMailTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SnailMail.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SnailMail";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		H001 = {isa = XCConfigurationList; buildConfigurations = (I001, I002, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
-		H002 = {isa = XCConfigurationList; buildConfigurations = (I003, I004, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
-		H003 = {isa = XCConfigurationList; buildConfigurations = (I005, I006, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		H001 /* Build configuration list for PBXProject "SnailMail" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				I001 /* Debug */,
+				I002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		H002 /* Build configuration list for PBXNativeTarget "SnailMail" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				I003 /* Debug */,
+				I004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		H003 /* Build configuration list for PBXNativeTarget "SnailMailTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				I005 /* Debug */,
+				I006 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		4D78C99AF0DEF2097460450C /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = exactVersion;
+				version = 12.19.3;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		1ED9BB875E5EA8243665EDE8 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4D78C99AF0DEF2097460450C /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		3BAC272D4C4AA5F0FB138329 /* FirebaseFunctions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4D78C99AF0DEF2097460450C /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFunctions;
+		};
+		4913BA8AD85FC7AFB2DD4019 /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4D78C99AF0DEF2097460450C /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		8BE5BEE6354BEDEF3F6A6554 /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4D78C99AF0DEF2097460450C /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		"TEMP_768BE2A0-4B8E-403D-85BC-9EF6F2E2840B" /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4D78C99AF0DEF2097460450C /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
-	rootObject = D001;
+	rootObject = D001 /* Project object */;
 }

@@ -11,7 +11,8 @@ paper-like cards, restrained snail details, and lowercase copy throughout.
 2. Select the `SnailMail` scheme and an iPhone simulator.
 3. Press **Run** (`⌘R`).
 
-No Apple Developer account or backend is required for the simulator.
+No Apple Developer account is required for the simulator. The Firebase SDK is
+configured, while the current demo data still stays on-device.
 
 ## Run without opening Xcode
 
@@ -90,8 +91,19 @@ The `firebase/` directory contains the first production backend boundary:
 - Firestore indexes for sender and recipient mailboxes
 - Local Auth, Firestore, and Functions emulator configuration
 
-The Swift app still uses its local demo store while Firebase account configuration is pending.
-That keeps the Simulator build runnable and prevents project credentials from entering Git.
+The iOS app is registered with Firebase and initializes the Firebase SDK, while
+the visible demo flow still uses its local store. Authentication and live data
+sync are the next implementation step.
+
+Current Firebase registration:
+
+- Project: `snail-mail-btc`
+- iOS bundle ID: `com.samgolik.snailmail`
+- Firebase Apple SDK: `12.19.3` (pinned for Xcode 16.4 / Swift 6.1 compatibility)
+- Products linked: Core, Authentication, Firestore, and Functions
+
+`GoogleService-Info.plist` is required locally but intentionally ignored by Git.
+After a fresh clone, download it for the registered iOS app before building.
 
 ### Local backend setup
 
@@ -102,16 +114,14 @@ cd firebase/functions
 npm install
 npm run check
 cd ../..
-firebase emulators:start
+npx -y firebase-tools@latest emulators:start
 ```
 
-To connect a real project later:
+The remaining production setup is:
 
-1. Create or select a Firebase project.
-2. Add an iOS app with bundle ID `com.samgolik.snailmail`.
-3. Download `GoogleService-Info.plist` into the local project without committing it.
-4. Enable Authentication and Firestore.
-5. Run `firebase use --add` to create the ignored `.firebaserc` mapping.
-6. Deploy rules/functions only after reviewing billing and production settings.
+1. Create the Firestore database after choosing its permanent region.
+2. Enable Authentication and choose the initial sign-in method.
+3. Connect the Swift screens to Authentication, Firestore, and callable Functions.
+4. Deploy rules/functions only after reviewing billing and production settings.
 
 Cloud configuration and deployment are intentional account-level actions and are not performed by this repository automatically.
