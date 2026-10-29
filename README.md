@@ -99,8 +99,10 @@ Current Firebase registration:
 
 - Project: `snail-mail-btc`
 - iOS bundle ID: `com.samgolik.snailmail`
+- Firestore: Standard edition, default database, `us-east1`
 - Firebase Apple SDK: `12.19.3` (pinned for Xcode 16.4 / Swift 6.1 compatibility)
 - Products linked: Core, Authentication, Firestore, and Functions
+- Firestore rules and mailbox indexes: deployed
 
 `GoogleService-Info.plist` is required locally but intentionally ignored by Git.
 After a fresh clone, download it for the registered iOS app before building.
@@ -119,9 +121,8 @@ npx -y firebase-tools@latest emulators:start
 
 The remaining production setup is:
 
-1. Create the Firestore database after choosing its permanent region.
-2. Enable Authentication and choose the initial sign-in method.
-3. Connect the Swift screens to Authentication, Firestore, and callable Functions.
-4. Deploy rules/functions only after reviewing billing and production settings.
+1. Enable Authentication and choose the initial sign-in method.
+2. Connect the Swift screens to Authentication, Firestore, and callable Functions.
+3. Deploy Functions only after reviewing billing and production settings.
 
 Cloud configuration and deployment are intentional account-level actions and are not performed by this repository automatically.
