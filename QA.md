@@ -3,6 +3,7 @@
 ## Happy path
 
 - Launch on a fresh simulator and confirm **You** shows `guest` and a beta ID.
+- Confirm the home screen uses the snail-and-envelope icon without white corners.
 - Save the guest with an email and password of at least six characters.
 - Relaunch and confirm the saved email remains signed in.
 - Sign out and confirm the app returns to a fresh guest without blocking the demo.
@@ -29,6 +30,7 @@
 - Turn on VoiceOver and verify mailbox rows describe the sender and state.
 - Test on a small iPhone simulator and a current large iPhone simulator.
 - Install on a physical iPhone, accept the trust prompt if shown, and verify launch.
+- Archive a Release build and confirm validation finds a 1024×1024 app icon.
 
 ## Known MVP limits
 

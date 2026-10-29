@@ -19,6 +19,12 @@ struct SettingsView: View {
             Section("how to test") {
                 Text("write a letter as sam, switch to justin, then watch the traveling snail. the dc-to-columbus demo arrives in about one minute")
             }
+            Section("feedback") {
+                Link("email beat the clock studios", destination: URL(string: "mailto:beattheclockstudios@gmail.com?subject=snail%20mail%20beta%20feedback")!)
+                Text("tell us what feels confusing, too cute, too plain, or unexpectedly fun")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
             Section {
                 Button("reset demo", role: .destructive) { confirmReset = true }
             }

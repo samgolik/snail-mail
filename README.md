@@ -6,6 +6,8 @@ debug delivery, JSON persistence, Firebase identity, and unit tests.
 
 The interface uses a muted sage, powder-blue, cream, and clay palette with rounded
 paper-like cards, restrained snail details, and lowercase copy throughout.
+The asset catalog includes a full-resolution, full-bleed snail-and-envelope app
+icon ready for TestFlight packaging.
 
 ## Run it
 
@@ -146,4 +148,5 @@ Run the local preflight check with:
 Uploading to TestFlight still requires an active Apple Developer Program
 membership, an Apple Distribution signing identity, and an App Store Connect
 app record for bundle ID `com.samgolik.snailmail`. The repository can be built
-and tested in the simulator without those credentials.
+and tested in the simulator without those credentials. See `TESTFLIGHT.md` for
+the shortest upload checklist and draft beta metadata.

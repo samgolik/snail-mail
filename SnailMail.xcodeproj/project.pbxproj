@@ -19,6 +19,7 @@
 		A009 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B009 /* SettingsView.swift */; };
 		A010 /* SnailMailTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B010 /* SnailMailTests.swift */; };
 		A011 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B013 /* XCTest.framework */; };
+		A4E6A55046E525FC333B83F2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F50F42AC016D6E14241A7D30 /* Assets.xcassets */; };
 		E2A882EFC38527AEBD445E2E /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 23EE1DB1A3F92E6EED7D2204 /* GoogleService-Info.plist */; };
 		E62A4B3BEB6E724D911C5B67 /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = 3BAC272D4C4AA5F0FB138329 /* FirebaseFunctions */; };
 		EFCF7E3201C476F215B260AF /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 1ED9BB875E5EA8243665EDE8 /* FirebaseCore */; };
@@ -50,6 +51,7 @@
 		B011 /* SnailMail.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SnailMail.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B012 /* SnailMailTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SnailMailTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B013 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = System/Library/Frameworks/XCTest.framework; sourceTree = SDKROOT; };
+		F50F42AC016D6E14241A7D30 /* Assets.xcassets */ = {isa = PBXFileReference; explicitFileType = folder.assetcatalog; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -96,6 +98,7 @@
 				B007 /* ComposeView.swift */,
 				B008 /* LetterDetailView.swift */,
 				B009 /* SettingsView.swift */,
+				F50F42AC016D6E14241A7D30 /* Assets.xcassets */,
 			);
 			path = SnailMail;
 			sourceTree = "<group>";
@@ -211,6 +214,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E2A882EFC38527AEBD445E2E /* GoogleService-Info.plist in Resources */,
+				A4E6A55046E525FC333B83F2 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -287,6 +291,7 @@
 		I003 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -317,6 +322,7 @@
 		I004 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
