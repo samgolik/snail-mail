@@ -25,7 +25,7 @@ final class AuthManager: ObservableObject {
 
     func ensureSignedIn() async {
         guard Auth.auth().currentUser == nil else { return }
-        await perform { try await Auth.auth().signInAnonymously() }
+        await perform { return try await Auth.auth().signInAnonymously() }
     }
 
     func createAccount(email: String, password: String) async -> Bool {
@@ -37,9 +37,9 @@ final class AuthManager: ObservableObject {
         return await perform {
             let credential = EmailAuthProvider.credential(withEmail: cleanEmail, password: password)
             if let current = Auth.auth().currentUser, current.isAnonymous {
-                try await current.link(with: credential)
+                return try await current.link(with: credential)
             } else {
-                try await Auth.auth().createUser(withEmail: cleanEmail, password: password)
+                return try await Auth.auth().createUser(withEmail: cleanEmail, password: password)
             }
         }
     }
@@ -47,7 +47,7 @@ final class AuthManager: ObservableObject {
     func signIn(email: String, password: String) async -> Bool {
         let cleanEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         return await perform {
-            try await Auth.auth().signIn(withEmail: cleanEmail, password: password)
+            return try await Auth.auth().signIn(withEmail: cleanEmail, password: password)
         }
     }
 
