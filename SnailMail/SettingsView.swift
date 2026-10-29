@@ -99,9 +99,12 @@ private struct BetaAccountSection: View {
             SecureField("password", text: $password)
             Button(mode.buttonLabel) {
                 Task {
-                    let success = mode == .create
-                        ? await auth.createAccount(email: email, password: password)
-                        : await auth.signIn(email: email, password: password)
+                    let success: Bool
+                    if mode == .create {
+                        success = await auth.createAccount(email: email, password: password)
+                    } else {
+                        success = await auth.signIn(email: email, password: password)
+                    }
                     if success {
                         password = ""
                         showForm = false

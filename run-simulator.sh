@@ -4,7 +4,8 @@ set -euo pipefail
 project_dir="${0:A:h}"
 derived_data="$project_dir/.build/DerivedData"
 scheme="SnailMail"
-bundle_id="com.example.SnailMail"
+bundle_id="com.samgolik.snailmail"
+host_arch="$(uname -m)"
 
 if ! command -v xcodebuild >/dev/null || ! command -v xcrun >/dev/null; then
   print -u2 "Apple developer tools are unavailable. Try: xcode-select -p"
@@ -61,6 +62,8 @@ xcodebuild \
   -configuration Debug \
   -destination "platform=iOS Simulator,id=$device_id" \
   -derivedDataPath "$derived_data" \
+  ARCHS="$host_arch" \
+  ONLY_ACTIVE_ARCH=YES \
   CODE_SIGNING_ALLOWED=NO \
   build
 

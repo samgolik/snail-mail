@@ -30,6 +30,9 @@ cd /path/to/SnailMail
 The script finds an available iPhone simulator, builds the app, boots the device,
 installs the app, and launches it. Xcode.app must still be installed because its
 iOS SDK and build tools are required, but the Xcode IDE does not need to open.
+It automatically builds only the host simulator architecture (`x86_64` on an
+Intel Mac and `arm64` on Apple silicon), avoiding mixed-architecture Firebase
+module errors.
 
 Quickly diagnose the toolchain with:
 
