@@ -4,37 +4,38 @@ import FirebaseAuth
 @MainActor
 final class AuthManager: ObservableObject {
     @Published private(set) var user: User?
+    @Published private(set) var isRestoringSession = true
     @Published private(set) var isWorking = false
     @Published var errorMessage: String?
+    @Published var noticeMessage: String?
 
     private var listener: AuthStateDidChangeListenerHandle?
 
     init() {
         listener = Auth.auth().addStateDidChangeListener { [weak self] _, user in
-            Task { @MainActor in self?.user = user }
+            Task { @MainActor in
+                self?.user = user
+                self?.isRestoringSession = false
+            }
         }
-        Task { await ensureSignedIn() }
     }
 
     var isAnonymous: Bool { user?.isAnonymous == true }
+    var isAuthenticated: Bool { user != nil && !isAnonymous }
     var email: String? { user?.email }
+    var isEmailVerified: Bool { user?.isEmailVerified == true }
     var betaCode: String {
         guard let uid = user?.uid else { return "connecting" }
         return String(uid.prefix(8)).uppercased()
     }
 
-    func ensureSignedIn() async {
-        guard Auth.auth().currentUser == nil else { return }
-        await perform { return try await Auth.auth().signInAnonymously() }
-    }
-
     func createAccount(email: String, password: String) async -> Bool {
         let cleanEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        guard !cleanEmail.isEmpty, password.count >= 6 else {
+        guard Self.looksLikeEmail(cleanEmail), password.count >= 6 else {
             errorMessage = "use a valid email and at least 6 characters for your password"
             return false
         }
-        return await perform {
+        let success = await perform {
             let credential = EmailAuthProvider.credential(withEmail: cleanEmail, password: password)
             if let current = Auth.auth().currentUser, current.isAnonymous {
                 return try await current.link(with: credential)
@@ -42,28 +43,74 @@ final class AuthManager: ObservableObject {
                 return try await Auth.auth().createUser(withEmail: cleanEmail, password: password)
             }
         }
+        if success {
+            try? await Auth.auth().currentUser?.sendEmailVerification()
+            noticeMessage = "account created — check your inbox to verify your email"
+        }
+        return success
     }
 
     func signIn(email: String, password: String) async -> Bool {
         let cleanEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard Self.looksLikeEmail(cleanEmail), !password.isEmpty else {
+            errorMessage = "enter your email and password"
+            return false
+        }
         return await perform {
             return try await Auth.auth().signIn(withEmail: cleanEmail, password: password)
+        }
+    }
+
+    func sendPasswordReset(email: String) async -> Bool {
+        let cleanEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard Self.looksLikeEmail(cleanEmail) else {
+            errorMessage = "enter your email first"
+            return false
+        }
+        isWorking = true
+        clearMessages()
+        defer { isWorking = false }
+        do {
+            try await Auth.auth().sendPasswordReset(withEmail: cleanEmail)
+            noticeMessage = "password reset email sent"
+            return true
+        } catch {
+            errorMessage = Self.message(for: error)
+            return false
+        }
+    }
+
+    func resendVerification() async {
+        guard let user, !user.isEmailVerified else { return }
+        isWorking = true
+        clearMessages()
+        defer { isWorking = false }
+        do {
+            try await user.sendEmailVerification()
+            noticeMessage = "verification email sent"
+        } catch {
+            errorMessage = Self.message(for: error)
         }
     }
 
     func signOut() async {
         do {
             try Auth.auth().signOut()
-            await ensureSignedIn()
+            clearMessages()
         } catch {
             errorMessage = Self.message(for: error)
         }
     }
 
+    func clearMessages() {
+        errorMessage = nil
+        noticeMessage = nil
+    }
+
     @discardableResult
     private func perform(_ work: () async throws -> AuthDataResult) async -> Bool {
         isWorking = true
-        errorMessage = nil
+        clearMessages()
         defer { isWorking = false }
         do {
             _ = try await work()
@@ -83,10 +130,20 @@ final class AuthManager: ObservableObject {
         .joined(separator: " ")
 
         if details.localizedCaseInsensitiveContains("keychain") {
-            return "the simulator could not access its secure keychain. rebuild with ./run-simulator.sh, then retry"
+            return "the simulator could not access its secure keychain. rebuild with ./run-simulator.sh and try again"
         }
 
-        return error.localizedDescription.lowercased()
+        let description = error.localizedDescription.lowercased()
+        if description.contains("email address is already") { return "an account already exists for this email — try signing in" }
+        if description.contains("password is invalid") || description.contains("wrong-password") { return "that email and password do not match" }
+        if description.contains("no user record") || description.contains("user-not-found") { return "no account was found for this email" }
+        if description.contains("network") { return "could not reach snail mail — check your connection and try again" }
+        return description
+    }
+
+    private static func looksLikeEmail(_ email: String) -> Bool {
+        let pieces = email.split(separator: "@", omittingEmptySubsequences: false)
+        return pieces.count == 2 && pieces[1].contains(".")
     }
 
     deinit {

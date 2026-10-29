@@ -2,11 +2,14 @@
 
 ## Happy path
 
-- Launch on a fresh simulator and confirm **You** shows `guest` and a beta ID.
+- Launch on a fresh simulator and confirm the sign-up screen appears before the mailbox.
 - Confirm the home screen uses the snail-and-envelope icon without white corners.
-- Save the guest with an email and password of at least six characters.
+- Create an account with a new email and a password of at least six characters.
+- Confirm the verification email arrives and **You** can resend it.
 - Relaunch and confirm the saved email remains signed in.
-- Sign out and confirm the app returns to a fresh guest without blocking the demo.
+- Sign out and confirm the app returns to the sign-up/sign-in screen.
+- Sign back in and confirm the mailbox opens.
+- On **Sign in**, request a password reset and confirm the email arrives.
 - Launch as Sam and confirm both mailbox sections are empty.
 - Write a letter to Justin and verify blank messages cannot be sent.
 - Confirm the counter prevents messages longer than 500 characters.
@@ -20,6 +23,11 @@
 
 ## Edge cases
 
+- Try malformed emails, a password shorter than six characters, an existing
+  email, and an incorrect password; confirm each error is understandable.
+- Switch between **Sign up** and **Sign in** and confirm the password is cleared.
+- Disable networking, attempt sign-in, restore networking, and retry.
+- Relaunch with an existing session and confirm there is no flash of the login screen.
 - Send multiple letters before switching users.
 - Send text with leading/trailing spaces.
 - Switch users while a letter detail screen is open.

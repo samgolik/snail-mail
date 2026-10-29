@@ -1,6 +1,7 @@
 # Snail Mail MVP
 
-A SwiftUI vertical slice for delayed messages. It includes two demo profiles, a
+A SwiftUI beta for delayed messages. It includes Firebase email/password sign-up,
+sign-in, password reset, email verification, two local demo profiles, a
 mailbox, composition, distance-based travel time, sealed letters, accelerated
 debug delivery, JSON persistence, Firebase identity, and unit tests.
 
@@ -117,10 +118,11 @@ Current Firebase registration:
 - Firestore rules and mailbox indexes: deployed
 - Firebase Authentication: anonymous and email/password enabled
 
-The app signs a new installation in as a private guest automatically. Under
-**You**, a tester can save that guest as an email/password account or restore an
-existing beta account. Letter content remains in the local demo store for this
-checkpoint; cross-device friend delivery is the next product milestone.
+The app now opens on a real email/password welcome flow. Testers can create an
+account, sign back in, request a password reset, receive email verification, and
+sign out under **You**. A signed-in account is required to enter the app. Letter
+content remains in the local demo store for this checkpoint; cross-device friend
+delivery and user profiles are the next product milestone.
 
 `GoogleService-Info.plist` is required locally but intentionally ignored by Git.
 After a fresh clone, download it for the registered iOS app before building.

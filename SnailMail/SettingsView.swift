@@ -7,7 +7,7 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            BetaAccountSection()
+            AccountSection()
             Section("viewing as") {
                 Picker("demo user", selection: $store.activeProfile) {
                     ForEach(store.profiles) { profile in
@@ -39,97 +39,41 @@ struct SettingsView: View {
     }
 }
 
-private struct BetaAccountSection: View {
+private struct AccountSection: View {
     @EnvironmentObject private var auth: AuthManager
-    @State private var email = ""
-    @State private var password = ""
-    @State private var mode: AccountMode = .create
-    @State private var showForm = false
+    @State private var confirmSignOut = false
 
     var body: some View {
-        Section("beta account") {
-            LabeledContent("status", value: status)
-            LabeledContent("beta id", value: auth.betaCode)
+        Section("account") {
+            LabeledContent("email", value: auth.email ?? "unknown")
+            LabeledContent("status", value: auth.isEmailVerified ? "verified" : "not verified")
+            LabeledContent("account id", value: auth.betaCode)
                 .textSelection(.enabled)
 
-            if auth.user == nil {
-                Text("snail mail needs a private beta identity before account setup is available")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                if !auth.isWorking {
-                    Button("retry connection") {
-                        Task { await auth.ensureSignedIn() }
-                    }
+            if !auth.isEmailVerified {
+                Button("resend verification email") {
+                    Task { await auth.resendVerification() }
                 }
-            } else if auth.isAnonymous {
-                Text("your demo is connected privately. save it with an email when you want to use the same account on another phone")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Button(showForm ? "hide account setup" : "save or restore account") {
-                    withAnimation { showForm.toggle() }
-                }
-                if showForm { accountForm }
-            } else {
-                Text(auth.email ?? "saved account")
-                    .foregroundStyle(.secondary)
-                Button("sign out", role: .destructive) {
-                    Task { await auth.signOut() }
-                }
+                .disabled(auth.isWorking)
             }
 
-            if auth.isWorking {
-                ProgressView("connecting...")
-            }
             if let error = auth.errorMessage {
                 Text(error)
                     .font(.caption)
                     .foregroundStyle(.red)
             }
+            if let notice = auth.noticeMessage {
+                Text(notice)
+                    .font(.caption)
+                    .foregroundStyle(Color.snailGreen)
+            }
+
+            Button("sign out", role: .destructive) { confirmSignOut = true }
+        }
+        .confirmationDialog("sign out of snail mail?", isPresented: $confirmSignOut) {
+            Button("sign out", role: .destructive) {
+                Task { await auth.signOut() }
+            }
         }
     }
-
-    private var status: String {
-        guard auth.user != nil else { return auth.isWorking ? "connecting" : "not connected" }
-        return auth.isAnonymous ? "guest" : "saved"
-    }
-
-    private var accountForm: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Picker("account action", selection: $mode) {
-                ForEach(AccountMode.allCases) { option in
-                    Text(option.label).tag(option)
-                }
-            }
-            .pickerStyle(.segmented)
-            TextField("email", text: $email)
-                .textInputAutocapitalization(.never)
-                .keyboardType(.emailAddress)
-                .autocorrectionDisabled()
-            SecureField("password", text: $password)
-            Button(mode.buttonLabel) {
-                Task {
-                    let success: Bool
-                    if mode == .create {
-                        success = await auth.createAccount(email: email, password: password)
-                    } else {
-                        success = await auth.signIn(email: email, password: password)
-                    }
-                    if success {
-                        password = ""
-                        showForm = false
-                    }
-                }
-            }
-            .disabled(email.isEmpty || password.count < 6 || auth.isWorking)
-        }
-    }
-}
-
-private enum AccountMode: String, CaseIterable, Identifiable {
-    case create
-    case signIn
-
-    var id: Self { self }
-    var label: String { self == .create ? "save" : "sign in" }
-    var buttonLabel: String { self == .create ? "save this account" : "sign in" }
 }
