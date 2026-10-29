@@ -108,7 +108,9 @@ Current Firebase registration:
 - iOS bundle ID: `com.samgolik.snailmail`
 - Firestore: Standard edition, default database, `us-east1`
 - Firebase Apple SDK: `12.19.3` (pinned for Xcode 16.4 / Swift 6.1 compatibility)
-- Products linked: Core, Authentication, Firestore, and Functions
+- iOS products linked: Core and Authentication
+- Firestore and Functions backend configuration is retained but their unused,
+  heavyweight iOS SDK products are intentionally not linked for the first beta
 - Firestore rules and mailbox indexes: deployed
 - Firebase Authentication: anonymous and email/password enabled
 

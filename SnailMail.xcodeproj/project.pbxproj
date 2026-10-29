@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		8C4F0FAC3FE7F10800EE9B12 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 8BE5BEE6354BEDEF3F6A6554 /* FirebaseFirestore */; };
 		A001 /* SnailMailApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001 /* SnailMailApp.swift */; };
 		A002 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = B002 /* Models.swift */; };
 		A003 /* DeliveryCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B003 /* DeliveryCalculator.swift */; };
@@ -21,7 +20,6 @@
 		A011 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B013 /* XCTest.framework */; };
 		A4E6A55046E525FC333B83F2 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F50F42AC016D6E14241A7D30 /* Assets.xcassets */; };
 		E2A882EFC38527AEBD445E2E /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 23EE1DB1A3F92E6EED7D2204 /* GoogleService-Info.plist */; };
-		E62A4B3BEB6E724D911C5B67 /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = 3BAC272D4C4AA5F0FB138329 /* FirebaseFunctions */; };
 		EFCF7E3201C476F215B260AF /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 1ED9BB875E5EA8243665EDE8 /* FirebaseCore */; };
 		F66CFE26C8474789E2880D04 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 4913BA8AD85FC7AFB2DD4019 /* FirebaseAuth */; };
 /* End PBXBuildFile section */
@@ -61,8 +59,6 @@
 			files = (
 				EFCF7E3201C476F215B260AF /* FirebaseCore in Frameworks */,
 				F66CFE26C8474789E2880D04 /* FirebaseAuth in Frameworks */,
-				8C4F0FAC3FE7F10800EE9B12 /* FirebaseFirestore in Frameworks */,
-				E62A4B3BEB6E724D911C5B67 /* FirebaseFunctions in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -140,8 +136,6 @@
 			packageProductDependencies = (
 				1ED9BB875E5EA8243665EDE8 /* FirebaseCore */,
 				4913BA8AD85FC7AFB2DD4019 /* FirebaseAuth */,
-				8BE5BEE6354BEDEF3F6A6554 /* FirebaseFirestore */,
-				3BAC272D4C4AA5F0FB138329 /* FirebaseFunctions */,
 			);
 			productName = SnailMail;
 			productReference = B011 /* SnailMail.app */;
@@ -272,6 +266,7 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
@@ -316,6 +311,7 @@
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
 			};

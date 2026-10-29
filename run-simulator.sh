@@ -3,6 +3,7 @@ set -euo pipefail
 
 project_dir="${0:A:h}"
 derived_data="$project_dir/.build/DerivedData"
+build_log="$project_dir/.build/last-build.log"
 scheme="SnailMail"
 bundle_id="com.samgolik.snailmail"
 host_arch="$(uname -m)"
@@ -56,7 +57,8 @@ print(device_id)
 ' "$device_id")"
 
 print "Building for $device_name…"
-xcodebuild \
+mkdir -p "$project_dir/.build"
+if ! xcodebuild \
   -project "$project_dir/SnailMail.xcodeproj" \
   -scheme "$scheme" \
   -configuration Debug \
@@ -65,7 +67,12 @@ xcodebuild \
   ARCHS="$host_arch" \
   ONLY_ACTIVE_ARCH=YES \
   CODE_SIGNING_ALLOWED=NO \
-  build
+  build 2>&1 | tee "$build_log"; then
+  print -u2 "\nBuild failed. Relevant diagnostics:"
+  grep -n "error:" "$build_log" >&2 || true
+  print -u2 "\nFull log: $build_log"
+  exit 1
+fi
 
 app_path="$derived_data/Build/Products/Debug-iphonesimulator/SnailMail.app"
 
