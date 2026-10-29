@@ -52,7 +52,16 @@ private struct BetaAccountSection: View {
             LabeledContent("beta id", value: auth.betaCode)
                 .textSelection(.enabled)
 
-            if auth.isAnonymous {
+            if auth.user == nil {
+                Text("snail mail needs a private beta identity before account setup is available")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                if !auth.isWorking {
+                    Button("retry connection") {
+                        Task { await auth.ensureSignedIn() }
+                    }
+                }
+            } else if auth.isAnonymous {
                 Text("your demo is connected privately. save it with an email when you want to use the same account on another phone")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -80,7 +89,7 @@ private struct BetaAccountSection: View {
     }
 
     private var status: String {
-        guard auth.user != nil else { return "connecting" }
+        guard auth.user != nil else { return auth.isWorking ? "connecting" : "not connected" }
         return auth.isAnonymous ? "guest" : "saved"
     }
 

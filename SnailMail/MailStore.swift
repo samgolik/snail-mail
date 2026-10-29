@@ -16,7 +16,7 @@ final class AuthManager: ObservableObject {
         Task { await ensureSignedIn() }
     }
 
-    var isAnonymous: Bool { user?.isAnonymous ?? true }
+    var isAnonymous: Bool { user?.isAnonymous == true }
     var email: String? { user?.email }
     var betaCode: String {
         guard let uid = user?.uid else { return "connecting" }
@@ -56,7 +56,7 @@ final class AuthManager: ObservableObject {
             try Auth.auth().signOut()
             await ensureSignedIn()
         } catch {
-            errorMessage = error.localizedDescription.lowercased()
+            errorMessage = Self.message(for: error)
         }
     }
 
@@ -69,9 +69,24 @@ final class AuthManager: ObservableObject {
             _ = try await work()
             return true
         } catch {
-            errorMessage = error.localizedDescription.lowercased()
+            errorMessage = Self.message(for: error)
             return false
         }
+    }
+
+    private static func message(for error: Error) -> String {
+        let details = [
+            error.localizedDescription,
+            (error as NSError).localizedFailureReason
+        ]
+        .compactMap { $0 }
+        .joined(separator: " ")
+
+        if details.localizedCaseInsensitiveContains("keychain") {
+            return "the simulator could not access its secure keychain. rebuild with ./run-simulator.sh, then retry"
+        }
+
+        return error.localizedDescription.lowercased()
     }
 
     deinit {

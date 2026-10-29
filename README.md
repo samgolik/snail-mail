@@ -32,7 +32,10 @@ installs the app, and launches it. Xcode.app must still be installed because its
 iOS SDK and build tools are required, but the Xcode IDE does not need to open.
 It automatically builds only the host simulator architecture (`x86_64` on an
 Intel Mac and `arm64` on Apple silicon), avoiding mixed-architecture Firebase
-module errors.
+module errors. Keep normal simulator signing enabled: Firebase Authentication
+stores its session in the Keychain, and explicitly disabling code signing can
+prevent that secure storage from working. If a connection attempt fails, open
+**You** and tap **Retry connection** after rebuilding with this script.
 
 Quickly diagnose the toolchain with:
 
