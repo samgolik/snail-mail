@@ -1,0 +1,5 @@
+{
+  "score": 5,
+  "summary": "Direct Firestore access is denied for every collection. Authenticated callable functions are the sole production boundary and enforce identity, verified-email social actions, accepted friendships, server timestamps, body limits, server-controlled arrival, recipient-only opening, and account cleanup.",
+  "findings": []
+}

@@ -17,5 +17,11 @@
       ]
     }
   ],
-  "fieldOverrides": []
+  "fieldOverrides": [
+    {
+      "collectionGroup": "sealedLetters",
+      "fieldPath": "body",
+      "indexes": []
+    }
+  ]
 }

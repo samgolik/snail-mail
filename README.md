@@ -99,6 +99,8 @@ The `firebase/` directory contains the first production backend boundary:
 - Completely private `sealedLetters` documents
 - A callable `sendLetter` function that verifies friendship and calculates arrival using server time
 - A callable `openLetter` function that releases the body only to the recipient after arrival
+- Callable profile setup, unique friend codes, friend request/acceptance, and mailbox bootstrap
+- Complete in-app account deletion that removes friendships, letters, sealed bodies, profile reservations, and Firebase Auth identity
 - Firestore indexes for sender and recipient mailboxes
 - Local Auth, Firestore, and Functions emulator configuration
 
@@ -117,6 +119,12 @@ Current Firebase registration:
   heavyweight iOS SDK products are intentionally not linked for the first beta
 - Firestore rules and mailbox indexes: deployed
 - Firebase Authentication: anonymous and email/password enabled
+
+The current rules are intentionally closed to direct client access. Production
+reads and writes go through authenticated callable functions so profiles cannot
+be enumerated, friendships cannot be forged, and letter metadata cannot be
+tampered with. Backend changes made after the last deployment require
+`firebase login --reauth` and a reviewed deploy before production testing.
 
 The app now opens on a real email/password welcome flow. Testers can create an
 account, sign back in, request a password reset, receive email verification, and
