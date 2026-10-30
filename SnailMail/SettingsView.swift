@@ -8,6 +8,7 @@ struct SettingsView: View {
     @State private var confirmSignOut = false
     @State private var confirmDelete = false
     @State private var personToBlock: SnailProfile?
+    @State private var personToRemove: SnailProfile?
     @State private var personToReport: SnailProfile?
     @State private var reportReason = ""
     @State private var showingProfileEditor = false
@@ -16,6 +17,7 @@ struct SettingsView: View {
         Form {
             identitySection
             friendsSection
+            blockedSection
             accountSection
             Section("feedback") {
                 Link(
@@ -70,6 +72,21 @@ struct SettingsView: View {
             }
         } message: {
             Text("you will no longer be connected or able to exchange letters.")
+        }
+        .confirmationDialog(
+            "remove \(personToRemove?.displayName.lowercased() ?? "this friend")?",
+            isPresented: Binding(
+                get: { personToRemove != nil },
+                set: { if !$0 { personToRemove = nil } }
+            )
+        ) {
+            Button("remove connection", role: .destructive) {
+                guard let person = personToRemove else { return }
+                Task { _ = await store.removeFriend(person) }
+                personToRemove = nil
+            }
+        } message: {
+            Text("old letters stay in both mailboxes. either person can send a new request later.")
         }
         .alert(
             "report \(personToReport?.displayName.lowercased() ?? "this person")",
@@ -139,6 +156,9 @@ struct SettingsView: View {
                             Button("block", systemImage: "hand.raised", role: .destructive) {
                                 personToBlock = friend
                             }
+                            Button("remove friend", systemImage: "person.badge.minus", role: .destructive) {
+                                personToRemove = friend
+                            }
                         } label: {
                             Image(systemName: "ellipsis.circle")
                         }
@@ -189,6 +209,32 @@ struct SettingsView: View {
             }
             if let error = store.errorMessage {
                 Text(error).font(.caption).foregroundStyle(.red)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var blockedSection: some View {
+        if !store.blockedProfiles.isEmpty {
+            Section("blocked accounts") {
+                ForEach(store.blockedProfiles) { person in
+                    HStack {
+                        VStack(alignment: .leading) {
+                            Text(person.displayName.lowercased())
+                            Text(person.username.lowercased())
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Button("unblock") {
+                            Task { _ = await store.unblock(person) }
+                        }
+                        .disabled(store.isWorking)
+                    }
+                }
+                Text("unblocking does not restore the old connection. exchange a new friend request when you are ready.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
     }

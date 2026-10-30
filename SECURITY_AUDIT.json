@@ -1,5 +1,5 @@
 {
   "score": 5,
-  "summary": "Direct Firestore access is denied for every collection. Authenticated callable functions are the sole production boundary and enforce identity, verified-email social actions, accepted friendships, server timestamps, daily write-action limits, report-to-relationship consistency, body limits, server-controlled arrival, recipient-only opening, and account cleanup.",
+  "summary": "Direct Firestore access is denied for every collection. Authenticated callable functions are the sole production boundary and enforce identity, verified-email social actions, accepted friendships, private blocker-owned block management, server timestamps, daily write-action limits, report-to-relationship consistency, body limits, server-controlled arrival, recipient-only opening, and account cleanup.",
   "findings": []
 }

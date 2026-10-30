@@ -27,6 +27,8 @@
 - Report a disposable friend and confirm the action completes without exposing the reporter.
 - Report a received letter from its overflow menu and confirm the success notice.
 - Block a disposable friend and confirm the connection disappears for both sending paths.
+- Confirm the blocked account appears privately under **you**, unblock it, exchange
+  a new request, then remove the connection without blocking either account.
 
 ## Edge cases
 
@@ -63,6 +65,8 @@
 - Only accepted friends can send letters to each other.
 - Neither sender nor recipient can read `sealedLetters` directly.
 - A block in either direction prevents new friend requests and letters.
+- Only the blocker can see and remove their block; unblocking does not silently
+  restore the old friendship.
 - The sender cannot call `openLetter` on a sent letter.
 - The recipient cannot open a letter before the server-side `arrivesAt` value.
 - Changing device time does not affect server delivery.

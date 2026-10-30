@@ -27,7 +27,7 @@ server-calculated arrival time—no peeking and no rushing the road.
 - private friend-code connections
 - cross-device delayed letters
 - sealed contents until arrival
-- in-app reporting, blocking, and permanent account deletion
+- in-app reporting, reversible blocking, connection removal, and permanent account deletion
 - a calm mailbox without feeds, likes, or read-pressure
 
 Made thoughtfully by beat the clock studios.

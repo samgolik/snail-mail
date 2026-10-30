@@ -87,9 +87,22 @@ await call("reportUser", justin.token, {
   targetID: sam.id, letterID: mailbox.letters[0].id, reason: "integration test report",
 });
 await call("blockUser", justin.token, {targetID: sam.id});
+const blockedHome = await call("loadHome", justin.token, {});
+assert.equal(blockedHome.blockedProfiles[0]?.id, sam.id, "blocked account should be manageable");
 await call("sendLetter", sam.token, {
   recipientID: justin.id, body: "A blocked letter must not leave.",
 }, 403);
+await call("unblockUser", justin.token, {targetID: sam.id});
+await call("requestFriend", sam.token, {friendCode: justinProfile.profile.friendCode});
+const reconnectedHome = await call("loadHome", justin.token, {});
+const secondRequest = reconnectedHome.connections.find((item) => item.isIncoming);
+assert.ok(secondRequest, "friend request should work after unblock");
+await call("respondToFriend", justin.token, {
+  friendshipID: secondRequest.id, accept: true,
+});
+await call("removeFriend", justin.token, {targetID: sam.id});
+const removedHome = await call("loadHome", justin.token, {});
+assert.equal(removedHome.connections.length, 0, "removed friendship should disappear");
 for (let index = 0; index < 19; index += 1) {
   await call("saveProfile", sam.token, {
     displayName: "Sam", username: `sam_limit_${index}`,

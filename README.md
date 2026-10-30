@@ -2,8 +2,9 @@
 
 A SwiftUI beta for delayed messages. It includes Firebase email/password sign-up,
 sign-in, password reset and verification; server-backed profiles and friend
-requests; editable return addresses; cross-device mailboxes; server-calculated
-travel time; sealed letters; reporting and blocking; permanent account deletion;
+requests; editable return addresses; removable connections and manageable blocks;
+cross-device mailboxes; server-calculated travel time; sealed letters; reporting;
+permanent account deletion;
 launch recovery; and automated backend coverage.
 
 The interface uses an adaptive muted sage, powder-blue, cream, and clay palette
@@ -107,7 +108,7 @@ The `firebase/` directory contains the first production backend boundary:
 - A callable `sendLetter` function that verifies friendship and calculates arrival using server time
 - A callable `openLetter` function that releases the body only to the recipient after arrival
 - Callable profile setup, unique friend codes, friend request/acceptance, and mailbox bootstrap
-- Validated reporting and blocking tied to real connections or letters
+- Validated reporting, reversible blocking, and connection removal
 - Per-account daily limits for profile edits, friend requests, letters, and reports
 - Complete in-app account deletion that removes friendships, letters, sealed bodies, profile reservations, and Firebase Auth identity
 - Firestore indexes for sender and recipient mailboxes
@@ -161,7 +162,8 @@ CHOKIDAR_USEPOLLING=1 npx -y firebase-tools@latest emulators:start
 
 The backend integration test creates two disposable emulator accounts and
 exercises profile setup, verified friend requests, sealed sending, early-open
-rejection, reporting, blocking, rate-limit enforcement, and account deletion:
+rejection, reporting, block/unblock, reconnect/removal, rate-limit enforcement,
+and account deletion:
 
 ```sh
 cd firebase/functions

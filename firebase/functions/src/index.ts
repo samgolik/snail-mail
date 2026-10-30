@@ -250,6 +250,29 @@ export const blockUser = onCall({region: "us-east1"}, async (request) => {
   return {blocked: true};
 });
 
+export const unblockUser = onCall({region: "us-east1"}, async (request) => {
+  const blockerID = requireUser(request);
+  const targetID = requireText(request.data?.targetID, "targetID", 128);
+  await db.collection("blocks").doc(`${blockerID}_${targetID}`).delete();
+  return {unblocked: true};
+});
+
+export const removeFriend = onCall({region: "us-east1"}, async (request) => {
+  const userID = requireUser(request);
+  const targetID = requireText(request.data?.targetID, "targetID", 128);
+  const friendshipID = [userID, targetID].sort().join("_");
+  const ref = db.collection("friendships").doc(friendshipID);
+  await db.runTransaction(async (transaction: Transaction) => {
+    const friendship = await transaction.get(ref);
+    const userIDs = friendship.data()?.userIDs as string[] | undefined;
+    if (!friendship.exists || !userIDs?.includes(userID) || !userIDs.includes(targetID)) {
+      throw new HttpsError("not-found", "that connection no longer exists");
+    }
+    transaction.delete(ref);
+  });
+  return {removed: true};
+});
+
 export const reportUser = onCall({region: "us-east1"}, async (request) => {
   const reporterID = requireUser(request);
   const targetID = requireText(request.data?.targetID, "targetID", 128);
@@ -311,15 +334,18 @@ export const respondToFriend = onCall({region: "us-east1"}, async (request) => {
 
 export const loadHome = onCall({region: "us-east1"}, async (request) => {
   const id = requireUser(request);
-  const [profile, friendships, received, sent] = await Promise.all([
+  const [profile, friendships, received, sent, blocks] = await Promise.all([
     db.collection("users").doc(id).get(),
     db.collection("friendships").where("userIDs", "array-contains", id).get(),
     db.collection("letters").where("recipientID", "==", id).orderBy("sentAt", "desc").limit(100).get(),
     db.collection("letters").where("senderID", "==", id).orderBy("sentAt", "desc").limit(100).get(),
+    db.collection("blocks").where("blockerID", "==", id).limit(100).get(),
   ]);
   const otherIDs: string[] = friendships.docs.map((item: QueryDocumentSnapshot) =>
     (item.data().userIDs as string[]).find((value) => value !== id)!);
-  const people = await Promise.all(otherIDs.map((otherID: string) =>
+  const blockedIDs = blocks.docs.map((item: QueryDocumentSnapshot) => item.data().targetID as string);
+  const profileIDs = [...new Set([...otherIDs, ...blockedIDs])];
+  const people = await Promise.all(profileIDs.map((otherID: string) =>
     db.collection("users").doc(otherID).get()));
   const peopleByID = new Map(people.filter((item: DocumentSnapshot) => item.exists)
     .map((item: DocumentSnapshot) => [item.id, profileJSON(item.id, item.data()!)]));
@@ -338,6 +364,9 @@ export const loadHome = onCall({region: "us-east1"}, async (request) => {
   return {
     profile: profile.exists ? profileJSON(profile.id, profile.data()!) : null,
     connections,
+    blockedProfiles: blockedIDs
+      .map((blockedID: string) => peopleByID.get(blockedID))
+      .filter((item) => item),
     letters: allLetters.map((item) => letterJSON(item.id, item.data())),
   };
 });

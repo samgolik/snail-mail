@@ -43,7 +43,9 @@ For each report:
    reported user.
 
 Blocking is immediate and self-service. It removes the friendship and prevents
-new friend requests or letters in either direction.
+new friend requests or letters in either direction. The blocker can privately
+review and unblock accounts under **you**; unblocking never restores a friendship
+without a new accepted request.
 
 ## privacy and deletion requests
 

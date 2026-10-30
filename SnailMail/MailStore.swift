@@ -289,6 +289,7 @@ struct SnailLetter: Codable, Identifiable, Hashable {
 private struct HomeResponse: Decodable {
     let profile: SnailProfile?
     let connections: [SnailConnection]
+    let blockedProfiles: [SnailProfile]
     let letters: [SnailLetter]
 }
 
@@ -307,6 +308,7 @@ enum HomeLoadState: Equatable {
 final class ProductionStore: ObservableObject {
     @Published private(set) var profile: SnailProfile?
     @Published private(set) var connections: [SnailConnection] = []
+    @Published private(set) var blockedProfiles: [SnailProfile] = []
     @Published private(set) var letters: [SnailLetter] = []
     @Published private(set) var openedBodies: [String: String] = [:]
     @Published private(set) var loadState: HomeLoadState = .idle
@@ -363,7 +365,8 @@ final class ProductionStore: ObservableObject {
 
     func person(id: String) -> SnailProfile? {
         if profile?.id == id { return profile }
-        return connections.first { $0.profile.id == id }?.profile
+        return connections.first { $0.profile.id == id }?.profile ??
+            blockedProfiles.first { $0.id == id }
     }
 
     func load() async {
@@ -378,6 +381,7 @@ final class ProductionStore: ObservableObject {
             guard sessionUserID == expectedUserID, latestLoadID == loadID else { return }
             profile = response.profile
             connections = response.connections
+            blockedProfiles = response.blockedProfiles
             letters = response.letters
             loadErrorMessage = nil
             loadState = .loaded
@@ -445,6 +449,28 @@ final class ProductionStore: ObservableObject {
         return success
     }
 
+    func unblock(_ person: SnailProfile) async -> Bool {
+        let success = await perform {
+            let _: EmptyResponse = try await CallableAPI.call(
+                "unblockUser",
+                payload: TargetPayload(targetID: person.id)
+            )
+        }
+        if success { await load() }
+        return success
+    }
+
+    func removeFriend(_ person: SnailProfile) async -> Bool {
+        let success = await perform {
+            let _: EmptyResponse = try await CallableAPI.call(
+                "removeFriend",
+                payload: TargetPayload(targetID: person.id)
+            )
+        }
+        if success { await load() }
+        return success
+    }
+
     func report(_ person: SnailProfile, reason: String, letterID: String? = nil) async -> Bool {
         await perform {
             let _: EmptyResponse = try await CallableAPI.call(
@@ -485,6 +511,7 @@ final class ProductionStore: ObservableObject {
             guard self.sessionUserID == expectedUserID else { return }
             profile = nil
             connections = []
+            blockedProfiles = []
             letters = []
             openedBodies = [:]
         }
@@ -493,6 +520,7 @@ final class ProductionStore: ObservableObject {
     func resetSession() {
         profile = nil
         connections = []
+        blockedProfiles = []
         letters = []
         openedBodies = [:]
         loadState = .idle
