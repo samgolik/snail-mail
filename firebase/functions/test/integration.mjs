@@ -48,6 +48,15 @@ async function createVerifiedUser(label) {
   return {id: localId, token: signin.body.idToken};
 }
 
+async function createAnonymousUser() {
+  const signup = await json(
+    `http://${authBase}/identitytoolkit.googleapis.com/v1/accounts:signUp?key=fake`,
+    {method: "POST", body: JSON.stringify({returnSecureToken: true})},
+  );
+  assert.equal(signup.response.ok, true, JSON.stringify(signup.body));
+  return signup.body.idToken;
+}
+
 async function call(name, token, data, expectedStatus = 200) {
   const result = await json(
     `http://${functionsBase}/${project}/us-east1/${name}`,
@@ -61,6 +70,12 @@ async function call(name, token, data, expectedStatus = 200) {
   return result.body.result ?? result.body.error;
 }
 
+const anonymousToken = await createAnonymousUser();
+await call("saveProfile", anonymousToken, {
+  displayName: "Anonymous", username: `anonymous_${Date.now()}`,
+  city: "Nowhere", latitude: 0, longitude: 0,
+}, 401);
+
 const sam = await createVerifiedUser("sam");
 const justin = await createVerifiedUser("justin");
 await call("saveProfile", sam.token, {
@@ -71,10 +86,19 @@ const justinProfile = await call("saveProfile", justin.token, {
   displayName: "Justin", username: `justin_${Date.now()}`, city: "Columbus, OH",
   latitude: 39.9612, longitude: -82.9988,
 });
+await call("requestFriend", sam.token, {
+  friendCode: justinProfile.profile.friendCode,
+}, 400);
+await call("acceptTerms", sam.token, {version: "2026-10-30"});
+await call("acceptTerms", justin.token, {version: "2026-10-30"});
 await call("requestFriend", sam.token, {friendCode: justinProfile.profile.friendCode});
 const pendingHome = await call("loadHome", justin.token, {});
+assert.equal(pendingHome.termsAccepted, true, "current terms acceptance should be returned");
 const incoming = pendingHome.connections.find((item) => item.isIncoming);
 assert.ok(incoming, "recipient should receive a friend request");
+assert.equal("friendCode" in incoming.profile, false, "a friend's private code must not leak");
+assert.equal("latitude" in incoming.profile, false, "a friend's delivery coordinates must not leak");
+assert.equal("longitude" in incoming.profile, false, "a friend's delivery coordinates must not leak");
 await call("respondToFriend", justin.token, {friendshipID: incoming.id, accept: true});
 await call("sendLetter", sam.token, {
   recipientID: justin.id, body: "This body must stay sealed.",

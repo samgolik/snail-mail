@@ -38,6 +38,8 @@ private struct AuthenticatedRoot: View {
                 case .loaded:
                     if store.profile == nil {
                         ProfileSetupView()
+                    } else if !store.termsAccepted {
+                        TermsAcceptanceView()
                     } else {
                         MainTabView()
                     }
@@ -57,6 +59,57 @@ private struct AuthenticatedRoot: View {
             guard phase == .active, store.hasLoaded else { return }
             Task { await store.load() }
         }
+    }
+}
+
+private struct TermsAcceptanceView: View {
+    @EnvironmentObject private var store: ProductionStore
+    @EnvironmentObject private var auth: AuthManager
+    @State private var agreed = false
+
+    var body: some View {
+        ZStack {
+            PastelBackground()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 22) {
+                    Spacer(minLength: 48)
+                    Image(systemName: "hand.raised.circle")
+                        .font(.system(size: 50, weight: .light))
+                        .foregroundStyle(Color.snailGreen)
+                    Text("a kind little post office")
+                        .font(.largeTitle.weight(.semibold))
+                    Text("snail mail is for thoughtful correspondence. harassment, threats, hate, sexual exploitation, spam, impersonation, and illegal content are not allowed.")
+                        .foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 12) {
+                        Link("read the terms of use", destination: URL(string: "https://snail-mail-btc.web.app/terms")!)
+                        Link("read the community guidelines", destination: URL(string: "https://snail-mail-btc.web.app/community")!)
+                        Link("read the privacy policy", destination: URL(string: "https://snail-mail-btc.web.app/privacy")!)
+                    }
+                    Toggle("i am at least 13 and agree to the terms and community guidelines", isOn: $agreed)
+                        .tint(.snailGreen)
+                    if let error = store.errorMessage {
+                        MessageRow(text: error, systemImage: "exclamationmark.circle", color: .red)
+                    }
+                    Button("enter the post office") {
+                        Task { _ = await store.acceptTerms() }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .tint(.snailGreen)
+                    .frame(maxWidth: .infinity)
+                    .disabled(!agreed || store.isWorking)
+                    Button("sign out") {
+                        store.resetSession()
+                        Task { await auth.signOut() }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .disabled(store.isWorking)
+                    Spacer(minLength: 28)
+                }
+                .padding(.horizontal, 24)
+            }
+        }
+        .foregroundStyle(Color.berryInk)
     }
 }
 
@@ -241,6 +294,7 @@ private struct AuthView: View {
     @State private var mode: AuthMode = .signUp
     @State private var email = ""
     @State private var password = ""
+    @State private var agreedToCreateAccount = false
 
     var body: some View {
         ZStack {
@@ -270,6 +324,7 @@ private struct AuthView: View {
         .foregroundStyle(Color.berryInk)
         .onChange(of: mode) { _, _ in
             password = ""
+            agreedToCreateAccount = false
             auth.clearMessages()
         }
     }
@@ -299,6 +354,16 @@ private struct AuthView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                Toggle("i am at least 13 and agree to the terms and community guidelines", isOn: $agreedToCreateAccount)
+                    .font(.caption)
+                    .tint(.snailGreen)
+                HStack(spacing: 14) {
+                    Link("terms", destination: URL(string: "https://snail-mail-btc.web.app/terms")!)
+                    Link("community", destination: URL(string: "https://snail-mail-btc.web.app/community")!)
+                    Link("privacy", destination: URL(string: "https://snail-mail-btc.web.app/privacy")!)
+                }
+                .font(.caption)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
 
             if let error = auth.errorMessage {
@@ -330,7 +395,8 @@ private struct AuthView: View {
             .buttonStyle(.borderedProminent)
             .tint(.snailGreen)
             .controlSize(.large)
-            .disabled(email.isEmpty || password.isEmpty || auth.isWorking)
+            .disabled(email.isEmpty || password.isEmpty || auth.isWorking ||
+                      (mode == .signUp && !agreedToCreateAccount))
 
             if mode == .signIn {
                 Button("forgot password?") {

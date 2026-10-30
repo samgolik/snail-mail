@@ -13,7 +13,7 @@
   "auth": {
     "authorizedDomains": ["localhost"],
     "providers": {
-      "anonymous": true,
+      "anonymous": false,
       "emailPassword": true
     }
   },

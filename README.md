@@ -109,6 +109,8 @@ The `firebase/` directory contains the first production backend boundary:
 - A callable `openLetter` function that releases the body only to the recipient after arrival
 - Callable profile setup, unique friend codes, friend request/acceptance, and mailbox bootstrap
 - Validated reporting, reversible blocking, and connection removal
+- Versioned Terms of Use and Community Guidelines acceptance before social actions
+- Private profile shaping so friend codes and delivery coordinates are never returned to other accounts
 - Per-account daily limits for profile edits, friend requests, letters, and reports
 - Complete in-app account deletion that removes friendships, letters, sealed bodies, profile reservations, and Firebase Auth identity
 - Firestore indexes for sender and recipient mailboxes
@@ -128,9 +130,9 @@ Current Firebase registration:
   heavyweight iOS SDK products are intentionally not linked for the first beta
 - Firestore rules and mailbox indexes: deployed
 - Privacy/support Hosting site: deployed at `https://snail-mail-btc.web.app`
-- Callable Functions: all 11 deployed on Node 22 in `us-east1`, with bounded
+- Callable Functions: all 12 deployed on Node 22 in `us-east1`, with bounded
   beta scaling and one-day cleanup of stale deployment images
-- Firebase Authentication: anonymous and email/password enabled
+- Firebase Authentication: email/password enabled; anonymous accounts disabled
 
 The current rules are intentionally closed to direct client access. Production
 reads and writes go through authenticated callable functions so profiles cannot
@@ -215,7 +217,7 @@ older Intel Mac, `CHOKIDAR_USEPOLLING=1` prevents the Functions watcher from
 exhausting file descriptors.
 
 The app and local backend are connected and the full emulator integration test
-passes. Firestore rules/indexes, Hosting, and all 11 production Functions are
+passes. Firestore rules/indexes, Hosting, and all 12 production Functions are
 live. Functions use the conservative beta scaling limits documented in
 `DECISIONS.md`, and stale deployment images are removed after one day. Use
 `deploy-functions.sh` for reviewed backend releases. See `TESTFLIGHT.md` and

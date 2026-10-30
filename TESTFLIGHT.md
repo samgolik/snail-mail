@@ -24,8 +24,9 @@ not require a paid Apple account; upload and TestFlight distribution do.
 
 Current status: Firestore rules/indexes and Hosting are deployed. Functions are
 verified locally, deployed, and configured with conservative beta cost limits.
-All 11 were active on October 30, 2026, and the production endpoint rejected a
-request without App Check as designed. Finish the owner-controlled App Attest
+All 12 were active on October 30, 2026, and the production endpoints rejected
+requests without App Check as designed. Terms and Community pages are live and
+anonymous authentication is disabled. Finish the owner-controlled App Attest
 registration before distributing the first build and confirm the billing budget
 alert reaches the studio email.
 

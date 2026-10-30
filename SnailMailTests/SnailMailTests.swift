@@ -55,6 +55,7 @@ final class SnailMailTests: XCTestCase {
         XCTAssertEqual(store.sessionUserID, "second-user")
         XCTAssertEqual(store.loadState, .idle)
         XCTAssertNil(store.profile)
+        XCTAssertFalse(store.termsAccepted)
         XCTAssertTrue(store.connections.isEmpty)
         XCTAssertTrue(store.correspondents.isEmpty)
         XCTAssertTrue(store.letters.isEmpty)

@@ -13,6 +13,11 @@ small enough for one developer to follow consistently.
 Never place passwords, ID tokens, letter contents, private keys, or unredacted
 user exports in issues, logs, screenshots, or source control.
 
+The current Terms of Use and Community Guidelines version is `2026-10-30` in
+both the callable backend and public pages. A material policy change requires a
+new version value, updated pages, QA of the re-acceptance screen, and a recorded
+decision. Do not silently change the legal meaning while retaining the version.
+
 ## before every release
 
 1. Run `./testflight-check.sh` and the emulator integration test in `README.md`.

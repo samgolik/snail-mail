@@ -256,9 +256,9 @@ struct SnailProfile: Codable, Identifiable, Hashable {
     let displayName: String
     let username: String
     let city: String
-    let latitude: Double
-    let longitude: Double
-    let friendCode: String
+    let latitude: Double?
+    let longitude: Double?
+    let friendCode: String?
 }
 
 struct SnailConnection: Codable, Identifiable, Hashable {
@@ -290,6 +290,7 @@ struct SnailLetter: Codable, Identifiable, Hashable {
 
 private struct HomeResponse: Decodable {
     let profile: SnailProfile?
+    let termsAccepted: Bool?
     let connections: [SnailConnection]
     let blockedProfiles: [SnailProfile]
     let correspondents: [SnailProfile]
@@ -299,6 +300,7 @@ private struct HomeResponse: Decodable {
 private struct ProfileResponse: Decodable { let profile: SnailProfile }
 private struct OpenLetterResponse: Decodable { let body: String }
 private struct EmptyResponse: Decodable {}
+private struct TermsResponse: Decodable { let accepted: Bool }
 
 enum HomeLoadState: Equatable {
     case idle
@@ -310,6 +312,7 @@ enum HomeLoadState: Equatable {
 @MainActor
 final class ProductionStore: ObservableObject {
     @Published private(set) var profile: SnailProfile?
+    @Published private(set) var termsAccepted = false
     @Published private(set) var connections: [SnailConnection] = []
     @Published private(set) var blockedProfiles: [SnailProfile] = []
     @Published private(set) var correspondents: [SnailProfile] = []
@@ -387,6 +390,7 @@ final class ProductionStore: ObservableObject {
             let response: HomeResponse = try await CallableAPI.call("loadHome", payload: NoPayload())
             guard sessionUserID == expectedUserID, latestLoadID == loadID else { return }
             profile = response.profile
+            termsAccepted = response.termsAccepted ?? false
             connections = response.connections
             blockedProfiles = response.blockedProfiles
             correspondents = response.correspondents
@@ -442,6 +446,20 @@ final class ProductionStore: ObservableObject {
             )
         }
         if success { await load() }
+        return success
+    }
+
+    func acceptTerms() async -> Bool {
+        let success = await perform {
+            let response: TermsResponse = try await CallableAPI.call(
+                "acceptTerms",
+                payload: TermsPayload(version: "2026-10-30")
+            )
+            guard response.accepted else {
+                throw TermsAcceptanceError()
+            }
+        }
+        if success { termsAccepted = true }
         return success
     }
 
@@ -527,6 +545,7 @@ final class ProductionStore: ObservableObject {
             let _: EmptyResponse = try await CallableAPI.call("deleteAccount", payload: NoPayload())
             guard self.sessionUserID == expectedUserID else { return }
             profile = nil
+            termsAccepted = false
             connections = []
             blockedProfiles = []
             correspondents = []
@@ -537,6 +556,7 @@ final class ProductionStore: ObservableObject {
 
     func resetSession() {
         profile = nil
+        termsAccepted = false
         connections = []
         blockedProfiles = []
         correspondents = []
@@ -616,6 +636,7 @@ private struct ProfilePayload: Encodable {
     let longitude: Double
 }
 private struct FriendCodePayload: Encodable { let friendCode: String }
+private struct TermsPayload: Encodable { let version: String }
 private struct FriendResponsePayload: Encodable { let friendshipID: String; let accept: Bool }
 private struct SendLetterPayload: Encodable { let recipientID: String; let body: String }
 private struct LetterPayload: Encodable { let letterID: String }
@@ -625,6 +646,7 @@ private struct ReportPayload: Encodable {
     let reason: String
     let letterID: String?
 }
+private struct TermsAcceptanceError: Error {}
 
 private enum CallableAPI {
     private static let logger = Logger(
@@ -717,8 +739,13 @@ private enum CallableAPI {
                 id: diagnosticID,
                 level: .error
             )
+            #if DEBUG && targetEnvironment(simulator)
+            let networkMessage = "the local post office could not be reached — check ./run-backend.sh"
+            #else
+            let networkMessage = "couldn’t reach the post office — check your connection and try again"
+            #endif
             throw APIError(
-                message: "the local post office could not be reached — check ./run-backend.sh",
+                message: networkMessage,
                 diagnosticID: diagnosticID,
                 stage: "network"
             )

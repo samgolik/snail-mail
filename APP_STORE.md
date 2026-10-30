@@ -10,6 +10,8 @@
 - Support URL: `https://snail-mail-btc.web.app/support`
 - Privacy URL: `https://snail-mail-btc.web.app/privacy`
 - Marketing URL: `https://snail-mail-btc.web.app`
+- Terms URL: `https://snail-mail-btc.web.app/terms`
+- Community Guidelines: `https://snail-mail-btc.web.app/community`
 
 ## Promotional text
 
@@ -45,7 +47,8 @@ Data is linked to the user and used for **App Functionality**:
 - Identifiers → User ID
 - Location → Coarse Location (city-derived coordinates)
 - Other Data → profile name, username, city, friend relationships, blocks,
-  safety reports, delivery metadata, and App Attest security proofs
+  safety reports, terms-acceptance records, delivery metadata, and App Attest
+  security proofs
 
 Firebase App Check processes an App Attest attestation object and assertion object
 to prevent abuse. In Apple’s current questionnaire, disclose this under the
@@ -67,6 +70,9 @@ without waiting.
 Report and block controls appear in the received-letter overflow menu and under
 **you → friends**. Permanent deletion appears under **you → account**. A network
 failure at launch shows a retry screen and never creates or overwrites a profile.
+Every account must accept the current Terms of Use and Community Guidelines
+before connecting with friends or sending letters; acceptance is versioned and
+recorded server-side.
 
 ## Age rating and policy selections
 

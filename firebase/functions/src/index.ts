@@ -33,6 +33,7 @@ const db = getFirestore();
 const MAX_BODY_LENGTH = 500;
 const MILES_PER_SNAIL_DAY = 15;
 const MAX_SNAIL_DAYS = 30;
+const CURRENT_TERMS_VERSION = "2026-10-30";
 
 type CallableIdentity = {
   auth?: {uid: string; token: {[key: string]: unknown}};
@@ -77,6 +78,11 @@ function requireUser(request: CallableIdentity): string {
   }
   const id = request.auth?.uid;
   if (!id) throw new HttpsError("unauthenticated", "sign in to continue");
+  const firebaseClaims = request.auth?.token.firebase as
+    {sign_in_provider?: string} | undefined;
+  if (firebaseClaims?.sign_in_provider === "anonymous") {
+    throw new HttpsError("unauthenticated", "create or sign in to an account to continue");
+  }
   return id;
 }
 
@@ -88,6 +94,16 @@ function requireVerifiedUser(
     throw new HttpsError("failed-precondition", "verify your email to connect with friends");
   }
   return id;
+}
+
+async function requireTermsAccepted(userID: string): Promise<void> {
+  const profile = await db.collection("users").doc(userID).get();
+  if (profile.data()?.termsVersion !== CURRENT_TERMS_VERSION) {
+    throw new HttpsError(
+      "failed-precondition",
+      "accept the current terms and community guidelines to continue",
+    );
+  }
 }
 
 function requireNumber(value: unknown, field: string, min: number, max: number): number {
@@ -142,12 +158,16 @@ function distanceMiles(origin: Coordinates, destination: Coordinates): number {
   return earthRadiusMiles * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function profileJSON(id: string, data: DocumentData) {
-  return {
+function profileJSON(id: string, data: DocumentData, includePrivate = false) {
+  const shared = {
     id,
     displayName: data.displayName,
     username: data.username,
     city: data.city,
+  };
+  if (!includePrivate) return shared;
+  return {
+    ...shared,
     latitude: data.latitude,
     longitude: data.longitude,
     friendCode: data.friendCode,
@@ -222,8 +242,27 @@ export const saveProfile = onCall({region: "us-east1"}, async (request) => {
     latitude, longitude, friendCode}};
 });
 
+export const acceptTerms = onCall({region: "us-east1"}, async (request) => {
+  const id = requireUser(request);
+  const version = requireText(request.data?.version, "version", 20);
+  if (version !== CURRENT_TERMS_VERSION) {
+    throw new HttpsError("failed-precondition", "a newer agreement is available");
+  }
+  const profileRef = db.collection("users").doc(id);
+  const profile = await profileRef.get();
+  if (!profile.exists) {
+    throw new HttpsError("failed-precondition", "make your return address first");
+  }
+  await profileRef.set({
+    termsVersion: version,
+    termsAcceptedAt: FieldValue.serverTimestamp(),
+  }, {merge: true});
+  return {accepted: true};
+});
+
 export const requestFriend = onCall({region: "us-east1"}, async (request) => {
   const requesterID = requireVerifiedUser(request);
+  await requireTermsAccepted(requesterID);
   const code = requireText(request.data?.friendCode, "friendCode", 10).toUpperCase();
   await enforceDailyLimit(requesterID, "requestFriend", 30);
   const codeDoc = await db.collection("friendCodes").doc(code).get();
@@ -334,6 +373,7 @@ export const reportUser = onCall({region: "us-east1"}, async (request) => {
 
 export const respondToFriend = onCall({region: "us-east1"}, async (request) => {
   const id = requireVerifiedUser(request);
+  await requireTermsAccepted(id);
   const friendshipID = requireText(request.data?.friendshipID, "friendshipID", 300);
   if (typeof request.data?.accept !== "boolean") {
     throw new HttpsError("invalid-argument", "accept must be true or false");
@@ -389,7 +429,8 @@ export const loadHome = onCall({region: "us-east1"}, async (request) => {
     };
   }).filter((item: {profile: unknown}) => item.profile);
   return {
-    profile: profile.exists ? profileJSON(profile.id, profile.data()!) : null,
+    profile: profile.exists ? profileJSON(profile.id, profile.data()!, true) : null,
+    termsAccepted: profile.data()?.termsVersion === CURRENT_TERMS_VERSION,
     connections,
     blockedProfiles: blockedIDs
       .map((blockedID: string) => peopleByID.get(blockedID))
@@ -430,6 +471,12 @@ export const sendLetter = onCall({region: "us-east1"}, async (request) => {
     ]);
     if (!sender.exists || !recipient.exists) {
       throw new HttpsError("not-found", "sender or recipient profile is missing");
+    }
+    if (sender.data()?.termsVersion !== CURRENT_TERMS_VERSION) {
+      throw new HttpsError(
+        "failed-precondition",
+        "accept the current terms and community guidelines to continue",
+      );
     }
     if (!friendship.exists || friendship.data()?.status !== "accepted") {
       throw new HttpsError("permission-denied", "letters require an accepted friendship");

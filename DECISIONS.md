@@ -106,6 +106,29 @@ operations runbook.
 - **Question for Sam:** Tester feedback should decide whether the final identity
   leans more vintage post office, storybook snail, or clean modern stationery.
 
+### minimize profile data at the callable boundary
+
+- **Decision:** A user receives their own friend code and approximate delivery
+  coordinates, but other accounts receive only display name, username, and city.
+- **Why:** The server calculates delivery time, so clients do not need another
+  person’s coordinates. Friend codes are invitations, not public identifiers.
+- **Verification:** The emulator integration test fails if a friendship response
+  contains `friendCode`, `latitude`, or `longitude` for the other account.
+
+### require a versioned community agreement
+
+- **Decision:** Account creation presents the Terms, Community Guidelines, and
+  Privacy Policy. The backend records acceptance of version `2026-10-30`; friend
+  requests, request responses, and sending remain unavailable until acceptance.
+- **Why:** Private messages are still user-generated content. Clear rules,
+  reporting, blocking, enforcement expectations, and recorded acceptance are
+  part of a responsible social product and App Review readiness.
+- **Safety exception:** Reporting, blocking, account deletion, and reading one’s
+  mailbox are never withheld because a newer agreement needs acceptance.
+- **Deployment:** The twelfth callable, `acceptTerms`, and the public Terms and
+  Community pages went live on October 30, 2026. Anonymous authentication is
+  disabled, and the backend also rejects anonymous identities defensively.
+
 ## prioritized ideas for tester feedback
 
 These are hypotheses, not committed scope:

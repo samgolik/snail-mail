@@ -3,6 +3,11 @@ set -u
 
 cd "${0:A:h}"
 
+if ! command -v npm >/dev/null 2>&1 && [[ -s "$HOME/.nvm/nvm.sh" ]]; then
+  source "$HOME/.nvm/nvm.sh"
+  nvm use 22 >/dev/null
+fi
+
 failed=0
 check() {
   if eval "$2" >/dev/null 2>&1; then
@@ -15,6 +20,7 @@ check() {
 
 print "snail mail · testflight preflight"
 check "xcode command-line tools" "xcodebuild -version"
+check "node 22 toolchain" "node --version | grep -q '^v22\\.'"
 check "firebase configuration" "test -f SnailMail/GoogleService-Info.plist"
 check "firebase bundle id" "grep -q com.samgolik.snailmail SnailMail/GoogleService-Info.plist"
 check "firebase project pinned" "grep -q '\"default\"[[:space:]]*:[[:space:]]*\"snail-mail-btc\"' .firebaserc"
@@ -40,6 +46,9 @@ check "reversible blocking endpoint" "grep -q 'export const unblockUser' firebas
 check "connection removal endpoint" "grep -q 'export const removeFriend' firebase/functions/src/index.ts"
 check "public privacy page" "test -f site/public/privacy.html"
 check "public support page" "test -f site/public/support.html"
+check "public terms and community pages" "test -f site/public/terms.html && test -f site/public/community.html"
+check "versioned terms acceptance" "grep -q 'CURRENT_TERMS_VERSION' firebase/functions/src/index.ts && grep -q 'acceptTerms' SnailMail/MailStore.swift"
+check "private profile fields sanitized" "grep -q 'if (!includePrivate) return shared' firebase/functions/src/index.ts"
 check "app store metadata" "test -f APP_STORE.md"
 check "production operations runbook" "test -f OPERATIONS.md"
 check "decision record" "test -f DECISIONS.md"

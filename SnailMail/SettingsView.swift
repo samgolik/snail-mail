@@ -119,13 +119,15 @@ struct SettingsView: View {
                 LabeledContent("name", value: profile.displayName.lowercased())
                 LabeledContent("handle", value: profile.username.lowercased())
                 LabeledContent("city", value: profile.city.lowercased())
-                LabeledContent("friend code", value: profile.friendCode)
-                    .textSelection(.enabled)
-                ShareLink(
-                    item: "find me on snail mail with friend code \(profile.friendCode)",
-                    subject: Text("my snail mail address")
-                ) {
-                    Label("share my friend code", systemImage: "square.and.arrow.up")
+                if let friendCode = profile.friendCode, !friendCode.isEmpty {
+                    LabeledContent("friend code", value: friendCode)
+                        .textSelection(.enabled)
+                    ShareLink(
+                        item: "find me on snail mail with friend code \(friendCode)",
+                        subject: Text("my snail mail address")
+                    ) {
+                        Label("share my friend code", systemImage: "square.and.arrow.up")
+                    }
                 }
                 Button("edit return address", systemImage: "pencil") {
                     showingProfileEditor = true
@@ -259,6 +261,8 @@ struct SettingsView: View {
             Button("sign out") { confirmSignOut = true }
             Button("delete account", role: .destructive) { confirmDelete = true }
             Link("privacy policy", destination: URL(string: "https://snail-mail-btc.web.app/privacy")!)
+            Link("terms of use", destination: URL(string: "https://snail-mail-btc.web.app/terms")!)
+            Link("community guidelines", destination: URL(string: "https://snail-mail-btc.web.app/community")!)
             Link("support", destination: URL(string: "https://snail-mail-btc.web.app/support")!)
             LabeledContent("version", value: appVersion)
         }

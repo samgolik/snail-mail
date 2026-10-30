@@ -19,6 +19,8 @@ installation.
 - Launch on a fresh simulator and confirm the sign-up screen appears before the mailbox.
 - Confirm the home screen uses the snail-and-envelope icon without white corners.
 - Create an account with a new email and a password of at least six characters.
+- Confirm account creation is disabled until the Terms and Community Guidelines
+  agreement is selected and all three legal links open successfully.
 - Confirm the verification email arrives and **You** can resend it.
 - Relaunch and confirm the saved email remains signed in.
 - Sign out and confirm the app returns to the sign-up/sign-in screen.
@@ -28,6 +30,8 @@ installation.
 - Exchange a friend code and accept the request from the recipient account.
 - Edit the display name, username, and city; relaunch and confirm the new return
   address appears on both devices without changing the friend code.
+- Accept the server-recorded Terms and Community Guidelines prompt and confirm
+  social features remain unavailable before acceptance.
 - Confirm both mailbox sections are initially empty.
 - Write a letter to the connected friend and verify blank messages cannot be sent.
 - Confirm the counter prevents messages longer than 500 characters.
@@ -79,6 +83,8 @@ installation.
 - Production callers without a valid Firebase App Check token are rejected before
   user authorization; the emulator bypass is limited to `FUNCTIONS_EMULATOR=true`.
 - Only accepted friends can send letters to each other.
+- Friend responses never include another account’s friend code or delivery
+  coordinates.
 - Neither sender nor recipient can read `sealedLetters` directly.
 - A block in either direction prevents new friend requests and letters.
 - Only the blocker can see and remove their block; unblocking does not silently
