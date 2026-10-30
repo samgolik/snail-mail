@@ -68,7 +68,7 @@ private struct ConnectionProblemView: View {
         ZStack {
             PastelBackground()
             ContentUnavailableView {
-                Label("the post office is quiet", systemImage: "wifi.exclamationmark")
+                Label("the post office is out of reach", systemImage: "wifi.exclamationmark")
             } description: {
                 Text(store.loadErrorMessage ?? "we couldn’t collect your mail just now.")
             } actions: {

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 
-const project = process.env.GCLOUD_PROJECT || "demo-snail-mail";
+const project = process.env.GCLOUD_PROJECT || "snail-mail-btc";
 const authBase = process.env.FIREBASE_AUTH_EMULATOR_HOST || "127.0.0.1:9099";
 const functionsBase = process.env.FUNCTIONS_EMULATOR_HOST || "127.0.0.1:5001";
 const password = "deliberate-snail-42";

@@ -163,8 +163,15 @@ npm install
 npm run check
 npm run build
 cd ../..
-CHOKIDAR_USEPOLLING=1 npx -y firebase-tools@latest emulators:start
+./run-backend.sh
 ```
+
+Keep that terminal running while using the simulator. Debug simulator builds
+automatically use Auth on `127.0.0.1:9099` and callable Functions on
+`127.0.0.1:5001`; Release and physical-device builds always use production.
+Because emulator accounts are separate from production, create a fresh local
+account the first time. If a previous emulator session left a port occupied,
+stop that old process before restarting the complete suite.
 
 The backend integration test creates two disposable emulator accounts and
 exercises profile setup, verified friend requests, sealed sending, early-open

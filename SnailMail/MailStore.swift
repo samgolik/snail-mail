@@ -559,7 +559,11 @@ final class ProductionStore: ObservableObject {
             switch urlError.code {
             case .notConnectedToInternet, .networkConnectionLost, .cannotConnectToHost,
                  .cannotFindHost, .timedOut:
+                #if DEBUG && targetEnvironment(simulator)
+                return "the local post office isn’t running — start ./run-backend.sh, then try again"
+                #else
                 return "couldn’t reach the post office — check your connection and try again"
+                #endif
             default:
                 break
             }
@@ -598,9 +602,15 @@ private struct ReportPayload: Encodable {
 }
 
 private enum CallableAPI {
+    #if DEBUG && targetEnvironment(simulator)
+    private static let baseURL = URL(
+        string: "http://127.0.0.1:5001/snail-mail-btc/us-east1"
+    )!
+    #else
     private static let baseURL = URL(
         string: "https://us-east1-snail-mail-btc.cloudfunctions.net"
     )!
+    #endif
 
     static func call<Payload: Encodable, Result: Decodable>(
         _ name: String,

@@ -1,5 +1,14 @@
 # MVP QA Pass
 
+For simulator QA, start the complete local backend from the repository root:
+
+```sh
+./run-backend.sh
+```
+
+Keep it running while testing. Debug simulator builds use the local Auth and
+Functions emulators; Release and device builds use production.
+
 ## Happy path
 
 - Launch on a fresh simulator and confirm the sign-up screen appears before the mailbox.

@@ -1,6 +1,7 @@
 import SwiftUI
 import FirebaseCore
 import FirebaseAppCheck
+import FirebaseAuth
 
 private final class SnailAppCheckProviderFactory: NSObject, AppCheckProviderFactory {
     func createProvider(with app: FirebaseApp) -> AppCheckProvider? {
@@ -21,6 +22,9 @@ struct SnailMailApp: App {
     init() {
         AppCheck.setAppCheckProviderFactory(SnailAppCheckProviderFactory())
         FirebaseApp.configure()
+        #if DEBUG && targetEnvironment(simulator)
+        Auth.auth().useEmulator(withHost: "127.0.0.1", port: 9099)
+        #endif
         _auth = StateObject(wrappedValue: AuthManager())
     }
 
