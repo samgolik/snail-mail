@@ -1,12 +1,14 @@
-# Snail Mail MVP
+# snail mail
 
 A SwiftUI beta for delayed messages. It includes Firebase email/password sign-up,
 sign-in, password reset and verification; server-backed profiles and friend
-requests; cross-device mailboxes; server-calculated travel time; sealed letters;
-account deletion; and unit tests.
+requests; editable return addresses; cross-device mailboxes; server-calculated
+travel time; sealed letters; reporting and blocking; permanent account deletion;
+launch recovery; and automated backend coverage.
 
-The interface uses a muted sage, powder-blue, cream, and clay palette with rounded
-paper-like cards, restrained snail details, and lowercase copy throughout.
+The interface uses an adaptive muted sage, powder-blue, cream, and clay palette
+with rounded paper-like cards, a hand-drawn journey snail, full Dark Mode
+contrast, Reduce Motion support, and lowercase copy throughout.
 The asset catalog includes a full-resolution, full-bleed snail-and-envelope app
 icon ready for TestFlight packaging.
 
@@ -37,7 +39,8 @@ Intel Mac and `arm64` on Apple silicon), avoiding mixed-architecture Firebase
 module errors. Keep normal simulator signing enabled: Firebase Authentication
 stores its session in the Keychain, and explicitly disabling code signing can
 prevent that secure storage from working. If a connection attempt fails, open
-**You** and tap **Retry connection** after rebuilding with this script.
+the app now shows a dedicated retry screen instead of mistaking an outage for a
+new account.
 
 Quickly diagnose the toolchain with:
 
@@ -88,19 +91,24 @@ xcodebuild test -project SnailMail.xcodeproj -scheme SnailMail \
   -destination 'platform=iOS Simulator,name=iPhone 16 Pro'
 ```
 
-## Production note
+## Delivery model
 
-Release builds use real days. Before inviting real users, replace local persistence with authentication and a server that withholds message bodies until arrival. Client-side hiding alone is not secure.
+Release builds use real days, capped at 30. Delivery is enforced by server time:
+the mailbox response never includes a letter body, and only the authenticated
+recipient can request the separately stored body after arrival. Changing a
+device clock or modifying the client cannot open a letter early.
 
 ## Firebase backend foundation
 
 The `firebase/` directory contains the first production backend boundary:
 
-- Firestore rules that make letter metadata readable only to participants
+- Firestore rules that deny all direct client access
 - Completely private `sealedLetters` documents
 - A callable `sendLetter` function that verifies friendship and calculates arrival using server time
 - A callable `openLetter` function that releases the body only to the recipient after arrival
 - Callable profile setup, unique friend codes, friend request/acceptance, and mailbox bootstrap
+- Validated reporting and blocking tied to real connections or letters
+- Per-account daily limits for profile edits, friend requests, letters, and reports
 - Complete in-app account deletion that removes friendships, letters, sealed bodies, profile reservations, and Firebase Auth identity
 - Firestore indexes for sender and recipient mailboxes
 - Local Auth, Firestore, and Functions emulator configuration
@@ -150,7 +158,7 @@ CHOKIDAR_USEPOLLING=1 npx -y firebase-tools@latest emulators:start
 
 The backend integration test creates two disposable emulator accounts and
 exercises profile setup, verified friend requests, sealed sending, early-open
-rejection, reporting, blocking, and account deletion:
+rejection, reporting, blocking, rate-limit enforcement, and account deletion:
 
 ```sh
 cd firebase/functions
@@ -161,11 +169,10 @@ Run it while the Auth, Firestore, and Functions emulators are active. On this
 older Intel Mac, `CHOKIDAR_USEPOLLING=1` prevents the Functions watcher from
 exhausting file descriptors.
 
-The remaining production setup is:
-
-1. Enable Authentication and choose the initial sign-in method.
-2. Connect the Swift screens to Authentication, Firestore, and callable Functions.
-3. Deploy Functions only after reviewing billing and production settings.
+The app and local backend are connected and the full emulator integration test
+passes. The remaining cloud release step is to reauthenticate the Firebase CLI,
+confirm the project billing/budget settings, and deploy the reviewed Functions,
+rules, indexes, and Hosting pages. See `TESTFLIGHT.md` and `OPERATIONS.md`.
 
 Cloud configuration and deployment are intentional account-level actions and are not performed by this repository automatically.
 

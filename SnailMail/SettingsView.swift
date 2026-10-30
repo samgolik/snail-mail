@@ -1,4 +1,5 @@
 import SwiftUI
+import CoreLocation
 
 struct SettingsView: View {
     @EnvironmentObject private var store: ProductionStore
@@ -9,6 +10,7 @@ struct SettingsView: View {
     @State private var personToBlock: SnailProfile?
     @State private var personToReport: SnailProfile?
     @State private var reportReason = ""
+    @State private var showingProfileEditor = false
 
     var body: some View {
         Form {
@@ -30,6 +32,11 @@ struct SettingsView: View {
         .foregroundStyle(Color.berryInk)
         .navigationTitle("you")
         .refreshable { await store.load() }
+        .sheet(isPresented: $showingProfileEditor) {
+            if let profile = store.profile {
+                ProfileEditorView(profile: profile)
+            }
+        }
         .confirmationDialog("sign out of snail mail?", isPresented: $confirmSignOut) {
             Button("sign out", role: .destructive) {
                 store.resetSession()
@@ -102,6 +109,9 @@ struct SettingsView: View {
                     subject: Text("my snail mail address")
                 ) {
                     Label("share my friend code", systemImage: "square.and.arrow.up")
+                }
+                Button("edit return address", systemImage: "pencil") {
+                    showingProfileEditor = true
                 }
             }
         }
@@ -202,6 +212,99 @@ struct SettingsView: View {
             }
             Button("sign out") { confirmSignOut = true }
             Button("delete account", role: .destructive) { confirmDelete = true }
+            Link("privacy policy", destination: URL(string: "https://snail-mail-btc.web.app/privacy")!)
+            Link("support", destination: URL(string: "https://snail-mail-btc.web.app/support")!)
+            LabeledContent("version", value: appVersion)
+        }
+    }
+
+    private var appVersion: String {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1"
+        return "\(version) (\(build))"
+    }
+}
+
+private struct ProfileEditorView: View {
+    @EnvironmentObject private var store: ProductionStore
+    @Environment(\.dismiss) private var dismiss
+    @State private var displayName: String
+    @State private var username: String
+    @State private var city: String
+    @State private var isLocating = false
+
+    init(profile: SnailProfile) {
+        _displayName = State(initialValue: profile.displayName)
+        _username = State(initialValue: profile.username.replacingOccurrences(of: "@", with: ""))
+        _city = State(initialValue: profile.city)
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("your return address") {
+                    TextField("name", text: $displayName)
+                        .textContentType(.name)
+                    TextField("username", text: $username)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                    TextField("city, state", text: $city)
+                        .textContentType(.addressCity)
+                }
+                Section {
+                    Text("your city is converted to approximate coordinates for delivery timing. exact device location is never requested.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                if let error = store.errorMessage {
+                    Section { Text(error).foregroundStyle(.red) }
+                }
+            }
+            .scrollContentBackground(.hidden)
+            .background(PastelBackground())
+            .navigationTitle("edit address")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("save") { Task { await save() } }
+                        .disabled(!canSave || store.isWorking || isLocating)
+                }
+            }
+            .interactiveDismissDisabled(store.isWorking || isLocating)
+        }
+        .tint(.snailGreen)
+    }
+
+    private var canSave: Bool {
+        !displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        !username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        !city.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private func save() async {
+        isLocating = true
+        defer { isLocating = false }
+        do {
+            let places = try await CLGeocoder().geocodeAddressString(city)
+            guard let coordinate = places.first?.location?.coordinate else {
+                throw ProfileEditorLocationError()
+            }
+            if await store.saveProfile(
+                displayName: displayName,
+                username: username,
+                city: city,
+                latitude: coordinate.latitude,
+                longitude: coordinate.longitude
+            ) {
+                dismiss()
+            }
+        } catch {
+            store.errorMessage = "we couldn’t find that city — try “city, state”"
         }
     }
 }
+
+private struct ProfileEditorLocationError: Error {}

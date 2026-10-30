@@ -90,6 +90,16 @@ await call("blockUser", justin.token, {targetID: sam.id});
 await call("sendLetter", sam.token, {
   recipientID: justin.id, body: "A blocked letter must not leave.",
 }, 403);
+for (let index = 0; index < 19; index += 1) {
+  await call("saveProfile", sam.token, {
+    displayName: "Sam", username: `sam_limit_${index}`,
+    city: "Washington, DC", latitude: 38.9072, longitude: -77.0369,
+  });
+}
+await call("saveProfile", sam.token, {
+  displayName: "Sam", username: "sam_limit_blocked",
+  city: "Washington, DC", latitude: 38.9072, longitude: -77.0369,
+}, 429);
 await call("deleteAccount", sam.token, {});
 await call("deleteAccount", justin.token, {});
 console.log("✓ production social flow passed");

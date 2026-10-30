@@ -7,6 +7,18 @@ struct MailboxView: View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 24) {
                 greeting
+                if let message = store.loadErrorMessage {
+                    Button {
+                        Task { await store.load() }
+                    } label: {
+                        Label("\(message). tap to try again", systemImage: "arrow.clockwise.circle")
+                            .font(.caption)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(Color.berryInk)
+                    .accessibilityHint("retries the mailbox connection")
+                }
                 mailboxSection("traveling", letters: store.travelingLetters,
                                empty: "the road is quiet")
                 mailboxSection("arrived", letters: store.arrivedLetters,
@@ -47,7 +59,7 @@ struct MailboxView: View {
                 .frame(maxWidth: .infinity)
                 .padding(30)
                 .foregroundStyle(.secondary)
-                .background(.white.opacity(0.72), in: RoundedRectangle(cornerRadius: 24))
+                .background(Color.card.opacity(0.72), in: RoundedRectangle(cornerRadius: 24))
                 .overlay {
                     RoundedRectangle(cornerRadius: 24)
                         .stroke(Color.powderBlue.opacity(0.65), lineWidth: 1)
@@ -92,9 +104,24 @@ private struct ProductionLetterRow: View {
             Image(systemName: "chevron.right").foregroundStyle(.tertiary)
         }
         .padding()
-        .background(.white.opacity(0.88), in: RoundedRectangle(cornerRadius: 24))
+        .background(Color.card.opacity(0.88), in: RoundedRectangle(cornerRadius: 24))
         .overlay { RoundedRectangle(cornerRadius: 24).stroke(Color.sand.opacity(0.9)) }
         .shadow(color: Color.powderBlue.opacity(0.20), radius: 12, y: 5)
         .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilityLabel)
+        .accessibilityHint("opens letter details")
+    }
+
+    private var accessibilityLabel: String {
+        let isReceived = letter.recipientID == store.profile?.id
+        let person = isReceived
+            ? store.person(id: letter.senderID)?.displayName ?? "a friend"
+            : store.person(id: letter.recipientID)?.displayName ?? "a friend"
+        let direction = isReceived ? "from" : "to"
+        if letter.hasArrived(at: store.now) {
+            return "letter \(direction) \(person), \(isReceived ? "ready to open" : "delivered")"
+        }
+        let percent = Int(letter.progress(at: store.now) * 100)
+        return "letter \(direction) \(person), traveling, \(percent) percent of the journey complete"
     }
 }

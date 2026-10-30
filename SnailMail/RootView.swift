@@ -1,8 +1,10 @@
 import SwiftUI
 import CoreLocation
+import UIKit
 
 struct RootView: View {
     @EnvironmentObject private var auth: AuthManager
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         Group {
@@ -14,32 +16,77 @@ struct RootView: View {
                 AuthView()
             }
         }
-        .animation(.easeInOut(duration: 0.2), value: auth.isAuthenticated)
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: auth.isAuthenticated)
     }
 }
 
 private struct AuthenticatedRoot: View {
     @EnvironmentObject private var store: ProductionStore
     @EnvironmentObject private var auth: AuthManager
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         Group {
-            if !store.hasLoaded {
+            if store.sessionUserID != auth.user?.uid {
                 LaunchView()
-            } else if store.profile == nil {
-                ProfileSetupView()
             } else {
-                MainTabView()
+                switch store.loadState {
+                case .idle, .loading:
+                    LaunchView()
+                case .failed:
+                    ConnectionProblemView()
+                case .loaded:
+                    if store.profile == nil {
+                        ProfileSetupView()
+                    } else {
+                        MainTabView()
+                    }
+                }
             }
         }
         .task(id: auth.user?.uid) {
-            guard auth.user != nil else { return }
-            if !store.hasLoaded { await store.load() }
+            guard let userID = auth.user?.uid else { return }
+            store.prepareSession(userID: userID)
+            await store.load()
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(60))
                 if !Task.isCancelled { await store.load() }
             }
         }
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active, store.hasLoaded else { return }
+            Task { await store.load() }
+        }
+    }
+}
+
+private struct ConnectionProblemView: View {
+    @EnvironmentObject private var store: ProductionStore
+    @EnvironmentObject private var auth: AuthManager
+
+    var body: some View {
+        ZStack {
+            PastelBackground()
+            ContentUnavailableView {
+                Label("the post office is quiet", systemImage: "wifi.exclamationmark")
+            } description: {
+                Text(store.loadErrorMessage ?? "we couldn’t collect your mail just now.")
+            } actions: {
+                VStack(spacing: 12) {
+                    Button("try again") {
+                        Task { await store.load() }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.snailGreen)
+                    Button("sign out") {
+                        store.resetSession()
+                        Task { await auth.signOut() }
+                    }
+                    .buttonStyle(.bordered)
+                }
+            }
+        }
+        .foregroundStyle(Color.berryInk)
     }
 }
 
@@ -61,9 +108,7 @@ private struct LaunchView: View {
         ZStack {
             PastelBackground()
             VStack(spacing: 18) {
-                Image(systemName: "envelope.badge")
-                    .font(.system(size: 48, weight: .light))
-                    .foregroundStyle(Color.snailGreen)
+                PostalSeal()
                 Text("snail mail")
                     .font(.largeTitle.weight(.semibold))
                 ProgressView()
@@ -71,6 +116,27 @@ private struct LaunchView: View {
             }
             .foregroundStyle(Color.berryInk)
         }
+    }
+}
+
+private struct PostalSeal: View {
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(Color.paper.opacity(0.92))
+                .frame(width: 92, height: 92)
+                .overlay {
+                    Circle()
+                        .stroke(Color.clay.opacity(0.75), style: StrokeStyle(lineWidth: 2, dash: [3, 4]))
+                        .padding(7)
+                }
+            Image(systemName: "envelope.fill")
+                .font(.system(size: 38, weight: .light))
+                .foregroundStyle(Color.snailGreen)
+                .rotationEffect(.degrees(-4))
+        }
+        .shadow(color: Color.powderBlue.opacity(0.28), radius: 16, y: 8)
+        .accessibilityHidden(true)
     }
 }
 
@@ -267,10 +333,10 @@ private struct AuthView: View {
             }
         }
         .padding(22)
-        .background(.white.opacity(0.86), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .background(Color.card.opacity(0.92), in: RoundedRectangle(cornerRadius: 24, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .stroke(Color.white.opacity(0.9), lineWidth: 1)
+                .stroke(Color.cardBorder.opacity(0.9), lineWidth: 1)
         }
     }
 }
@@ -305,13 +371,48 @@ private extension View {
 }
 
 extension Color {
-    static let snailGreen = Color(red: 0.32, green: 0.48, blue: 0.39)
-    static let paper = Color(red: 0.97, green: 0.95, blue: 0.89)
-    static let sage = Color(red: 0.72, green: 0.80, blue: 0.70)
-    static let powderBlue = Color(red: 0.73, green: 0.82, blue: 0.87)
-    static let clay = Color(red: 0.78, green: 0.61, blue: 0.50)
-    static let sand = Color(red: 0.88, green: 0.82, blue: 0.70)
-    static let berryInk = Color(red: 0.24, green: 0.27, blue: 0.25)
+    static let snailGreen = adaptive(
+        light: UIColor(red: 0.32, green: 0.48, blue: 0.39, alpha: 1),
+        dark: UIColor(red: 0.58, green: 0.75, blue: 0.64, alpha: 1)
+    )
+    static let paper = adaptive(
+        light: UIColor(red: 0.97, green: 0.95, blue: 0.89, alpha: 1),
+        dark: UIColor(red: 0.12, green: 0.15, blue: 0.13, alpha: 1)
+    )
+    static let sage = adaptive(
+        light: UIColor(red: 0.72, green: 0.80, blue: 0.70, alpha: 1),
+        dark: UIColor(red: 0.27, green: 0.36, blue: 0.30, alpha: 1)
+    )
+    static let powderBlue = adaptive(
+        light: UIColor(red: 0.73, green: 0.82, blue: 0.87, alpha: 1),
+        dark: UIColor(red: 0.28, green: 0.38, blue: 0.43, alpha: 1)
+    )
+    static let clay = adaptive(
+        light: UIColor(red: 0.68, green: 0.48, blue: 0.37, alpha: 1),
+        dark: UIColor(red: 0.84, green: 0.66, blue: 0.53, alpha: 1)
+    )
+    static let sand = adaptive(
+        light: UIColor(red: 0.88, green: 0.82, blue: 0.70, alpha: 1),
+        dark: UIColor(red: 0.44, green: 0.38, blue: 0.29, alpha: 1)
+    )
+    static let berryInk = adaptive(
+        light: UIColor(red: 0.24, green: 0.27, blue: 0.25, alpha: 1),
+        dark: UIColor(red: 0.91, green: 0.90, blue: 0.84, alpha: 1)
+    )
+    static let card = adaptive(
+        light: UIColor(white: 1, alpha: 1),
+        dark: UIColor(red: 0.16, green: 0.19, blue: 0.17, alpha: 1)
+    )
+    static let cardBorder = adaptive(
+        light: UIColor(white: 1, alpha: 1),
+        dark: UIColor(red: 0.45, green: 0.55, blue: 0.48, alpha: 1)
+    )
+
+    private static func adaptive(light: UIColor, dark: UIColor) -> Color {
+        Color(uiColor: UIColor { traits in
+            traits.userInterfaceStyle == .dark ? dark : light
+        })
+    }
 }
 
 struct PastelBackground: View {

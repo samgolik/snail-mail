@@ -19,6 +19,38 @@ const MAX_BODY_LENGTH = 500;
 const MILES_PER_SNAIL_DAY = 15;
 const MAX_SNAIL_DAYS = 30;
 
+async function enforceDailyLimit(
+  userID: string,
+  action: string,
+  maximum: number,
+): Promise<void> {
+  const ref = db.collection("rateLimits").doc(`${userID}_${action}`);
+  const now = Timestamp.now();
+  const windowMilliseconds = 86_400_000;
+  await db.runTransaction(async (transaction: Transaction) => {
+    const snapshot = await transaction.get(ref);
+    const data = snapshot.data();
+    const startedAt = data?.windowStartedAt as Timestamp | undefined;
+    const inCurrentWindow = startedAt &&
+      now.toMillis() - startedAt.toMillis() < windowMilliseconds;
+    const count = inCurrentWindow && typeof data?.count === "number" ? data.count : 0;
+    if (count >= maximum) {
+      throw new HttpsError(
+        "resource-exhausted",
+        "that is enough postage for today — please try again tomorrow",
+      );
+    }
+    transaction.set(ref, {
+      userID,
+      action,
+      count: count + 1,
+      windowStartedAt: inCurrentWindow ? startedAt : now,
+      updatedAt: now,
+      expiresAt: Timestamp.fromMillis(now.toMillis() + windowMilliseconds * 2),
+    });
+  });
+}
+
 function requireUser(request: {auth?: {uid: string; token: {[key: string]: unknown}}}): string {
   const id = request.auth?.uid;
   if (!id) throw new HttpsError("unauthenticated", "sign in to continue");
@@ -125,6 +157,7 @@ export const saveProfile = onCall({region: "us-east1"}, async (request) => {
   const city = requireText(request.data?.city, "city", 80);
   const latitude = requireNumber(request.data?.latitude, "latitude", -90, 90);
   const longitude = requireNumber(request.data?.longitude, "longitude", -180, 180);
+  await enforceDailyLimit(id, "saveProfile", 20);
   const userRef = db.collection("users").doc(id);
   const initial = await userRef.get();
   const friendCode = initial.data()?.friendCode ??
@@ -169,6 +202,7 @@ export const saveProfile = onCall({region: "us-east1"}, async (request) => {
 export const requestFriend = onCall({region: "us-east1"}, async (request) => {
   const requesterID = requireVerifiedUser(request);
   const code = requireText(request.data?.friendCode, "friendCode", 10).toUpperCase();
+  await enforceDailyLimit(requesterID, "requestFriend", 30);
   const codeDoc = await db.collection("friendCodes").doc(code).get();
   const recipientID = codeDoc.data()?.userID as string | undefined;
   if (!recipientID) throw new HttpsError("not-found", "friend code not found");
@@ -220,10 +254,30 @@ export const reportUser = onCall({region: "us-east1"}, async (request) => {
   const reporterID = requireUser(request);
   const targetID = requireText(request.data?.targetID, "targetID", 128);
   const reason = requireText(request.data?.reason, "reason", 500);
-  const letterID = typeof request.data?.letterID === "string" ?
-    request.data.letterID.slice(0, 128) : null;
+  const letterID = request.data?.letterID == null ? null :
+    requireText(request.data.letterID, "letterID", 128);
   if (reporterID === targetID) {
     throw new HttpsError("invalid-argument", "you cannot report yourself");
+  }
+  await enforceDailyLimit(reporterID, "reportUser", 20);
+
+  const target = await db.collection("users").doc(targetID).get();
+  if (!target.exists) {
+    throw new HttpsError("not-found", "that account no longer exists");
+  }
+  if (letterID) {
+    const letter = await db.collection("letters").doc(letterID).get();
+    const data = letter.data();
+    const participants = data ? [data.senderID, data.recipientID] : [];
+    if (!data || !participants.includes(reporterID) || !participants.includes(targetID)) {
+      throw new HttpsError("permission-denied", "that letter cannot be reported");
+    }
+  } else {
+    const friendshipID = [reporterID, targetID].sort().join("_");
+    const friendship = await db.collection("friendships").doc(friendshipID).get();
+    if (!friendship.exists) {
+      throw new HttpsError("permission-denied", "that account is not connected to you");
+    }
   }
   await db.collection("reports").add({
     reporterID, targetID, letterID, reason,
@@ -296,6 +350,7 @@ export const sendLetter = onCall({region: "us-east1"}, async (request) => {
   if (recipientID === senderID) {
     throw new HttpsError("invalid-argument", "you cannot send a letter to yourself");
   }
+  await enforceDailyLimit(senderID, "sendLetter", 60);
 
   const friendshipID = [senderID, recipientID].sort().join("_");
   const senderRef = db.collection("users").doc(senderID);
@@ -388,13 +443,14 @@ export const deleteAccount = onCall({region: "us-east1"}, async (request) => {
   const id = requireUser(request);
   const profileRef = db.collection("users").doc(id);
   const profile = await profileRef.get();
-  const [friendships, received, sent, blockedBy, blockedTargets, reports] = await Promise.all([
+  const [friendships, received, sent, blockedBy, blockedTargets, reports, rateLimits] = await Promise.all([
     db.collection("friendships").where("userIDs", "array-contains", id).get(),
     db.collection("letters").where("recipientID", "==", id).get(),
     db.collection("letters").where("senderID", "==", id).get(),
     db.collection("blocks").where("targetID", "==", id).get(),
     db.collection("blocks").where("blockerID", "==", id).get(),
     db.collection("reports").where("reporterID", "==", id).get(),
+    db.collection("rateLimits").where("userID", "==", id).get(),
   ]);
   const letters = [...received.docs, ...sent.docs]
     .filter((item, index, all) => all.findIndex((other) => other.id === item.id) === index);
@@ -403,6 +459,7 @@ export const deleteAccount = onCall({region: "us-east1"}, async (request) => {
   blockedBy.docs.forEach((item: QueryDocumentSnapshot) => writer.delete(item.ref));
   blockedTargets.docs.forEach((item: QueryDocumentSnapshot) => writer.delete(item.ref));
   reports.docs.forEach((item: QueryDocumentSnapshot) => writer.delete(item.ref));
+  rateLimits.docs.forEach((item: QueryDocumentSnapshot) => writer.delete(item.ref));
   letters.forEach((item) => {
     writer.delete(item.ref);
     writer.delete(db.collection("sealedLetters").doc(item.id));

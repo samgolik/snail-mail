@@ -59,6 +59,29 @@ their friend codes. Explain that delivery is intentionally delayed and supply a
 server-created letter that has already arrived so Review can test opening
 without waiting.
 
+Report and block controls appear in the received-letter overflow menu and under
+**you → friends**. Permanent deletion appears under **you → account**. A network
+failure at launch shows a retry screen and never creates or overwrites a profile.
+
+## Age rating and policy selections
+
+- Use Apple’s current questionnaire and answer from the shipped build, not this
+  draft. The app contains user-generated private messages and account-to-account
+  communication, with reporting and blocking controls.
+- There is no public feed, web browsing, gambling, advertising, or in-app purchase.
+- The product is not designed for children under 13; do not select the Kids category.
+- Use Apple’s standard EULA unless beat the clock studios supplies a reviewed
+  custom agreement.
+- Confirm the developer name, support contact, copyright owner, and content-rights
+  declaration in App Store Connect before submission.
+
+## Export compliance
+
+The target sets `ITSAppUsesNonExemptEncryption` to `NO`. The app uses ordinary
+system/Firebase HTTPS and authentication encryption and does not implement its
+own non-exempt cryptography. Re-evaluate this answer if cryptographic behavior or
+Apple’s questionnaire changes.
+
 ## Screenshot set
 
 Capture on the current required iPhone display sizes:

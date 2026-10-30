@@ -28,13 +28,16 @@ not require a paid Apple account; upload and TestFlight distribution do.
 
 1. Run `./testflight-check.sh`.
 2. QA fresh signup, profile setup, friend requests, delivery, opening,
-   reporting, blocking, password reset, sign-out, and account deletion.
+   profile editing, reporting from both a letter and the address book, blocking,
+   password reset, sign-out, launch retry, and account deletion.
 3. Test VoiceOver, Dynamic Type, Reduce Motion, light/dark appearance, offline
    errors, a small iPhone, and a current large iPhone.
 4. Increment `CURRENT_PROJECT_VERSION` for every upload.
 5. Archive Release for **Any iOS Device (arm64)** and validate the archive.
 6. Upload to App Store Connect and assign the build to internal TestFlight.
 7. Complete metadata and App Privacy answers from `APP_STORE.md`.
+8. Confirm the build’s export-compliance answer and age-rating questionnaire.
+9. Read `OPERATIONS.md` and assign a person to review reports during the beta.
 
 ## Review notes
 

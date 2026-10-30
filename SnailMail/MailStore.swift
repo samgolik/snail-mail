@@ -296,18 +296,29 @@ private struct ProfileResponse: Decodable { let profile: SnailProfile }
 private struct OpenLetterResponse: Decodable { let body: String }
 private struct EmptyResponse: Decodable {}
 
+enum HomeLoadState: Equatable {
+    case idle
+    case loading
+    case loaded
+    case failed
+}
+
 @MainActor
 final class ProductionStore: ObservableObject {
     @Published private(set) var profile: SnailProfile?
     @Published private(set) var connections: [SnailConnection] = []
     @Published private(set) var letters: [SnailLetter] = []
     @Published private(set) var openedBodies: [String: String] = [:]
-    @Published private(set) var hasLoaded = false
+    @Published private(set) var loadState: HomeLoadState = .idle
+    @Published private(set) var loadErrorMessage: String?
+    @Published private(set) var sessionUserID: String?
     @Published private(set) var isWorking = false
     @Published var errorMessage: String?
     @Published var now = Date()
 
     private var timer: Timer?
+    private var workingOperations: Set<UUID> = []
+    private var latestLoadID = UUID()
 
     init() {
         timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
@@ -316,6 +327,14 @@ final class ProductionStore: ObservableObject {
     }
 
     deinit { timer?.invalidate() }
+
+    var hasLoaded: Bool { loadState == .loaded }
+
+    func prepareSession(userID: String) {
+        guard sessionUserID != userID else { return }
+        resetSession()
+        sessionUserID = userID
+    }
 
     var friends: [SnailProfile] {
         connections.filter { $0.status == "accepted" }.map(\.profile)
@@ -348,13 +367,26 @@ final class ProductionStore: ObservableObject {
     }
 
     func load() async {
-        await perform {
+        guard let expectedUserID = sessionUserID else { return }
+        let loadID = UUID()
+        latestLoadID = loadID
+        let isInitialLoad = loadState != .loaded
+        if isInitialLoad { loadState = .loading }
+
+        do {
             let response: HomeResponse = try await CallableAPI.call("loadHome", payload: NoPayload())
+            guard sessionUserID == expectedUserID, latestLoadID == loadID else { return }
             profile = response.profile
             connections = response.connections
             letters = response.letters
+            loadErrorMessage = nil
+            loadState = .loaded
+        } catch {
+            guard sessionUserID == expectedUserID, latestLoadID == loadID else { return }
+            let message = Self.message(for: error)
+            loadErrorMessage = message
+            if isInitialLoad { loadState = .failed }
         }
-        hasLoaded = true
     }
 
     func saveProfile(
@@ -364,7 +396,8 @@ final class ProductionStore: ObservableObject {
         latitude: Double,
         longitude: Double
     ) async -> Bool {
-        await perform {
+        let expectedUserID = sessionUserID
+        return await perform {
             let response: ProfileResponse = try await CallableAPI.call(
                 "saveProfile",
                 payload: ProfilePayload(
@@ -375,6 +408,7 @@ final class ProductionStore: ObservableObject {
                     longitude: longitude
                 )
             )
+            guard self.sessionUserID == expectedUserID else { return }
             profile = response.profile
         }
     }
@@ -433,18 +467,22 @@ final class ProductionStore: ObservableObject {
 
     func open(_ letter: SnailLetter) async {
         guard letter.hasArrived(at: now), openedBodies[letter.id] == nil else { return }
+        let expectedUserID = sessionUserID
         _ = await perform {
             let response: OpenLetterResponse = try await CallableAPI.call(
                 "openLetter",
                 payload: LetterPayload(letterID: letter.id)
             )
+            guard self.sessionUserID == expectedUserID else { return }
             openedBodies[letter.id] = response.body
         }
     }
 
     func deleteAccount() async -> Bool {
-        await perform {
+        let expectedUserID = sessionUserID
+        return await perform {
             let _: EmptyResponse = try await CallableAPI.call("deleteAccount", payload: NoPayload())
+            guard self.sessionUserID == expectedUserID else { return }
             profile = nil
             connections = []
             letters = []
@@ -457,22 +495,57 @@ final class ProductionStore: ObservableObject {
         connections = []
         letters = []
         openedBodies = [:]
-        hasLoaded = false
+        loadState = .idle
+        loadErrorMessage = nil
         errorMessage = nil
+        sessionUserID = nil
+        latestLoadID = UUID()
+        workingOperations.removeAll()
+        isWorking = false
     }
 
     @discardableResult
     private func perform(_ work: () async throws -> Void) async -> Bool {
+        let operationID = UUID()
+        let expectedUserID = sessionUserID
+        workingOperations.insert(operationID)
         isWorking = true
         errorMessage = nil
-        defer { isWorking = false }
+        defer {
+            workingOperations.remove(operationID)
+            isWorking = !workingOperations.isEmpty
+        }
         do {
             try await work()
+            guard sessionUserID == expectedUserID else { return false }
             return true
         } catch {
-            errorMessage = error.localizedDescription.lowercased()
+            errorMessage = Self.message(for: error)
             return false
         }
+    }
+
+    private static func message(for error: Error) -> String {
+        if let urlError = error as? URLError {
+            switch urlError.code {
+            case .notConnectedToInternet, .networkConnectionLost, .cannotConnectToHost,
+                 .cannotFindHost, .timedOut:
+                return "couldn’t reach the post office — check your connection and try again"
+            default:
+                break
+            }
+        }
+
+        let description = error.localizedDescription
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        if description.contains("network") || description.contains("internet") {
+            return "couldn’t reach the post office — check your connection and try again"
+        }
+        if description.contains("decode") || description.contains("data couldn’t be read") {
+            return "the post office sent an unexpected reply — please try again"
+        }
+        return description.isEmpty ? "something went wrong — please try again" : description
     }
 }
 

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ComposeView: View {
     @EnvironmentObject private var store: ProductionStore
+    @EnvironmentObject private var auth: AuthManager
     @State private var bodyText = ""
     @State private var recipientID = ""
     @State private var showingSent = false
@@ -19,6 +20,13 @@ struct ComposeView: View {
                     description: Text("connect with a friend under you before writing your first letter")
                 )
             } else {
+                if !auth.isEmailVerified {
+                    Section {
+                        Label("verify your email under you before sending a letter", systemImage: "envelope.badge.shield.half.filled")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                }
                 Section("to") {
                     Picker("friend", selection: $recipientID) {
                         ForEach(store.friends) { friend in
@@ -37,6 +45,7 @@ struct ComposeView: View {
                         .font(.caption)
                         .foregroundStyle(bodyText.count > 500 ? .red : .secondary)
                         .frame(maxWidth: .infinity, alignment: .trailing)
+                        .accessibilityLabel("\(bodyText.count) of 500 characters")
                 }
                 if let recipient, let origin = store.profile {
                     Section("the little journey") {
@@ -69,7 +78,7 @@ struct ComposeView: View {
                     }
                 }
                 .disabled(bodyText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
-                          bodyText.count > 500 || store.isWorking)
+                          bodyText.count > 500 || store.isWorking || !auth.isEmailVerified)
             }
         }
         .scrollContentBackground(.hidden)
