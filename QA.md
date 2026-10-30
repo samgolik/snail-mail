@@ -18,15 +18,15 @@ installation.
 
 - Launch on a fresh simulator and confirm the sign-up screen appears before the mailbox.
 - Confirm the home screen uses the snail-and-envelope icon without white corners.
-- Create an account with a new email and a password of at least six characters.
+- Enter a new mobile number and request a one-time SMS code.
 - Confirm account creation is disabled until the Terms and Community Guidelines
   agreement is selected and all three legal links open successfully.
-- Confirm the verification SMS arrives, iOS offers one-time-code autofill, and the phone becomes verified.
-- Relaunch and confirm the saved email remains signed in.
+- Confirm the verification SMS arrives, iOS offers one-time-code autofill, and the account opens.
+- Relaunch and confirm the phone account remains signed in.
 - Sign out and confirm the app returns to the sign-up/sign-in screen.
 - Sign back in and confirm the mailbox opens.
-- On **Sign in**, request a password reset and confirm the email arrives.
-- Create two accounts on separate devices and verify both phone numbers.
+- Enter the same phone number again and confirm its next SMS code returns to the same account.
+- Create two phone accounts on separate devices.
 - Exchange a friend code and accept the request from the recipient account.
 - Edit the display name, username, and city; relaunch and confirm the new return
   address appears on both devices without changing the friend code.
@@ -50,9 +50,9 @@ installation.
 
 ## Edge cases
 
-- Try malformed emails, a password shorter than six characters, an existing
-  email, and an incorrect password; confirm each error is understandable.
-- Switch between **Sign up** and **Sign in** and confirm the password is cleared.
+- Try a malformed phone number, an incorrect code, and repeated code requests;
+  confirm each error is understandable and rate limiting is respected.
+- Choose **use a different number** and confirm the old code is cleared.
 - Disable networking, attempt sign-in, restore networking, and retry.
 - Disable networking before launch with an existing session; confirm the app
   shows the post-office retry screen rather than profile setup. Restore networking

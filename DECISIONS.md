@@ -7,14 +7,13 @@ operations runbook.
 
 ## 2026-10-30 — first hosted beta backend preparation
 
-### use a verified phone number for trust, while keeping email/password sign-in
+### use the verified phone number as the complete account identity
 
-- **Decision:** Accounts continue to sign in and recover access with email and
-  password, but social features require a mobile number verified by a one-time
-  SMS code. Existing email/password accounts can add a phone number in place.
-- **Why:** This matches the desired onboarding without forcing an account
-  migration or removing password recovery. It also avoids treating a phone
-  number as the user's public identity; friends never receive it.
+- **Decision:** Signup, verification, and returning sign-in all use the same
+  one-time SMS flow. The app does not request an email address or password.
+- **Why:** A single phone-first flow is the intended product model and removes
+  the confusing distinction between creating an account and later verifying
+  it. The number remains private and friends never receive it.
 - **Cost and abuse controls:** SMS is restricted in Firebase to United States
   numbers for the first beta. The app discloses that Google receives the number
   for authentication, spam prevention, and abuse prevention. Broader country
@@ -23,9 +22,11 @@ operations runbook.
 - **Implementation:** Production Functions require Firebase's `phone_number`
   authentication claim for friendship and letter-writing actions. Local
   emulator tests temporarily accept their existing verified-email fixtures.
-- **Revisit when:** Testers need international numbers or a phone-only sign-in
-  flow. Before either change, define account recovery and number-recycling
-  behavior.
+- **Migration:** Existing beta accounts that already linked a phone number keep
+  their Firebase UID and can sign in with that number. Email-only beta accounts
+  must be recreated or migrated manually before launch.
+- **Revisit when:** Testers need international numbers. Before launch, document
+  recovery and recycled-number handling because there is no email fallback.
 
 ### blaze is active and the guarded backend is live
 

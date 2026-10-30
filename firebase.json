@@ -14,7 +14,7 @@
     "authorizedDomains": ["localhost"],
     "providers": {
       "anonymous": false,
-      "emailPassword": true
+      "emailPassword": false
     }
   },
   "firestore": {

@@ -291,9 +291,9 @@ private struct ProfileLocationError: Error {}
 
 private struct AuthView: View {
     @EnvironmentObject private var auth: AuthManager
-    @State private var mode: AuthMode = .signUp
-    @State private var email = ""
-    @State private var password = ""
+    @State private var phoneNumber = ""
+    @State private var verificationCode = ""
+    @State private var codeSent = false
     @State private var agreedToCreateAccount = false
 
     var body: some View {
@@ -322,35 +322,27 @@ private struct AuthView: View {
             .scrollDismissesKeyboard(.interactively)
         }
         .foregroundStyle(Color.berryInk)
-        .onChange(of: mode) { _, _ in
-            password = ""
-            agreedToCreateAccount = false
-            auth.clearMessages()
-        }
     }
 
     private var authCard: some View {
         VStack(spacing: 18) {
-            Picker("account action", selection: $mode) {
-                ForEach(AuthMode.allCases) { option in
-                    Text(option.label).tag(option)
-                }
-            }
-            .pickerStyle(.segmented)
+            Text("your phone number is your snail mail account")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-            TextField("email", text: $email)
-                .textContentType(.emailAddress)
-                .textInputAutocapitalization(.never)
-                .keyboardType(.emailAddress)
-                .autocorrectionDisabled()
+            TextField("mobile number", text: $phoneNumber)
+                .textContentType(.telephoneNumber)
+                .keyboardType(.phonePad)
                 .authFieldStyle()
 
-            SecureField("password", text: $password)
-                .textContentType(mode == .signUp ? .newPassword : .password)
-                .authFieldStyle()
-
-            if mode == .signUp {
-                Text("use at least 6 characters. you’ll verify your phone after signup.")
+            if codeSent {
+                TextField("6-digit code", text: $verificationCode)
+                    .textContentType(.oneTimeCode)
+                    .keyboardType(.numberPad)
+                    .authFieldStyle()
+            } else {
+                Text("we’ll text a one-time code. new numbers create an account; returning numbers sign in. standard rates may apply.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -375,10 +367,10 @@ private struct AuthView: View {
 
             Button {
                 Task {
-                    if mode == .signUp {
-                        _ = await auth.createAccount(email: email, password: password)
+                    if codeSent {
+                        _ = await auth.signInWithPhone(code: verificationCode)
                     } else {
-                        _ = await auth.signIn(email: email, password: password)
+                        codeSent = await auth.requestPhoneVerification(phoneNumber)
                     }
                 }
             } label: {
@@ -386,7 +378,7 @@ private struct AuthView: View {
                     if auth.isWorking {
                         ProgressView().tint(.white)
                     } else {
-                        Text(mode.buttonLabel).fontWeight(.semibold)
+                        Text(codeSent ? "enter the post office" : "text me a code").fontWeight(.semibold)
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -395,12 +387,15 @@ private struct AuthView: View {
             .buttonStyle(.borderedProminent)
             .tint(.snailGreen)
             .controlSize(.large)
-            .disabled(email.isEmpty || password.isEmpty || auth.isWorking ||
-                      (mode == .signUp && !agreedToCreateAccount))
+            .disabled(phoneNumber.isEmpty || auth.isWorking ||
+                      (!codeSent && !agreedToCreateAccount) ||
+                      (codeSent && verificationCode.count < 6))
 
-            if mode == .signIn {
-                Button("forgot password?") {
-                    Task { _ = await auth.sendPasswordReset(email: email) }
+            if codeSent {
+                Button("use a different number") {
+                    verificationCode = ""
+                    codeSent = false
+                    auth.clearMessages()
                 }
                 .font(.subheadline)
                 .disabled(auth.isWorking)
@@ -426,15 +421,6 @@ private struct MessageRow: View {
             .foregroundStyle(color)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
-}
-
-private enum AuthMode: String, CaseIterable, Identifiable {
-    case signUp
-    case signIn
-
-    var id: Self { self }
-    var label: String { self == .signUp ? "sign up" : "sign in" }
-    var buttonLabel: String { self == .signUp ? "create account" : "sign in" }
 }
 
 private extension View {

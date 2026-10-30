@@ -24,62 +24,11 @@ final class AuthManager: ObservableObject {
 
     var isAnonymous: Bool { user?.isAnonymous == true }
     var isAuthenticated: Bool { user != nil && !isAnonymous }
-    var email: String? { user?.email }
     var phoneNumber: String? { user?.phoneNumber }
     var isPhoneVerified: Bool { phoneNumber != nil }
     var betaCode: String {
         guard let uid = user?.uid else { return "connecting" }
         return String(uid.prefix(8)).uppercased()
-    }
-
-    func createAccount(email: String, password: String) async -> Bool {
-        let cleanEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        guard Self.looksLikeEmail(cleanEmail), password.count >= 6 else {
-            errorMessage = "use a valid email and at least 6 characters for your password"
-            return false
-        }
-        let success = await perform {
-            let credential = EmailAuthProvider.credential(withEmail: cleanEmail, password: password)
-            if let current = SnailFirebase.auth.currentUser, current.isAnonymous {
-                return try await current.link(with: credential)
-            } else {
-                return try await SnailFirebase.auth.createUser(withEmail: cleanEmail, password: password)
-            }
-        }
-        if success {
-            noticeMessage = "account created — verify your phone under you"
-        }
-        return success
-    }
-
-    func signIn(email: String, password: String) async -> Bool {
-        let cleanEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        guard Self.looksLikeEmail(cleanEmail), !password.isEmpty else {
-            errorMessage = "enter your email and password"
-            return false
-        }
-        return await perform {
-            return try await SnailFirebase.auth.signIn(withEmail: cleanEmail, password: password)
-        }
-    }
-
-    func sendPasswordReset(email: String) async -> Bool {
-        let cleanEmail = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        guard Self.looksLikeEmail(cleanEmail) else {
-            errorMessage = "enter your email first"
-            return false
-        }
-        isWorking = true
-        clearMessages()
-        defer { isWorking = false }
-        do {
-            try await SnailFirebase.auth.sendPasswordReset(withEmail: cleanEmail)
-            noticeMessage = "password reset email sent"
-            return true
-        } catch {
-            errorMessage = Self.message(for: error)
-            return false
-        }
     }
 
     func requestPhoneVerification(_ rawPhoneNumber: String) async -> Bool {
@@ -102,9 +51,8 @@ final class AuthManager: ObservableObject {
         }
     }
 
-    func confirmPhoneVerification(code: String) async -> Bool {
-        guard let user,
-              let verificationID = UserDefaults.standard.string(forKey: "phoneAuthVerificationID"),
+    func signInWithPhone(code: String) async -> Bool {
+        guard let verificationID = UserDefaults.standard.string(forKey: "phoneAuthVerificationID"),
               code.trimmingCharacters(in: .whitespacesAndNewlines).count >= 6 else {
             errorMessage = "enter the 6-digit code from the text message"
             return false
@@ -117,11 +65,11 @@ final class AuthManager: ObservableObject {
                 withVerificationID: verificationID,
                 verificationCode: code.trimmingCharacters(in: .whitespacesAndNewlines)
             )
-            _ = try await user.link(with: credential)
-            _ = try await user.getIDToken(forcingRefresh: true)
-            self.user = SnailFirebase.auth.currentUser
+            let result = try await SnailFirebase.auth.signIn(with: credential)
+            _ = try await result.user.getIDToken(forcingRefresh: true)
+            self.user = result.user
             UserDefaults.standard.removeObject(forKey: "phoneAuthVerificationID")
-            noticeMessage = "phone verified"
+            noticeMessage = "welcome to the post office"
             return true
         } catch {
             errorMessage = Self.message(for: error)
@@ -143,20 +91,6 @@ final class AuthManager: ObservableObject {
         noticeMessage = nil
     }
 
-    @discardableResult
-    private func perform(_ work: () async throws -> AuthDataResult) async -> Bool {
-        isWorking = true
-        clearMessages()
-        defer { isWorking = false }
-        do {
-            _ = try await work()
-            return true
-        } catch {
-            errorMessage = Self.message(for: error)
-            return false
-        }
-    }
-
     private static func message(for error: Error) -> String {
         let details = [
             error.localizedDescription,
@@ -170,16 +104,12 @@ final class AuthManager: ObservableObject {
         }
 
         let description = error.localizedDescription.lowercased()
-        if description.contains("email address is already") { return "an account already exists for this email — try signing in" }
-        if description.contains("password is invalid") || description.contains("wrong-password") { return "that email and password do not match" }
-        if description.contains("no user record") || description.contains("user-not-found") { return "no account was found for this email" }
+        if description.contains("invalid-verification-code") || description.contains("verification code") {
+            return "that verification code didn’t work — check it and try again"
+        }
+        if description.contains("too many requests") { return "too many attempts — wait a little while and try again" }
         if description.contains("network") { return "could not reach snail mail — check your connection and try again" }
         return description
-    }
-
-    private static func looksLikeEmail(_ email: String) -> Bool {
-        let pieces = email.split(separator: "@", omittingEmptySubsequences: false)
-        return pieces.count == 2 && pieces[1].contains(".")
     }
 
     private static func normalizedUSPhoneNumber(_ raw: String) -> String? {

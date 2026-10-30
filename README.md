@@ -1,7 +1,7 @@
 # snail mail
 
-A SwiftUI beta for delayed messages. It includes Firebase email/password sign-up,
-email/password sign-in, password reset, and SMS phone verification; server-backed profiles and friend
+A SwiftUI beta for delayed messages. It includes passwordless Firebase phone
+signup and sign-in with one-time SMS codes; server-backed profiles and friend
 requests; editable return addresses; removable connections and manageable blocks;
 cross-device mailboxes; server-calculated travel time; sealed letters; reporting;
 permanent account deletion;
@@ -81,7 +81,7 @@ Store bundle ID and production App Attest entitlement.
 
 ## Product flow
 
-1. Create an account and verify a mobile phone with a one-time SMS code.
+1. Enter a mobile number and use its one-time SMS code to create an account or sign in.
 2. Make a return address with a display name, username, and city.
 3. Exchange friend codes and accept the incoming request.
 4. Write a letter; the server seals its body and calculates arrival.
@@ -134,7 +134,7 @@ Current Firebase registration:
 - Privacy/support Hosting site: deployed at `https://snail-mail-btc.web.app`
 - Callable Functions: all 12 deployed on Node 22 in `us-east1`, with bounded
   beta scaling and one-day cleanup of stale deployment images
-- Firebase Authentication: email/password enabled; anonymous accounts disabled
+- Firebase Authentication: phone enabled; email/password and anonymous accounts disabled
 
 The current rules are intentionally closed to direct client access. Production
 reads and writes go through authenticated callable functions so profiles cannot
@@ -148,11 +148,11 @@ App Attest capability for the App ID and register App Attest in Firebase. The ap
 profile, friendship, and letter screens require that owner-controlled setup before
 production device testing; the callable Functions are already live.
 
-The app opens on an email/password welcome flow. A signed-in user creates a
+The app opens on a phone-number welcome flow. A verified number creates a new
+account or returns to its existing account without a password. A signed-in user creates a
 return address, exchanges private friend codes, accepts connections, and sends
 cross-device letters whose bodies remain in a server-only collection until
-arrival. Password reset, verification, sign-out, and permanent account deletion
-are available in-app.
+arrival. Sign-out and permanent account deletion are available in-app.
 
 `GoogleService-Info.plist` is required locally but intentionally ignored by Git.
 After a fresh clone, download it for the registered iOS app before building.
