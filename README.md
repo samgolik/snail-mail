@@ -126,13 +126,16 @@ Current Firebase registration:
 - Firestore and Functions backend configuration is retained but their unused,
   heavyweight iOS SDK products are intentionally not linked for the first beta
 - Firestore rules and mailbox indexes: deployed
+- Privacy/support Hosting site: deployed at `https://snail-mail-btc.web.app`
+- Callable Functions: locally validated but not yet deployed; Firebase requires the
+  project to be upgraded to Blaze before enabling Artifact Registry
 - Firebase Authentication: anonymous and email/password enabled
 
 The current rules are intentionally closed to direct client access. Production
 reads and writes go through authenticated callable functions so profiles cannot
 be enumerated, friendships cannot be forged, and letter metadata cannot be
-tampered with. Backend changes made after the last deployment require
-`firebase login --reauth` and a reviewed deploy before production testing.
+tampered with. The app’s profile, friendship, and letter screens require the
+callable Functions deployment before production testing.
 
 The app opens on an email/password welcome flow. A signed-in user creates a
 return address, exchanges private friend codes, accepts connections, and sends
@@ -170,9 +173,9 @@ older Intel Mac, `CHOKIDAR_USEPOLLING=1` prevents the Functions watcher from
 exhausting file descriptors.
 
 The app and local backend are connected and the full emulator integration test
-passes. The remaining cloud release step is to reauthenticate the Firebase CLI,
-confirm the project billing/budget settings, and deploy the reviewed Functions,
-rules, indexes, and Hosting pages. See `TESTFLIGHT.md` and `OPERATIONS.md`.
+passes. Firestore rules/indexes and Hosting are live. The remaining cloud release
+step is a user-approved Blaze upgrade with a budget alert followed by the reviewed
+Functions deployment. See `TESTFLIGHT.md` and `OPERATIONS.md`.
 
 Cloud configuration and deployment are intentional account-level actions and are not performed by this repository automatically.
 

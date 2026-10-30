@@ -16,6 +16,10 @@ not require a paid Apple account; upload and TestFlight distribution do.
 
 ## Backend release
 
+Current status: Firestore rules/indexes and Hosting are deployed. Functions are
+verified locally but Firebase blocked deployment until `snail-mail-btc` is on the
+Blaze plan. Upgrade only with an owner-approved billing account and budget alert.
+
 1. Run `npm ci && npm run check && npm run build` in `firebase/functions`.
 2. Run the full emulator integration test documented in `README.md`.
 3. Review `SECURITY_AUDIT.json`, Firestore Rules, indexes, and project ID.
