@@ -3,8 +3,30 @@ import FirebaseCore
 import FirebaseAppCheck
 import FirebaseAuth
 
-enum SnailRuntime {
-    static let localAuthUserIDKey = "snailMail.localAuthUserID"
+enum SnailFirebase {
+    private static let localAppName = "SnailMailLocal"
+
+    static func configure() {
+        FirebaseApp.configure()
+        #if DEBUG && targetEnvironment(simulator)
+        guard let defaultApp = FirebaseApp.app() else {
+            fatalError("Firebase default app was not configured")
+        }
+        FirebaseApp.configure(name: localAppName, options: defaultApp.options)
+        auth.useEmulator(withHost: "127.0.0.1", port: 9099)
+        #endif
+    }
+
+    static var auth: Auth {
+        #if DEBUG && targetEnvironment(simulator)
+        guard let localApp = FirebaseApp.app(name: localAppName) else {
+            fatalError("Firebase local app was not configured")
+        }
+        return Auth.auth(app: localApp)
+        #else
+        return Auth.auth()
+        #endif
+    }
 }
 
 private final class SnailAppCheckProviderFactory: NSObject, AppCheckProviderFactory {
@@ -25,15 +47,7 @@ struct SnailMailApp: App {
 
     init() {
         AppCheck.setAppCheckProviderFactory(SnailAppCheckProviderFactory())
-        FirebaseApp.configure()
-        #if DEBUG && targetEnvironment(simulator)
-        let localAuth = Auth.auth()
-        localAuth.useEmulator(withHost: "127.0.0.1", port: 9099)
-        if let restoredUserID = localAuth.currentUser?.uid,
-           restoredUserID != UserDefaults.standard.string(forKey: SnailRuntime.localAuthUserIDKey) {
-            try? localAuth.signOut()
-        }
-        #endif
+        SnailFirebase.configure()
         _auth = StateObject(wrappedValue: AuthManager())
     }
 

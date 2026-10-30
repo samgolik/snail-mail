@@ -172,10 +172,10 @@ automatically use Auth on `127.0.0.1:9099` and callable Functions on
 The explicit Debug Info.plist alone permits local HTTP traffic for those
 emulators; the separate Release Info.plist remains HTTPS-only.
 Because emulator accounts are separate from production, create a fresh local
-account the first time. The Debug build discards a restored production session
-once, then preserves the local emulator session normally. If a previous emulator
-session left a port occupied, stop that old process before restarting the
-complete suite.
+account the first time. Debug simulator authentication uses a separately named
+Firebase app, giving it a distinct keychain namespace from production while
+still preserving local sessions normally. If a previous emulator session left a
+port occupied, stop that old process before restarting the complete suite.
 
 `run-simulator.sh` refuses to install the app unless Auth, Firestore, and
 Functions are listening locally. After building, it also inspects the compiled

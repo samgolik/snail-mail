@@ -13,22 +13,8 @@ final class AuthManager: ObservableObject {
     private var listener: AuthStateDidChangeListenerHandle?
 
     init() {
-        listener = Auth.auth().addStateDidChangeListener { [weak self] _, user in
+        listener = SnailFirebase.auth.addStateDidChangeListener { [weak self] _, user in
             Task { @MainActor in
-                #if DEBUG && targetEnvironment(simulator)
-                if let user {
-                    let savedLocalUserID = UserDefaults.standard.string(
-                        forKey: SnailRuntime.localAuthUserIDKey
-                    )
-                    if savedLocalUserID != user.uid, self?.isWorking != true {
-                        try? Auth.auth().signOut()
-                        self?.user = nil
-                        self?.isRestoringSession = false
-                        return
-                    }
-                    UserDefaults.standard.set(user.uid, forKey: SnailRuntime.localAuthUserIDKey)
-                }
-                #endif
                 self?.user = user
                 self?.isRestoringSession = false
             }
@@ -52,14 +38,14 @@ final class AuthManager: ObservableObject {
         }
         let success = await perform {
             let credential = EmailAuthProvider.credential(withEmail: cleanEmail, password: password)
-            if let current = Auth.auth().currentUser, current.isAnonymous {
+            if let current = SnailFirebase.auth.currentUser, current.isAnonymous {
                 return try await current.link(with: credential)
             } else {
-                return try await Auth.auth().createUser(withEmail: cleanEmail, password: password)
+                return try await SnailFirebase.auth.createUser(withEmail: cleanEmail, password: password)
             }
         }
         if success {
-            try? await Auth.auth().currentUser?.sendEmailVerification()
+            try? await SnailFirebase.auth.currentUser?.sendEmailVerification()
             noticeMessage = "account created — check your inbox to verify your email"
         }
         return success
@@ -72,7 +58,7 @@ final class AuthManager: ObservableObject {
             return false
         }
         return await perform {
-            return try await Auth.auth().signIn(withEmail: cleanEmail, password: password)
+            return try await SnailFirebase.auth.signIn(withEmail: cleanEmail, password: password)
         }
     }
 
@@ -86,7 +72,7 @@ final class AuthManager: ObservableObject {
         clearMessages()
         defer { isWorking = false }
         do {
-            try await Auth.auth().sendPasswordReset(withEmail: cleanEmail)
+            try await SnailFirebase.auth.sendPasswordReset(withEmail: cleanEmail)
             noticeMessage = "password reset email sent"
             return true
         } catch {
@@ -116,7 +102,7 @@ final class AuthManager: ObservableObject {
         do {
             try await user.reload()
             _ = try await user.getIDToken(forcingRefresh: true)
-            self.user = Auth.auth().currentUser
+            self.user = SnailFirebase.auth.currentUser
             if isEmailVerified { noticeMessage = "email verified" }
         } catch {
             errorMessage = Self.message(for: error)
@@ -125,7 +111,7 @@ final class AuthManager: ObservableObject {
 
     func signOut() async {
         do {
-            try Auth.auth().signOut()
+            try SnailFirebase.auth.signOut()
             clearMessages()
         } catch {
             errorMessage = Self.message(for: error)
@@ -177,7 +163,7 @@ final class AuthManager: ObservableObject {
     }
 
     deinit {
-        if let listener { Auth.auth().removeStateDidChangeListener(listener) }
+        if let listener { SnailFirebase.auth.removeStateDidChangeListener(listener) }
     }
 }
 
@@ -635,7 +621,7 @@ private enum CallableAPI {
         _ name: String,
         payload: Payload
     ) async throws -> Result {
-        guard let user = Auth.auth().currentUser else {
+        guard let user = SnailFirebase.auth.currentUser else {
             throw APIError(message: "sign in to continue")
         }
         let token = try await user.getIDToken()
