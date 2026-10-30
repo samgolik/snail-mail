@@ -82,7 +82,6 @@ if ! xcodebuild \
   -derivedDataPath "$derived_data" \
   ARCHS="$host_arch" \
   ONLY_ACTIVE_ARCH=YES \
-  SWIFT_ACTIVE_COMPILATION_CONDITIONS=DEBUG \
   build 2>&1 | tee "$build_log"; then
   print -u2 "\nBuild failed. Relevant diagnostics:"
   grep -n "error:" "$build_log" >&2 || true
