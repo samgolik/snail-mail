@@ -17,21 +17,23 @@ not require a paid Apple account; upload and TestFlight distribution do.
    Debug simulator build, copy its generated debug token from the console, and
    register that token without committing it anywhere.
 7. Reauthenticate the Firebase CLI with `firebase login --reauth`.
-8. Confirm the Firebase project is on a plan that permits Cloud Functions
-   deployment and set a budget alert.
+8. Confirm the Firebase project remains on Blaze and that the billing budget
+   alert reaches `beattheclockstudios@gmail.com`.
 
 ## Backend release
 
 Current status: Firestore rules/indexes and Hosting are deployed. Functions are
-verified locally but Firebase blocked deployment until `snail-mail-btc` is on the
-Blaze plan. Upgrade only with an owner-approved billing account and budget alert.
-Do not deploy Functions until App Check registration is complete: production
-callables reject requests without a valid token by design.
+verified locally, deployed, and configured with conservative beta cost limits.
+All 11 were active on October 30, 2026, and the production endpoint rejected a
+request without App Check as designed. Finish the owner-controlled App Attest
+registration before distributing the first build and confirm the billing budget
+alert reaches the studio email.
 
 1. Run `npm ci && npm run check && npm run build` in `firebase/functions`.
 2. Run the full emulator integration test documented in `README.md`.
 3. Review `SECURITY_AUDIT.json`, Firestore Rules, indexes, and project ID.
-4. Deploy with `firebase deploy --only firestore,functions,hosting`.
+4. Deploy reviewed Function changes with `./deploy-functions.sh`; deploy rules,
+   indexes, or Hosting separately only when those files changed.
 5. Verify the public privacy and support URLs in `APP_STORE.md`.
 6. Create two production review accounts, verify both, connect them, and seed
    an already-arrived review letter.

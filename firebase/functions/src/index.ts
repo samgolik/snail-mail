@@ -1,6 +1,7 @@
 import {randomBytes} from "node:crypto";
 import {initializeApp} from "firebase-admin/app";
 import {getAuth} from "firebase-admin/auth";
+import {setGlobalOptions} from "firebase-functions/v2";
 import {
   DocumentData,
   DocumentSnapshot,
@@ -11,6 +12,20 @@ import {
   Transaction,
 } from "firebase-admin/firestore";
 import {HttpsError, onCall} from "firebase-functions/v2/https";
+
+setGlobalOptions({
+  region: "us-east1",
+  memory: "256MiB",
+  cpu: "gcf_gen1",
+  timeoutSeconds: 30,
+  minInstances: 0,
+  maxInstances: 2,
+  concurrency: 1,
+  labels: {
+    app: "snail-mail",
+    environment: "production",
+  },
+});
 
 initializeApp();
 
@@ -349,10 +364,16 @@ export const loadHome = onCall({region: "us-east1"}, async (request) => {
     db.collection("letters").where("senderID", "==", id).orderBy("sentAt", "desc").limit(100).get(),
     db.collection("blocks").where("blockerID", "==", id).limit(100).get(),
   ]);
+  const allLetters = [...received.docs, ...sent.docs]
+    .filter((item, index, all) => all.findIndex((other) => other.id === item.id) === index);
   const otherIDs: string[] = friendships.docs.map((item: QueryDocumentSnapshot) =>
     (item.data().userIDs as string[]).find((value) => value !== id)!);
   const blockedIDs = blocks.docs.map((item: QueryDocumentSnapshot) => item.data().targetID as string);
-  const profileIDs = [...new Set([...otherIDs, ...blockedIDs])];
+  const correspondentIDs = allLetters.map((item) => {
+    const data = item.data();
+    return data.senderID === id ? data.recipientID as string : data.senderID as string;
+  });
+  const profileIDs = [...new Set([...otherIDs, ...blockedIDs, ...correspondentIDs])];
   const people = await Promise.all(profileIDs.map((otherID: string) =>
     db.collection("users").doc(otherID).get()));
   const peopleByID = new Map(people.filter((item: DocumentSnapshot) => item.exists)
@@ -367,13 +388,14 @@ export const loadHome = onCall({region: "us-east1"}, async (request) => {
       profile: peopleByID.get(otherID),
     };
   }).filter((item: {profile: unknown}) => item.profile);
-  const allLetters = [...received.docs, ...sent.docs]
-    .filter((item, index, all) => all.findIndex((other) => other.id === item.id) === index);
   return {
     profile: profile.exists ? profileJSON(profile.id, profile.data()!) : null,
     connections,
     blockedProfiles: blockedIDs
       .map((blockedID: string) => peopleByID.get(blockedID))
+      .filter((item) => item),
+    correspondents: [...new Set(correspondentIDs)]
+      .map((correspondentID: string) => peopleByID.get(correspondentID))
       .filter((item) => item),
     letters: allLetters.map((item) => letterJSON(item.id, item.data())),
   };

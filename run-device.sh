@@ -4,7 +4,7 @@ set -euo pipefail
 project_dir="${0:A:h}"
 derived_data="$project_dir/.build/DeviceDerivedData"
 scheme="SnailMail"
-bundle_id="com.example.SnailMail"
+bundle_id="com.samgolik.snailmail"
 
 if [[ -z "${TEAM_ID:-}" ]]; then
   print -u2 "Set your Apple development team ID first:"
@@ -52,7 +52,6 @@ app_path="$derived_data/Build/Products/Debug-iphoneos/SnailMail.app"
 
 print "Installing Snail Mail…"
 xcrun devicectl device install app --device "$device_id" "$app_path"
-xcrun devicectl device process launch --device "$device_id" "$bundle_id" 2>/dev/null || \
-  xcrun devicectl device process launch --device "$device_id" com.samgolik.snailmail
+xcrun devicectl device process launch --device "$device_id" "$bundle_id"
 
 print "Snail Mail is running on your iPhone."

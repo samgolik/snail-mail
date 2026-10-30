@@ -103,6 +103,15 @@ await call("respondToFriend", justin.token, {
 await call("removeFriend", justin.token, {targetID: sam.id});
 const removedHome = await call("loadHome", justin.token, {});
 assert.equal(removedHome.connections.length, 0, "removed friendship should disappear");
+assert.equal(
+  removedHome.correspondents.some((item) => item.id === sam.id),
+  true,
+  "an old letter should retain enough sender context for safety actions",
+);
+await call("reportUser", justin.token, {
+  targetID: sam.id, letterID: mailbox.letters[0].id,
+  reason: "post-removal integration test report",
+});
 for (let index = 0; index < 19; index += 1) {
   await call("saveProfile", sam.token, {
     displayName: "Sam", username: `sam_limit_${index}`,

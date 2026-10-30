@@ -128,8 +128,8 @@ Current Firebase registration:
   heavyweight iOS SDK products are intentionally not linked for the first beta
 - Firestore rules and mailbox indexes: deployed
 - Privacy/support Hosting site: deployed at `https://snail-mail-btc.web.app`
-- Callable Functions: locally validated but not yet deployed; Firebase requires the
-  project to be upgraded to Blaze before enabling Artifact Registry
+- Callable Functions: all 11 deployed on Node 22 in `us-east1`, with bounded
+  beta scaling and one-day cleanup of stale deployment images
 - Firebase Authentication: anonymous and email/password enabled
 
 The current rules are intentionally closed to direct client access. Production
@@ -141,8 +141,8 @@ uses a debug provider only in simulator builds, and uses App Attest on devices.
 The production App Attest entitlement is checked in and linked to both app build
 configurations. After the Apple team is active, the owner must enable the matching
 App Attest capability for the App ID and register App Attest in Firebase. The app’s
-profile, friendship, and letter screens require that setup plus the callable
-Functions deployment before production testing.
+profile, friendship, and letter screens require that owner-controlled setup before
+production device testing; the callable Functions are already live.
 
 The app opens on an email/password welcome flow. A signed-in user creates a
 return address, exchanges private friend codes, accepts connections, and sends
@@ -215,9 +215,11 @@ older Intel Mac, `CHOKIDAR_USEPOLLING=1` prevents the Functions watcher from
 exhausting file descriptors.
 
 The app and local backend are connected and the full emulator integration test
-passes. Firestore rules/indexes and Hosting are live. The remaining cloud release
-step is a user-approved Blaze upgrade with a budget alert followed by the reviewed
-Functions deployment. See `TESTFLIGHT.md` and `OPERATIONS.md`.
+passes. Firestore rules/indexes, Hosting, and all 11 production Functions are
+live. Functions use the conservative beta scaling limits documented in
+`DECISIONS.md`, and stale deployment images are removed after one day. Use
+`deploy-functions.sh` for reviewed backend releases. See `TESTFLIGHT.md` and
+`OPERATIONS.md` for release procedures.
 
 Cloud configuration and deployment are intentional account-level actions and are not performed by this repository automatically.
 

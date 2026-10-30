@@ -10,7 +10,7 @@
     "check": "tsc --noEmit",
     "test:integration": "node test/integration.mjs",
     "serve": "npm run build && CHOKIDAR_USEPOLLING=1 firebase emulators:start --only auth,firestore,functions",
-    "deploy": "firebase deploy --only firestore,functions"
+    "deploy": "../../deploy-functions.sh"
   },
   "dependencies": {
     "@google-cloud/firestore": "^9.4.0",

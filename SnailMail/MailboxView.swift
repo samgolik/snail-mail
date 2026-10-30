@@ -32,6 +32,9 @@ struct MailboxView: View {
         .background(PastelBackground())
         .navigationTitle("snail mail")
         .foregroundStyle(Color.berryInk)
+        .navigationDestination(for: SnailLetter.self) {
+            ProductionLetterDetailView(letter: $0)
+        }
     }
 
     private var greeting: some View {
@@ -70,9 +73,6 @@ struct MailboxView: View {
                         .buttonStyle(.plain)
                 }
             }
-        }
-        .navigationDestination(for: SnailLetter.self) {
-            ProductionLetterDetailView(letter: $0)
         }
     }
 }

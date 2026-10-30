@@ -292,6 +292,7 @@ private struct HomeResponse: Decodable {
     let profile: SnailProfile?
     let connections: [SnailConnection]
     let blockedProfiles: [SnailProfile]
+    let correspondents: [SnailProfile]
     let letters: [SnailLetter]
 }
 
@@ -311,6 +312,7 @@ final class ProductionStore: ObservableObject {
     @Published private(set) var profile: SnailProfile?
     @Published private(set) var connections: [SnailConnection] = []
     @Published private(set) var blockedProfiles: [SnailProfile] = []
+    @Published private(set) var correspondents: [SnailProfile] = []
     @Published private(set) var letters: [SnailLetter] = []
     @Published private(set) var openedBodies: [String: String] = [:]
     @Published private(set) var loadState: HomeLoadState = .idle
@@ -370,7 +372,8 @@ final class ProductionStore: ObservableObject {
     func person(id: String) -> SnailProfile? {
         if profile?.id == id { return profile }
         return connections.first { $0.profile.id == id }?.profile ??
-            blockedProfiles.first { $0.id == id }
+            blockedProfiles.first { $0.id == id } ??
+            correspondents.first { $0.id == id }
     }
 
     func load() async {
@@ -386,6 +389,7 @@ final class ProductionStore: ObservableObject {
             profile = response.profile
             connections = response.connections
             blockedProfiles = response.blockedProfiles
+            correspondents = response.correspondents
             letters = response.letters
             loadErrorMessage = nil
             loadDiagnosticID = nil
@@ -525,6 +529,7 @@ final class ProductionStore: ObservableObject {
             profile = nil
             connections = []
             blockedProfiles = []
+            correspondents = []
             letters = []
             openedBodies = [:]
         }
@@ -534,6 +539,7 @@ final class ProductionStore: ObservableObject {
         profile = nil
         connections = []
         blockedProfiles = []
+        correspondents = []
         letters = []
         openedBodies = [:]
         loadState = .idle

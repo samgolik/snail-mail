@@ -56,6 +56,7 @@ final class SnailMailTests: XCTestCase {
         XCTAssertEqual(store.loadState, .idle)
         XCTAssertNil(store.profile)
         XCTAssertTrue(store.connections.isEmpty)
+        XCTAssertTrue(store.correspondents.isEmpty)
         XCTAssertTrue(store.letters.isEmpty)
     }
 }

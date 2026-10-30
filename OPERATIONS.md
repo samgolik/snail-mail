@@ -23,6 +23,29 @@ user exports in issues, logs, screenshots, or source control.
 6. Exercise the release build with two non-personal review accounts before
    inviting external testers.
 
+Deploy the backend from the repository root with `./deploy-functions.sh`. The
+script requires Node 22, uses the current Firebase CLI, targets only
+`snail-mail-btc` Functions, runs the TypeScript checks, and reapplies the one-day
+Artifact Registry cleanup policy. Do not replace it with a broad unreviewed
+`firebase deploy` command.
+
+## cost guardrails
+
+Production Functions are intentionally configured for the small TestFlight beta:
+
+- zero minimum instances, so no Function stays warm at idle;
+- at most two instances per Function;
+- 256 MiB memory and fractional Gen 1-style CPU;
+- one concurrent request per instance;
+- a 30-second request timeout;
+- per-user daily limits on state-changing actions.
+- one-day cleanup for stale Function container images.
+
+Review Firebase and Google Cloud usage at least daily during the first active
+testing week. Billing budget alerts are notifications, not hard spending caps.
+Do not raise a runtime limit, add a warm instance, create another region, or add
+a paid integration without recording the decision in `DECISIONS.md`.
+
 ## safety reports
 
 The app stores reports in the private `reports` collection with `status: open`.
@@ -88,7 +111,7 @@ release sealed contents to compensate for an outage.
 ## post-launch hardening
 
 App Check is integrated in the client and required by production callables. Before
-the first Functions deployment, finish the owner-controlled Firebase App Attest
+the first TestFlight build, finish the owner-controlled Firebase App Attest
 registration, Apple App ID capability, and simulator debug-token registration.
 The target already links its checked-in production entitlement. Never commit a
 debug token. Also confirm production usage alerts.
