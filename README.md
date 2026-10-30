@@ -183,6 +183,19 @@ Debug Info.plist and refuses installation if the local-network exception is
 missing. This turns a disconnected build into a terminal error instead of the
 ambiguous in-app “post office is out of reach” state.
 
+To watch safe client diagnostics in a third terminal while reproducing a
+connection problem:
+
+```sh
+./debug-logs.sh
+```
+
+Each callable request gets a short diagnostic ID that also appears on the
+in-app error screen. The log records authentication preparation, local App
+Check behavior, network status, HTTP status, and response decoding without
+printing passwords, Firebase tokens, user IDs, or letter contents. Match the
+on-screen ID to the terminal line to find the exact failing stage.
+
 The backend integration test creates two disposable emulator accounts and
 exercises profile setup, verified friend requests, sealed sending, early-open
 rejection, reporting, block/unblock, reconnect/removal, rate-limit enforcement,

@@ -1,6 +1,7 @@
 import Foundation
 import FirebaseAuth
 import FirebaseAppCheck
+import os
 
 @MainActor
 final class AuthManager: ObservableObject {
@@ -314,6 +315,8 @@ final class ProductionStore: ObservableObject {
     @Published private(set) var openedBodies: [String: String] = [:]
     @Published private(set) var loadState: HomeLoadState = .idle
     @Published private(set) var loadErrorMessage: String?
+    @Published private(set) var loadDiagnosticID: String?
+    @Published private(set) var loadDiagnosticStage: String?
     @Published private(set) var sessionUserID: String?
     @Published private(set) var isWorking = false
     @Published var errorMessage: String?
@@ -385,11 +388,20 @@ final class ProductionStore: ObservableObject {
             blockedProfiles = response.blockedProfiles
             letters = response.letters
             loadErrorMessage = nil
+            loadDiagnosticID = nil
+            loadDiagnosticStage = nil
             loadState = .loaded
         } catch {
             guard sessionUserID == expectedUserID, latestLoadID == loadID else { return }
             let message = Self.message(for: error)
             loadErrorMessage = message
+            if let apiError = error as? APIError {
+                loadDiagnosticID = apiError.diagnosticID
+                loadDiagnosticStage = apiError.stage
+            } else {
+                loadDiagnosticID = nil
+                loadDiagnosticStage = nil
+            }
             if isInitialLoad { loadState = .failed }
         }
     }
@@ -526,6 +538,8 @@ final class ProductionStore: ObservableObject {
         openedBodies = [:]
         loadState = .idle
         loadErrorMessage = nil
+        loadDiagnosticID = nil
+        loadDiagnosticStage = nil
         errorMessage = nil
         sessionUserID = nil
         latestLoadID = UUID()
@@ -607,6 +621,11 @@ private struct ReportPayload: Encodable {
 }
 
 private enum CallableAPI {
+    private static let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "com.samgolik.snailmail",
+        category: "callable"
+    )
+
     #if DEBUG && targetEnvironment(simulator)
     private static let baseURL = URL(
         string: "http://127.0.0.1:5001/snail-mail-btc/us-east1"
@@ -621,11 +640,48 @@ private enum CallableAPI {
         _ name: String,
         payload: Payload
     ) async throws -> Result {
+        let diagnosticID = String(UUID().uuidString.prefix(8)).uppercased()
+        log("request \(name) started", id: diagnosticID)
+
         guard let user = SnailFirebase.auth.currentUser else {
-            throw APIError(message: "sign in to continue")
+            log("request stopped: no current auth user", id: diagnosticID, level: .error)
+            throw APIError(
+                message: "your sign-in session is missing — sign out and sign in again",
+                diagnosticID: diagnosticID,
+                stage: "authentication"
+            )
         }
-        let token = try await user.getIDToken()
+
+        let token: String
+        do {
+            token = try await user.getIDToken()
+            log("firebase id token prepared", id: diagnosticID)
+        } catch {
+            let nsError = error as NSError
+            log(
+                "id token failed (\(nsError.domain) \(nsError.code))",
+                id: diagnosticID,
+                level: .error
+            )
+            throw APIError(
+                message: "your sign-in session could not be prepared — sign out and sign in again",
+                diagnosticID: diagnosticID,
+                stage: "authentication"
+            )
+        }
+
+        #if DEBUG && targetEnvironment(simulator)
+        let appCheckToken: String? = nil
+        log("app check skipped for local simulator", id: diagnosticID)
+        #else
         let appCheckToken = try? await AppCheck.appCheck().token(forcingRefresh: false).token
+        log(
+            appCheckToken == nil ? "app check token unavailable" : "app check token prepared",
+            id: diagnosticID,
+            level: appCheckToken == nil ? .error : .debug
+        )
+        #endif
+
         var request = URLRequest(url: baseURL.appending(path: name))
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -633,11 +689,43 @@ private enum CallableAPI {
         if let appCheckToken {
             request.setValue(appCheckToken, forHTTPHeaderField: "X-Firebase-AppCheck")
         }
-        request.httpBody = try JSONEncoder().encode(CallableRequest(data: payload))
-        let (data, response) = try await URLSession.shared.data(for: request)
-        guard let http = response as? HTTPURLResponse else {
-            throw APIError(message: "snail mail could not reach the server")
+        do {
+            request.httpBody = try JSONEncoder().encode(CallableRequest(data: payload))
+        } catch {
+            log("request payload encoding failed", id: diagnosticID, level: .error)
+            throw APIError(
+                message: "snail mail could not prepare that request",
+                diagnosticID: diagnosticID,
+                stage: "request"
+            )
         }
+
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch {
+            let nsError = error as NSError
+            log(
+                "network failed (\(nsError.domain) \(nsError.code))",
+                id: diagnosticID,
+                level: .error
+            )
+            throw APIError(
+                message: "the local post office could not be reached — check ./run-backend.sh",
+                diagnosticID: diagnosticID,
+                stage: "network"
+            )
+        }
+        guard let http = response as? HTTPURLResponse else {
+            log("response was not HTTP", id: diagnosticID, level: .error)
+            throw APIError(
+                message: "the post office sent an unexpected reply",
+                diagnosticID: diagnosticID,
+                stage: "response"
+            )
+        }
+        log("response status \(http.statusCode), \(data.count) bytes", id: diagnosticID)
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .custom { decoder in
             let value = try decoder.singleValueContainer().decode(String.self)
@@ -655,12 +743,42 @@ private enum CallableAPI {
         }
         if (200..<300).contains(http.statusCode),
            let result = try? decoder.decode(CallableResult<Result>.self, from: data) {
+            log("request completed", id: diagnosticID)
             return result.result
         }
         if let failure = try? decoder.decode(CallableFailure.self, from: data) {
-            throw APIError(message: failure.error.message)
+            log(
+                "server rejected request: \(failure.error.message)",
+                id: diagnosticID,
+                level: .error
+            )
+            throw APIError(
+                message: failure.error.message,
+                diagnosticID: diagnosticID,
+                stage: http.statusCode == 401 ? "authentication" : "server"
+            )
         }
-        throw APIError(message: "snail mail could not complete that request")
+        log("response decoding failed", id: diagnosticID, level: .error)
+        throw APIError(
+            message: "the post office sent an unexpected reply",
+            diagnosticID: diagnosticID,
+            stage: "response"
+        )
+    }
+
+    private enum LogLevel { case debug, error }
+
+    private static func log(_ message: String, id: String, level: LogLevel = .debug) {
+        let line = "[\(id)] \(message)"
+        switch level {
+        case .debug:
+            logger.debug("\(line, privacy: .public)")
+        case .error:
+            logger.error("\(line, privacy: .public)")
+        }
+        #if DEBUG
+        print("[snail-mail][callable]\(line)")
+        #endif
     }
 }
 
@@ -672,5 +790,7 @@ private struct CallableFailure: Decodable {
 }
 private struct APIError: LocalizedError {
     let message: String
+    let diagnosticID: String?
+    let stage: String?
     var errorDescription: String? { message }
 }

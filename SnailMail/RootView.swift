@@ -70,7 +70,15 @@ private struct ConnectionProblemView: View {
             ContentUnavailableView {
                 Label("the post office is out of reach", systemImage: "wifi.exclamationmark")
             } description: {
-                Text(store.loadErrorMessage ?? "we couldn’t collect your mail just now.")
+                VStack(spacing: 8) {
+                    Text(store.loadErrorMessage ?? "we couldn’t collect your mail just now.")
+                    if let diagnosticID = store.loadDiagnosticID {
+                        Text("diagnostic \(diagnosticID) · \(store.loadDiagnosticStage ?? "unknown stage")")
+                            .font(.caption.monospaced())
+                            .foregroundStyle(.secondary)
+                            .textSelection(.enabled)
+                    }
+                }
             } actions: {
                 VStack(spacing: 12) {
                     Button("try again") {
