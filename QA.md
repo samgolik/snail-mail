@@ -21,12 +21,12 @@ installation.
 - Create an account with a new email and a password of at least six characters.
 - Confirm account creation is disabled until the Terms and Community Guidelines
   agreement is selected and all three legal links open successfully.
-- Confirm the verification email arrives and **You** can resend it.
+- Confirm the verification SMS arrives, iOS offers one-time-code autofill, and the phone becomes verified.
 - Relaunch and confirm the saved email remains signed in.
 - Sign out and confirm the app returns to the sign-up/sign-in screen.
 - Sign back in and confirm the mailbox opens.
 - On **Sign in**, request a password reset and confirm the email arrives.
-- Create two accounts on separate simulators and verify both email addresses.
+- Create two accounts on separate devices and verify both phone numbers.
 - Exchange a friend code and accept the request from the recipient account.
 - Edit the display name, username, and city; relaunch and confirm the new return
   address appears on both devices without changing the friend code.

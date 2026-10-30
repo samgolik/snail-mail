@@ -12,6 +12,9 @@ struct SettingsView: View {
     @State private var personToReport: SnailProfile?
     @State private var reportReason = ""
     @State private var showingProfileEditor = false
+    @State private var phoneNumber = ""
+    @State private var verificationCode = ""
+    @State private var verificationCodeSent = false
 
     var body: some View {
         Form {
@@ -202,10 +205,10 @@ struct SettingsView: View {
                 }
             }
             .disabled(friendCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
-                      store.isWorking || !auth.isEmailVerified)
+                      store.isWorking || !auth.isPhoneVerified)
 
-            if !auth.isEmailVerified {
-                Text("verify your email before adding friends")
+            if !auth.isPhoneVerified {
+                Text("verify your phone before adding friends")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -244,16 +247,33 @@ struct SettingsView: View {
     private var accountSection: some View {
         Section("account") {
             LabeledContent("email", value: auth.email ?? "unknown")
-            LabeledContent("status", value: auth.isEmailVerified ? "verified" : "not verified")
-            if !auth.isEmailVerified {
-                Button("resend verification email") {
-                    Task { await auth.resendVerification() }
+            LabeledContent("phone", value: auth.phoneNumber ?? "not verified")
+            if !auth.isPhoneVerified {
+                TextField("mobile number", text: $phoneNumber)
+                    .textContentType(.telephoneNumber)
+                    .keyboardType(.phonePad)
+                Text("we’ll text a one-time code. standard rates may apply. your number is sent to Google for spam and abuse prevention.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Button(verificationCodeSent ? "send another code" : "text me a code") {
+                    Task {
+                        verificationCodeSent = await auth.requestPhoneVerification(phoneNumber)
+                    }
                 }
-                .disabled(auth.isWorking)
-                Button("i verified my email") {
-                    Task { await auth.refreshUser() }
+                .disabled(auth.isWorking || phoneNumber.isEmpty)
+                if verificationCodeSent {
+                    TextField("6-digit code", text: $verificationCode)
+                        .textContentType(.oneTimeCode)
+                        .keyboardType(.numberPad)
+                    Button("verify phone") {
+                        Task {
+                            if await auth.confirmPhoneVerification(code: verificationCode) {
+                                verificationCode = ""
+                            }
+                        }
+                    }
+                    .disabled(auth.isWorking || verificationCode.count < 6)
                 }
-                .disabled(auth.isWorking)
             }
             if let notice = auth.noticeMessage {
                 Text(notice).font(.caption).foregroundStyle(Color.snailGreen)

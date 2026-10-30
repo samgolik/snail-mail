@@ -90,8 +90,11 @@ function requireVerifiedUser(
   request: CallableIdentity,
 ): string {
   const id = requireUser(request);
-  if (request.auth?.token.email_verified !== true) {
-    throw new HttpsError("failed-precondition", "verify your email to connect with friends");
+  const hasVerifiedPhone = typeof request.auth?.token.phone_number === "string";
+  const emulatorEmailFallback = process.env.FUNCTIONS_EMULATOR === "true" &&
+    request.auth?.token.email_verified === true;
+  if (!hasVerifiedPhone && !emulatorEmailFallback) {
+    throw new HttpsError("failed-precondition", "verify your phone to connect with friends");
   }
   return id;
 }

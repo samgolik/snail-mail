@@ -1,7 +1,7 @@
 # snail mail
 
 A SwiftUI beta for delayed messages. It includes Firebase email/password sign-up,
-sign-in, password reset and verification; server-backed profiles and friend
+email/password sign-in, password reset, and SMS phone verification; server-backed profiles and friend
 requests; editable return addresses; removable connections and manageable blocks;
 cross-device mailboxes; server-calculated travel time; sealed letters; reporting;
 permanent account deletion;
@@ -81,7 +81,7 @@ Store bundle ID and production App Attest entitlement.
 
 ## Product flow
 
-1. Create an account and verify its email.
+1. Create an account and verify a mobile phone with a one-time SMS code.
 2. Make a return address with a display name, username, and city.
 3. Exchange friend codes and accept the incoming request.
 4. Write a letter; the server seals its body and calculates arrival.

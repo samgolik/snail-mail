@@ -20,9 +20,9 @@ struct ComposeView: View {
                     description: Text("connect with a friend under you before writing your first letter")
                 )
             } else {
-                if !auth.isEmailVerified {
+                if !auth.isPhoneVerified {
                     Section {
-                        Label("verify your email under you before sending a letter", systemImage: "envelope.badge.shield.half.filled")
+                        Label("verify your phone under you before sending a letter", systemImage: "envelope.badge.shield.half.filled")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -78,7 +78,7 @@ struct ComposeView: View {
                     }
                 }
                 .disabled(bodyText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
-                          bodyText.count > 500 || store.isWorking || !auth.isEmailVerified)
+                          bodyText.count > 500 || store.isWorking || !auth.isPhoneVerified)
             }
         }
         .scrollContentBackground(.hidden)

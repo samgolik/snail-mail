@@ -350,7 +350,7 @@ private struct AuthView: View {
                 .authFieldStyle()
 
             if mode == .signUp {
-                Text("use at least 6 characters. we’ll send a verification email.")
+                Text("use at least 6 characters. you’ll verify your phone after signup.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
