@@ -4,6 +4,7 @@ import FirebaseCore
 @main
 struct SnailMailApp: App {
     @StateObject private var store = MailStore()
+    @StateObject private var production = ProductionStore()
     @StateObject private var auth: AuthManager
 
     init() {
@@ -15,6 +16,7 @@ struct SnailMailApp: App {
         WindowGroup {
             RootView()
                 .environmentObject(store)
+                .environmentObject(production)
                 .environmentObject(auth)
                 .tint(.snailGreen)
         }

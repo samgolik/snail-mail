@@ -10,16 +10,20 @@
 - Sign out and confirm the app returns to the sign-up/sign-in screen.
 - Sign back in and confirm the mailbox opens.
 - On **Sign in**, request a password reset and confirm the email arrives.
-- Launch as Sam and confirm both mailbox sections are empty.
-- Write a letter to Justin and verify blank messages cannot be sent.
+- Create two accounts on separate simulators and verify both email addresses.
+- Exchange a friend code and accept the request from the recipient account.
+- Confirm both mailbox sections are initially empty.
+- Write a letter to the connected friend and verify blank messages cannot be sent.
 - Confirm the counter prevents messages longer than 500 characters.
-- Send, switch to Justin in **Demo**, and open **Mailbox**.
+- Send, open the recipient account, and refresh **Mailbox**.
 - Confirm the letter is under **Traveling** and its body is not visible.
 - Open it while traveling and confirm only journey information appears.
-- Wait about 66 seconds; confirm it moves to **Arrived** without relaunching.
+- Confirm it moves to **Arrived** when server time reaches the arrival date.
 - Open it and verify the exact message and sender.
 - Quit and relaunch; confirm the letter is still present.
-- Tap **Reset demo** and confirm all mail disappears.
+- Delete a disposable account and confirm it cannot sign in again.
+- Report a disposable friend and confirm the action completes without exposing the reporter.
+- Block a disposable friend and confirm the connection disappears for both sending paths.
 
 ## Edge cases
 
@@ -42,17 +46,16 @@
 
 ## Known MVP limits
 
-- Two hard-coded local demo correspondents only.
-- Firebase identity is live, but letters are still stored locally.
-- No friend search, cross-device delivery, or push notifications yet.
-- Debug builds accelerate delivery; Release builds use real 24-hour days.
-- Message secrecy is a UI simulation until delivery moves to a server.
+- Friend discovery intentionally uses private codes rather than public search.
+- Push notifications are not yet enabled; refresh fetches new mail.
+- The server caps fictional journeys at 30 days.
 
 ## Backend security checks
 
 - Unauthenticated callers cannot send or open letters.
 - Only accepted friends can send letters to each other.
 - Neither sender nor recipient can read `sealedLetters` directly.
+- A block in either direction prevents new friend requests and letters.
 - The sender cannot call `openLetter` on a sent letter.
 - The recipient cannot open a letter before the server-side `arrivesAt` value.
 - Changing device time does not affect server delivery.

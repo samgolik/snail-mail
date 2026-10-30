@@ -14,6 +14,21 @@
     "rules": "firebase/firestore.rules",
     "indexes": "firebase/firestore.indexes.json"
   },
+  "hosting": {
+    "public": "site/public",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "cleanUrls": true,
+    "trailingSlash": false,
+    "headers": [
+      {
+        "source": "**",
+        "headers": [
+          {"key": "X-Content-Type-Options", "value": "nosniff"},
+          {"key": "Referrer-Policy", "value": "strict-origin-when-cross-origin"}
+        ]
+      }
+    ]
+  },
   "emulators": {
     "auth": { "port": 9099 },
     "functions": { "port": 5001 },

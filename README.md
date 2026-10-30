@@ -1,9 +1,9 @@
 # Snail Mail MVP
 
 A SwiftUI beta for delayed messages. It includes Firebase email/password sign-up,
-sign-in, password reset, email verification, two local demo profiles, a
-mailbox, composition, distance-based travel time, sealed letters, accelerated
-debug delivery, JSON persistence, Firebase identity, and unit tests.
+sign-in, password reset and verification; server-backed profiles and friend
+requests; cross-device mailboxes; server-calculated travel time; sealed letters;
+account deletion; and unit tests.
 
 The interface uses a muted sage, powder-blue, cream, and clay palette with rounded
 paper-like cards, restrained snail details, and lowercase copy throughout.
@@ -16,8 +16,9 @@ icon ready for TestFlight packaging.
 2. Select the `SnailMail` scheme and an iPhone simulator.
 3. Press **Run** (`⌘R`).
 
-No Apple Developer account is required for the simulator. The Firebase SDK is
-configured, while the current demo data still stays on-device.
+No Apple Developer account is required for the simulator. Firebase Auth is
+configured locally; production social flows also require the callable backend
+in `firebase/functions` to be deployed.
 
 ## Run without opening Xcode
 
@@ -72,13 +73,13 @@ Apple Developer account. If signing has never been configured on this Mac, the
 command-line tools alone cannot add the Apple ID; that one-time setup must be done
 with a compatible Xcode installation or on another Mac using the same account.
 
-## Demo flow
+## Product flow
 
-1. On **Write**, send a letter from Sam to Justin.
-2. Open **Demo** and switch to Justin.
-3. Open **Mailbox** and watch the snail travel.
-4. The DC-to-Columbus journey takes about 66 seconds in a debug build.
-5. Open the letter after it moves to **Arrived**.
+1. Create an account and verify its email.
+2. Make a return address with a display name, username, and city.
+3. Exchange friend codes and accept the incoming request.
+4. Write a letter; the server seals its body and calculates arrival.
+5. The recipient watches it travel and can open it only after server time passes.
 
 Run unit tests with **Product → Test** (`⌘U`) or:
 
@@ -104,9 +105,8 @@ The `firebase/` directory contains the first production backend boundary:
 - Firestore indexes for sender and recipient mailboxes
 - Local Auth, Firestore, and Functions emulator configuration
 
-The iOS app is registered with Firebase and initializes the Firebase SDK, while
-the visible demo flow still uses its local store. Authentication and live data
-sync are the next implementation step.
+The iOS app is registered with Firebase and uses Firebase Authentication plus a
+narrow callable HTTPS API. Firestore is not directly accessible to the client.
 
 Current Firebase registration:
 
@@ -126,11 +126,11 @@ be enumerated, friendships cannot be forged, and letter metadata cannot be
 tampered with. Backend changes made after the last deployment require
 `firebase login --reauth` and a reviewed deploy before production testing.
 
-The app now opens on a real email/password welcome flow. Testers can create an
-account, sign back in, request a password reset, receive email verification, and
-sign out under **You**. A signed-in account is required to enter the app. Letter
-content remains in the local demo store for this checkpoint; cross-device friend
-delivery and user profiles are the next product milestone.
+The app opens on an email/password welcome flow. A signed-in user creates a
+return address, exchanges private friend codes, accepts connections, and sends
+cross-device letters whose bodies remain in a server-only collection until
+arrival. Password reset, verification, sign-out, and permanent account deletion
+are available in-app.
 
 `GoogleService-Info.plist` is required locally but intentionally ignored by Git.
 After a fresh clone, download it for the registered iOS app before building.

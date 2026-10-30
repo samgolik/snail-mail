@@ -93,6 +93,20 @@ final class AuthManager: ObservableObject {
         }
     }
 
+    func refreshUser() async {
+        guard let user else { return }
+        isWorking = true
+        clearMessages()
+        defer { isWorking = false }
+        do {
+            try await user.reload()
+            self.user = Auth.auth().currentUser
+            if isEmailVerified { noticeMessage = "email verified" }
+        } catch {
+            errorMessage = Self.message(for: error)
+        }
+    }
+
     func signOut() async {
         do {
             try Auth.auth().signOut()
@@ -232,4 +246,304 @@ final class MailStore: ObservableObject {
             .appending(path: "SnailMail", directoryHint: .isDirectory)
             .appending(path: "letters.json")
     }
+}
+
+struct SnailProfile: Codable, Identifiable, Hashable {
+    let id: String
+    let displayName: String
+    let username: String
+    let city: String
+    let latitude: Double
+    let longitude: Double
+    let friendCode: String
+}
+
+struct SnailConnection: Codable, Identifiable, Hashable {
+    let id: String
+    let status: String
+    let isIncoming: Bool
+    let profile: SnailProfile
+}
+
+struct SnailLetter: Codable, Identifiable, Hashable {
+    let id: String
+    let senderID: String
+    let recipientID: String
+    let originCity: String
+    let destinationCity: String
+    let distanceMiles: Int
+    let snailDays: Int
+    let sentAt: Date
+    let arrivesAt: Date
+    let status: String
+
+    func hasArrived(at date: Date = .now) -> Bool { date >= arrivesAt }
+
+    func progress(at date: Date = .now) -> Double {
+        guard arrivesAt > sentAt else { return 1 }
+        return min(max(date.timeIntervalSince(sentAt) / arrivesAt.timeIntervalSince(sentAt), 0), 1)
+    }
+}
+
+private struct HomeResponse: Decodable {
+    let profile: SnailProfile?
+    let connections: [SnailConnection]
+    let letters: [SnailLetter]
+}
+
+private struct ProfileResponse: Decodable { let profile: SnailProfile }
+private struct OpenLetterResponse: Decodable { let body: String }
+private struct EmptyResponse: Decodable {}
+
+@MainActor
+final class ProductionStore: ObservableObject {
+    @Published private(set) var profile: SnailProfile?
+    @Published private(set) var connections: [SnailConnection] = []
+    @Published private(set) var letters: [SnailLetter] = []
+    @Published private(set) var openedBodies: [String: String] = [:]
+    @Published private(set) var hasLoaded = false
+    @Published private(set) var isWorking = false
+    @Published var errorMessage: String?
+    @Published var now = Date()
+
+    private var timer: Timer?
+
+    init() {
+        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.now = .now }
+        }
+    }
+
+    deinit { timer?.invalidate() }
+
+    var friends: [SnailProfile] {
+        connections.filter { $0.status == "accepted" }.map(\.profile)
+    }
+
+    var incomingRequests: [SnailConnection] {
+        connections.filter { $0.status == "pending" && $0.isIncoming }
+    }
+
+    var outgoingRequests: [SnailConnection] {
+        connections.filter { $0.status == "pending" && !$0.isIncoming }
+    }
+
+    var receivedLetters: [SnailLetter] {
+        guard let id = profile?.id else { return [] }
+        return letters.filter { $0.recipientID == id }.sorted { $0.sentAt > $1.sentAt }
+    }
+
+    var travelingLetters: [SnailLetter] { receivedLetters.filter { !$0.hasArrived(at: now) } }
+    var arrivedLetters: [SnailLetter] { receivedLetters.filter { $0.hasArrived(at: now) } }
+
+    func person(id: String) -> SnailProfile? {
+        if profile?.id == id { return profile }
+        return connections.first { $0.profile.id == id }?.profile
+    }
+
+    func load() async {
+        await perform {
+            let response: HomeResponse = try await CallableAPI.call("loadHome", payload: NoPayload())
+            profile = response.profile
+            connections = response.connections
+            letters = response.letters
+        }
+        hasLoaded = true
+    }
+
+    func saveProfile(
+        displayName: String,
+        username: String,
+        city: String,
+        latitude: Double,
+        longitude: Double
+    ) async -> Bool {
+        await perform {
+            let response: ProfileResponse = try await CallableAPI.call(
+                "saveProfile",
+                payload: ProfilePayload(
+                    displayName: displayName,
+                    username: username,
+                    city: city,
+                    latitude: latitude,
+                    longitude: longitude
+                )
+            )
+            profile = response.profile
+        }
+    }
+
+    func requestFriend(code: String) async -> Bool {
+        let success = await perform {
+            let _: EmptyResponse = try await CallableAPI.call(
+                "requestFriend",
+                payload: FriendCodePayload(friendCode: code)
+            )
+        }
+        if success { await load() }
+        return success
+    }
+
+    func respond(to connection: SnailConnection, accept: Bool) async {
+        let success = await perform {
+            let _: EmptyResponse = try await CallableAPI.call(
+                "respondToFriend",
+                payload: FriendResponsePayload(friendshipID: connection.id, accept: accept)
+            )
+        }
+        if success { await load() }
+    }
+
+    func block(_ person: SnailProfile) async -> Bool {
+        let success = await perform {
+            let _: EmptyResponse = try await CallableAPI.call(
+                "blockUser",
+                payload: TargetPayload(targetID: person.id)
+            )
+        }
+        if success { await load() }
+        return success
+    }
+
+    func report(_ person: SnailProfile, reason: String, letterID: String? = nil) async -> Bool {
+        await perform {
+            let _: EmptyResponse = try await CallableAPI.call(
+                "reportUser",
+                payload: ReportPayload(targetID: person.id, reason: reason, letterID: letterID)
+            )
+        }
+    }
+
+    func send(body: String, to recipient: SnailProfile) async -> Bool {
+        let success = await perform {
+            let _: EmptyResponse = try await CallableAPI.call(
+                "sendLetter",
+                payload: SendLetterPayload(recipientID: recipient.id, body: body)
+            )
+        }
+        if success { await load() }
+        return success
+    }
+
+    func open(_ letter: SnailLetter) async {
+        guard letter.hasArrived(at: now), openedBodies[letter.id] == nil else { return }
+        _ = await perform {
+            let response: OpenLetterResponse = try await CallableAPI.call(
+                "openLetter",
+                payload: LetterPayload(letterID: letter.id)
+            )
+            openedBodies[letter.id] = response.body
+        }
+    }
+
+    func deleteAccount() async -> Bool {
+        await perform {
+            let _: EmptyResponse = try await CallableAPI.call("deleteAccount", payload: NoPayload())
+            profile = nil
+            connections = []
+            letters = []
+            openedBodies = [:]
+        }
+    }
+
+    func resetSession() {
+        profile = nil
+        connections = []
+        letters = []
+        openedBodies = [:]
+        hasLoaded = false
+        errorMessage = nil
+    }
+
+    @discardableResult
+    private func perform(_ work: () async throws -> Void) async -> Bool {
+        isWorking = true
+        errorMessage = nil
+        defer { isWorking = false }
+        do {
+            try await work()
+            return true
+        } catch {
+            errorMessage = error.localizedDescription.lowercased()
+            return false
+        }
+    }
+}
+
+private struct NoPayload: Encodable {}
+private struct ProfilePayload: Encodable {
+    let displayName: String
+    let username: String
+    let city: String
+    let latitude: Double
+    let longitude: Double
+}
+private struct FriendCodePayload: Encodable { let friendCode: String }
+private struct FriendResponsePayload: Encodable { let friendshipID: String; let accept: Bool }
+private struct SendLetterPayload: Encodable { let recipientID: String; let body: String }
+private struct LetterPayload: Encodable { let letterID: String }
+private struct TargetPayload: Encodable { let targetID: String }
+private struct ReportPayload: Encodable {
+    let targetID: String
+    let reason: String
+    let letterID: String?
+}
+
+private enum CallableAPI {
+    private static let baseURL = URL(
+        string: "https://us-east1-snail-mail-btc.cloudfunctions.net"
+    )!
+
+    static func call<Payload: Encodable, Result: Decodable>(
+        _ name: String,
+        payload: Payload
+    ) async throws -> Result {
+        guard let user = Auth.auth().currentUser else {
+            throw APIError(message: "sign in to continue")
+        }
+        let token = try await user.getIDToken()
+        var request = URLRequest(url: baseURL.appending(path: name))
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.httpBody = try JSONEncoder().encode(CallableRequest(data: payload))
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse else {
+            throw APIError(message: "snail mail could not reach the server")
+        }
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .custom { decoder in
+            let value = try decoder.singleValueContainer().decode(String.self)
+            let fractional = ISO8601DateFormatter()
+            fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            if let date = fractional.date(from: value) { return date }
+            let standard = ISO8601DateFormatter()
+            guard let date = standard.date(from: value) else {
+                throw DecodingError.dataCorruptedError(
+                    in: try decoder.singleValueContainer(),
+                    debugDescription: "invalid server date"
+                )
+            }
+            return date
+        }
+        if (200..<300).contains(http.statusCode),
+           let result = try? decoder.decode(CallableResult<Result>.self, from: data) {
+            return result.result
+        }
+        if let failure = try? decoder.decode(CallableFailure.self, from: data) {
+            throw APIError(message: failure.error.message)
+        }
+        throw APIError(message: "snail mail could not complete that request")
+    }
+}
+
+private struct CallableRequest<Payload: Encodable>: Encodable { let data: Payload }
+private struct CallableResult<Result: Decodable>: Decodable { let result: Result }
+private struct CallableFailure: Decodable {
+    struct Failure: Decodable { let message: String }
+    let error: Failure
+}
+private struct APIError: LocalizedError {
+    let message: String
+    var errorDescription: String? { message }
 }

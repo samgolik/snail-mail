@@ -1,4 +1,5 @@
 import SwiftUI
+import CoreLocation
 
 struct RootView: View {
     @EnvironmentObject private var auth: AuthManager
@@ -8,12 +9,32 @@ struct RootView: View {
             if auth.isRestoringSession {
                 LaunchView()
             } else if auth.isAuthenticated {
-                MainTabView()
+                AuthenticatedRoot()
             } else {
                 AuthView()
             }
         }
         .animation(.easeInOut(duration: 0.2), value: auth.isAuthenticated)
+    }
+}
+
+private struct AuthenticatedRoot: View {
+    @EnvironmentObject private var store: ProductionStore
+    @EnvironmentObject private var auth: AuthManager
+
+    var body: some View {
+        Group {
+            if !store.hasLoaded {
+                LaunchView()
+            } else if store.profile == nil {
+                ProfileSetupView()
+            } else {
+                MainTabView()
+            }
+        }
+        .task(id: auth.user?.uid) {
+            if auth.user != nil && !store.hasLoaded { await store.load() }
+        }
     }
 }
 
@@ -47,6 +68,94 @@ private struct LaunchView: View {
         }
     }
 }
+
+private struct ProfileSetupView: View {
+    @EnvironmentObject private var store: ProductionStore
+    @State private var displayName = ""
+    @State private var username = ""
+    @State private var city = ""
+    @State private var isLocating = false
+
+    var body: some View {
+        ZStack {
+            PastelBackground()
+            ScrollView {
+                VStack(alignment: .leading, spacing: 24) {
+                    Spacer(minLength: 52)
+                    Image(systemName: "person.crop.circle.badge.plus")
+                        .font(.system(size: 50, weight: .light))
+                        .foregroundStyle(Color.snailGreen)
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("make your return address")
+                            .font(.largeTitle.weight(.semibold))
+                        Text("friends will see your name, handle, and city on every little journey.")
+                            .foregroundStyle(.secondary)
+                    }
+                    VStack(spacing: 14) {
+                        TextField("name", text: $displayName)
+                            .textContentType(.name)
+                            .authFieldStyle()
+                        TextField("username", text: $username)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .authFieldStyle()
+                        TextField("city, state", text: $city)
+                            .textContentType(.addressCity)
+                            .authFieldStyle()
+                    }
+                    if let error = store.errorMessage {
+                        MessageRow(text: error, systemImage: "exclamationmark.circle", color: .red)
+                    }
+                    Button {
+                        Task { await save() }
+                    } label: {
+                        Group {
+                            if store.isWorking || isLocating {
+                                ProgressView().tint(.white)
+                            } else {
+                                Text("set my return address").fontWeight(.semibold)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .tint(.snailGreen)
+                    .disabled(displayName.isEmpty || username.isEmpty || city.isEmpty ||
+                              store.isWorking || isLocating)
+                    Text("your exact location is never shared. the city is converted to approximate coordinates only to calculate snail time.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer(minLength: 30)
+                }
+                .padding(.horizontal, 24)
+            }
+        }
+        .foregroundStyle(Color.berryInk)
+    }
+
+    private func save() async {
+        isLocating = true
+        defer { isLocating = false }
+        do {
+            let places = try await CLGeocoder().geocodeAddressString(city)
+            guard let coordinate = places.first?.location?.coordinate else {
+                throw ProfileLocationError()
+            }
+            _ = await store.saveProfile(
+                displayName: displayName,
+                username: username,
+                city: city,
+                latitude: coordinate.latitude,
+                longitude: coordinate.longitude
+            )
+        } catch {
+            store.errorMessage = "we couldn’t find that city — try “city, state”"
+        }
+    }
+}
+
+private struct ProfileLocationError: Error {}
 
 private struct AuthView: View {
     @EnvironmentObject private var auth: AuthManager
