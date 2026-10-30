@@ -169,6 +169,9 @@ cd ../..
 Keep that terminal running while using the simulator. Debug simulator builds
 automatically use Auth on `127.0.0.1:9099` and callable Functions on
 `127.0.0.1:5001`; Release and physical-device builds always use production.
+The Xcode Debug configuration defines Swift's `DEBUG` compilation condition,
+and `run-simulator.sh` also supplies it explicitly so a simulator build cannot
+silently route to the undeployed production Functions endpoint.
 The explicit Debug Info.plist alone permits local HTTP traffic for those
 emulators; the separate Release Info.plist remains HTTPS-only.
 Because emulator accounts are separate from production, create a fresh local
