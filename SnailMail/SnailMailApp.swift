@@ -3,6 +3,10 @@ import FirebaseCore
 import FirebaseAppCheck
 import FirebaseAuth
 
+enum SnailRuntime {
+    static let localAuthUserIDKey = "snailMail.localAuthUserID"
+}
+
 private final class SnailAppCheckProviderFactory: NSObject, AppCheckProviderFactory {
     func createProvider(with app: FirebaseApp) -> AppCheckProvider? {
         #if targetEnvironment(simulator)
@@ -23,7 +27,12 @@ struct SnailMailApp: App {
         AppCheck.setAppCheckProviderFactory(SnailAppCheckProviderFactory())
         FirebaseApp.configure()
         #if DEBUG && targetEnvironment(simulator)
-        Auth.auth().useEmulator(withHost: "127.0.0.1", port: 9099)
+        let localAuth = Auth.auth()
+        localAuth.useEmulator(withHost: "127.0.0.1", port: 9099)
+        if let restoredUserID = localAuth.currentUser?.uid,
+           restoredUserID != UserDefaults.standard.string(forKey: SnailRuntime.localAuthUserIDKey) {
+            try? localAuth.signOut()
+        }
         #endif
         _auth = StateObject(wrappedValue: AuthManager())
     }

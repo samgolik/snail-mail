@@ -169,9 +169,13 @@ cd ../..
 Keep that terminal running while using the simulator. Debug simulator builds
 automatically use Auth on `127.0.0.1:9099` and callable Functions on
 `127.0.0.1:5001`; Release and physical-device builds always use production.
+The Xcode Debug configuration alone permits local HTTP traffic for those
+emulators; the Release configuration remains HTTPS-only.
 Because emulator accounts are separate from production, create a fresh local
-account the first time. If a previous emulator session left a port occupied,
-stop that old process before restarting the complete suite.
+account the first time. The Debug build discards a restored production session
+once, then preserves the local emulator session normally. If a previous emulator
+session left a port occupied, stop that old process before restarting the
+complete suite.
 
 The backend integration test creates two disposable emulator accounts and
 exercises profile setup, verified friend requests, sealed sending, early-open

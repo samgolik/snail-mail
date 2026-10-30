@@ -7,7 +7,8 @@ For simulator QA, start the complete local backend from the repository root:
 ```
 
 Keep it running while testing. Debug simulator builds use the local Auth and
-Functions emulators; Release and device builds use production.
+Functions emulators and permit local HTTP traffic; Release and device builds use
+production and remain HTTPS-only.
 
 ## Happy path
 

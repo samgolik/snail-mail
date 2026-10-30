@@ -23,6 +23,7 @@ check "production app check enforcement" "grep -q 'app verification failed' fire
 check "app attest production entitlement" "test -f SnailMail/SnailMail.entitlements && grep -q 'com.apple.developer.devicecheck.appattest-environment' SnailMail/SnailMail.entitlements && grep -q '<string>production</string>' SnailMail/SnailMail.entitlements"
 check "app attest entitlement linked" "test \"$(grep -c 'CODE_SIGN_ENTITLEMENTS = SnailMail/SnailMail.entitlements' SnailMail.xcodeproj/project.pbxproj)\" -eq 2"
 check "clean project syntax" "plutil -lint SnailMail.xcodeproj/project.pbxproj"
+check "local networking limited to debug" "test \"$(grep -c 'INFOPLIST_KEY_NSAppTransportSecurity_NSAllowsLocalNetworking = YES' SnailMail.xcodeproj/project.pbxproj)\" -eq 1"
 check "export compliance declaration" "grep -q 'INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO' SnailMail.xcodeproj/project.pbxproj"
 check "1024 app icon" "sips -g pixelWidth -g pixelHeight SnailMail/Assets.xcassets/AppIcon.appiconset/AppIcon.png | grep -q '1024'"
 check "backend typecheck" "npm --prefix firebase/functions run check"

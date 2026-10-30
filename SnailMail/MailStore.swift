@@ -15,6 +15,20 @@ final class AuthManager: ObservableObject {
     init() {
         listener = Auth.auth().addStateDidChangeListener { [weak self] _, user in
             Task { @MainActor in
+                #if DEBUG && targetEnvironment(simulator)
+                if let user {
+                    let savedLocalUserID = UserDefaults.standard.string(
+                        forKey: SnailRuntime.localAuthUserIDKey
+                    )
+                    if savedLocalUserID != user.uid, self?.isWorking != true {
+                        try? Auth.auth().signOut()
+                        self?.user = nil
+                        self?.isRestoringSession = false
+                        return
+                    }
+                    UserDefaults.standard.set(user.uid, forKey: SnailRuntime.localAuthUserIDKey)
+                }
+                #endif
                 self?.user = user
                 self?.isRestoringSession = false
             }
@@ -578,6 +592,11 @@ final class ProductionStore: ObservableObject {
         if description.contains("decode") || description.contains("data couldn’t be read") {
             return "the post office sent an unexpected reply — please try again"
         }
+        #if DEBUG && targetEnvironment(simulator)
+        if description.contains("credential") || description.contains("token") {
+            return "this account belongs to a different post office — sign out and create a local account"
+        }
+        #endif
         return description.isEmpty ? "something went wrong — please try again" : description
     }
 }
