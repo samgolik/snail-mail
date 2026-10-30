@@ -1,5 +1,6 @@
 import Foundation
 import FirebaseAuth
+import FirebaseAppCheck
 
 @MainActor
 final class AuthManager: ObservableObject {
@@ -609,10 +610,14 @@ private enum CallableAPI {
             throw APIError(message: "sign in to continue")
         }
         let token = try await user.getIDToken()
+        let appCheckToken = try? await AppCheck.appCheck().token(forcingRefresh: false).token
         var request = URLRequest(url: baseURL.appending(path: name))
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        if let appCheckToken {
+            request.setValue(appCheckToken, forHTTPHeaderField: "X-Firebase-AppCheck")
+        }
         request.httpBody = try JSONEncoder().encode(CallableRequest(data: payload))
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse else {

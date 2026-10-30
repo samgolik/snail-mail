@@ -62,6 +62,8 @@
 ## Backend security checks
 
 - Unauthenticated callers cannot send or open letters.
+- Production callers without a valid Firebase App Check token are rejected before
+  user authorization; the emulator bypass is limited to `FUNCTIONS_EMULATOR=true`.
 - Only accepted friends can send letters to each other.
 - Neither sender nor recipient can read `sealedLetters` directly.
 - A block in either direction prevents new friend requests and letters.

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8C4F0FAC3FE7F10800EE9B12 /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 7F4BBC32CA113F4A78F0FBC8 /* FirebaseAppCheck */; };
 		A001 /* SnailMailApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001 /* SnailMailApp.swift */; };
 		A002 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = B002 /* Models.swift */; };
 		A003 /* DeliveryCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B003 /* DeliveryCalculator.swift */; };
@@ -59,6 +60,7 @@
 			files = (
 				EFCF7E3201C476F215B260AF /* FirebaseCore in Frameworks */,
 				F66CFE26C8474789E2880D04 /* FirebaseAuth in Frameworks */,
+				8C4F0FAC3FE7F10800EE9B12 /* FirebaseAppCheck in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -136,6 +138,7 @@
 			packageProductDependencies = (
 				1ED9BB875E5EA8243665EDE8 /* FirebaseCore */,
 				4913BA8AD85FC7AFB2DD4019 /* FirebaseAuth */,
+				7F4BBC32CA113F4A78F0FBC8 /* FirebaseAppCheck */,
 			);
 			productName = SnailMail;
 			productReference = B011 /* SnailMail.app */;
@@ -449,6 +452,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 4D78C99AF0DEF2097460450C /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseAuth;
+		};
+		7F4BBC32CA113F4A78F0FBC8 /* FirebaseAppCheck */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4D78C99AF0DEF2097460450C /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAppCheck;
 		};
 		8BE5BEE6354BEDEF3F6A6554 /* FirebaseFirestore */ = {
 			isa = XCSwiftPackageProductDependency;

@@ -10,8 +10,13 @@ not require a paid Apple account; upload and TestFlight distribution do.
 3. Create the explicit App ID and App Store Connect record for
    `com.samgolik.snailmail`.
 4. Configure Apple signing on a currently supported Xcode installation.
-5. Reauthenticate the Firebase CLI with `firebase login --reauth`.
-6. Confirm the Firebase project is on a plan that permits Cloud Functions
+5. Add the App Attest capability to the App ID/target and set its entitlement
+   environment to `production` after the paid Apple team is active.
+6. Register the iOS app under Firebase **App Check** with App Attest. Launch a
+   Debug simulator build, copy its generated debug token from the console, and
+   register that token without committing it anywhere.
+7. Reauthenticate the Firebase CLI with `firebase login --reauth`.
+8. Confirm the Firebase project is on a plan that permits Cloud Functions
    deployment and set a budget alert.
 
 ## Backend release
@@ -19,6 +24,8 @@ not require a paid Apple account; upload and TestFlight distribution do.
 Current status: Firestore rules/indexes and Hosting are deployed. Functions are
 verified locally but Firebase blocked deployment until `snail-mail-btc` is on the
 Blaze plan. Upgrade only with an owner-approved billing account and budget alert.
+Do not deploy Functions until App Check registration is complete: production
+callables reject requests without a valid token by design.
 
 1. Run `npm ci && npm run check && npm run build` in `firebase/functions`.
 2. Run the full emulator integration test documented in `README.md`.

@@ -19,6 +19,11 @@ const MAX_BODY_LENGTH = 500;
 const MILES_PER_SNAIL_DAY = 15;
 const MAX_SNAIL_DAYS = 30;
 
+type CallableIdentity = {
+  auth?: {uid: string; token: {[key: string]: unknown}};
+  app?: unknown;
+};
+
 async function enforceDailyLimit(
   userID: string,
   action: string,
@@ -51,14 +56,17 @@ async function enforceDailyLimit(
   });
 }
 
-function requireUser(request: {auth?: {uid: string; token: {[key: string]: unknown}}}): string {
+function requireUser(request: CallableIdentity): string {
+  if (process.env.FUNCTIONS_EMULATOR !== "true" && !request.app) {
+    throw new HttpsError("unauthenticated", "app verification failed");
+  }
   const id = request.auth?.uid;
   if (!id) throw new HttpsError("unauthenticated", "sign in to continue");
   return id;
 }
 
 function requireVerifiedUser(
-  request: {auth?: {uid: string; token: {[key: string]: unknown}}},
+  request: CallableIdentity,
 ): string {
   const id = requireUser(request);
   if (request.auth?.token.email_verified !== true) {

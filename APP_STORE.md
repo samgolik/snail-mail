@@ -45,7 +45,12 @@ Data is linked to the user and used for **App Functionality**:
 - Identifiers → User ID
 - Location → Coarse Location (city-derived coordinates)
 - Other Data → profile name, username, city, friend relationships, blocks,
-  safety reports, and delivery metadata
+  safety reports, delivery metadata, and App Attest security proofs
+
+Firebase App Check processes an App Attest attestation object and assertion object
+to prevent abuse. In Apple’s current questionnaire, disclose this under the
+closest security/fraud-prevention purpose and re-check whether **Other Data** or a
+device-identifier category is requested by the live form.
 
 Select **No** for tracking. Select **No** for third-party advertising and
 developer advertising. Review Firebase’s current SDK disclosures again at

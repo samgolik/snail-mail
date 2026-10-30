@@ -87,8 +87,10 @@ release sealed contents to compensate for an outage.
 
 ## post-launch hardening
 
-Before broad public distribution, add and enforce Firebase App Check and confirm
-production usage alerts. Authenticated write actions already have server-side
-daily limits. Add push notifications only after the Apple signing/APNs setup is
-available. These are not allowed to delay account deletion, reporting, blocking,
-or security fixes.
+App Check is integrated in the client and required by production callables. Before
+the first Functions deployment, finish the owner-controlled Firebase App Attest
+registration, Apple capability/production entitlement, and simulator debug-token
+registration. Never commit a debug token. Also confirm production usage alerts.
+Authenticated write actions already have server-side daily limits. Add push
+notifications only after the Apple signing/APNs setup is available. These are not
+allowed to delay account deletion, reporting, blocking, or security fixes.
