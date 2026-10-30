@@ -138,9 +138,11 @@ be enumerated, friendships cannot be forged, and letter metadata cannot be
 tampered with. Outside the emulator, every function also requires a verified
 Firebase App Check token. The app sends App Check in the callable protocol header,
 uses a debug provider only in simulator builds, and uses App Attest on devices.
-The owner must finish the App Attest capability/production entitlement after the
-Apple team is active. The app’s profile, friendship, and letter screens require
-that setup plus the callable Functions deployment before production testing.
+The production App Attest entitlement is checked in and linked to both app build
+configurations. After the Apple team is active, the owner must enable the matching
+App Attest capability for the App ID and register App Attest in Firebase. The app’s
+profile, friendship, and letter screens require that setup plus the callable
+Functions deployment before production testing.
 
 The app opens on an email/password welcome flow. A signed-in user creates a
 return address, exchanges private friend codes, accepts connections, and sends

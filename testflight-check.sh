@@ -21,6 +21,7 @@ check "firebase app check linked" "grep -q 'FirebaseAppCheck in Frameworks' Snai
 check "app check request header" "grep -q 'X-Firebase-AppCheck' SnailMail/MailStore.swift"
 check "production app check enforcement" "grep -q 'app verification failed' firebase/functions/src/index.ts"
 check "app attest production entitlement" "test -f SnailMail/SnailMail.entitlements && grep -q 'com.apple.developer.devicecheck.appattest-environment' SnailMail/SnailMail.entitlements && grep -q '<string>production</string>' SnailMail/SnailMail.entitlements"
+check "app attest entitlement linked" "test \"$(grep -c 'CODE_SIGN_ENTITLEMENTS = SnailMail/SnailMail.entitlements' SnailMail.xcodeproj/project.pbxproj)\" -eq 2"
 check "clean project syntax" "plutil -lint SnailMail.xcodeproj/project.pbxproj"
 check "export compliance declaration" "grep -q 'INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO' SnailMail.xcodeproj/project.pbxproj"
 check "1024 app icon" "sips -g pixelWidth -g pixelHeight SnailMail/Assets.xcassets/AppIcon.appiconset/AppIcon.png | grep -q '1024'"
