@@ -702,12 +702,19 @@ private enum CallableAPI {
         let appCheckToken: String? = nil
         log("app check skipped for local simulator", id: diagnosticID)
         #else
-        let appCheckToken = try? await AppCheck.appCheck().token(forcingRefresh: false).token
-        log(
-            appCheckToken == nil ? "app check token unavailable" : "app check token prepared",
-            id: diagnosticID,
-            level: appCheckToken == nil ? .error : .debug
-        )
+        let appCheckToken: String?
+        do {
+            appCheckToken = try await AppCheck.appCheck().token(forcingRefresh: false).token
+            log("app check token prepared", id: diagnosticID)
+        } catch {
+            let nsError = error as NSError
+            appCheckToken = nil
+            log(
+                "app check token failed (\(nsError.domain) \(nsError.code)): \(nsError.localizedDescription)",
+                id: diagnosticID,
+                level: .error
+            )
+        }
         #endif
 
         var request = URLRequest(url: baseURL.appending(path: name))

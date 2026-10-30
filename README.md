@@ -58,8 +58,8 @@ This is usually faster than the Simulator on an older Mac. You need:
 - An iPhone connected by USB and unlocked
 - Developer Mode enabled under **Settings → Privacy & Security → Developer Mode**
 - The Mac trusted when the iPhone asks
-- An Apple ID already configured for development signing in the installed Xcode toolchain
-- A Personal Team or paid team already listed in Xcode’s saved account settings
+- The Beat the Clock Apple Development certificate and the
+  `Snail Mail iPhone Development` profile installed on the Mac
 
 Then run:
 
@@ -68,23 +68,16 @@ cd /path/to/SnailMail
 ./run-device.sh
 ```
 
-The script finds the connected iPhone, prefers the saved free Personal Team,
-builds with automatic signing, registers a private Firebase App Check debug token,
-installs, and launches the app. A free Apple ID is sufficient for personal-device
-testing, though its development provisioning expires sooner than paid-account
-provisioning. The device Debug build uses `com.samgolik.snailmail.dev`, keeping it
-separate from the App Store identity. Override either choice with
-`TEAM_ID=... DEVICE_BUNDLE_ID=... ./run-device.sh`.
+The script finds the connected iPhone, builds with the app target’s manual
+development profile, installs, and launches the app. The paid Beat the Clock team
+is preferred when it is present in Xcode’s saved team list. Override the detected
+team or bundle ID with `TEAM_ID=... DEVICE_BUNDLE_ID=... ./run-device.sh`.
 
-The debug token lives only under ignored `.build/` output with owner-only file
-permissions. Never copy it into source control or distribute a Debug build. Release
-continues to use the App Store bundle ID and production App Attest entitlement.
-
-To choose a different saved team explicitly, use `TEAM_ID=YOUR_TEAM_ID`. If signing
-has never been configured on this Mac, automatic provisioning may create a
-development certificate from the saved Xcode account; otherwise that one-time
-account/certificate setup must be completed in Xcode or on another Mac using the
-same account.
+Debug builds use Firebase’s debug App Check provider. Each installation keeps a
+private token on the device; that token must be registered in Firebase App Check,
+and the Firebase App Check API must remain enabled for `snail-mail-btc`. Never
+share the token or distribute a Debug build. Release continues to use the App
+Store bundle ID and production App Attest entitlement.
 
 ## Product flow
 
