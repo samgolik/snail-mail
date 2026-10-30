@@ -169,8 +169,8 @@ cd ../..
 Keep that terminal running while using the simulator. Debug simulator builds
 automatically use Auth on `127.0.0.1:9099` and callable Functions on
 `127.0.0.1:5001`; Release and physical-device builds always use production.
-The Xcode Debug configuration alone permits local HTTP traffic for those
-emulators; the Release configuration remains HTTPS-only.
+The explicit Debug Info.plist alone permits local HTTP traffic for those
+emulators; the separate Release Info.plist remains HTTPS-only.
 Because emulator accounts are separate from production, create a fresh local
 account the first time. The Debug build discards a restored production session
 once, then preserves the local emulator session normally. If a previous emulator
@@ -178,7 +178,7 @@ session left a port occupied, stop that old process before restarting the
 complete suite.
 
 `run-simulator.sh` refuses to install the app unless Auth, Firestore, and
-Functions are listening locally. After building, it also inspects the generated
+Functions are listening locally. After building, it also inspects the compiled
 Debug Info.plist and refuses installation if the local-network exception is
 missing. This turns a disconnected build into a terminal error instead of the
 ambiguous in-app “post office is out of reach” state.

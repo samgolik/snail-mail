@@ -11,7 +11,7 @@ Functions emulators and permit local HTTP traffic; Release and device builds use
 production and remain HTTPS-only.
 
 Launch with `./run-simulator.sh`; its preflight must report all backend ports
-ready and confirm the generated Debug app’s local-network permission before
+ready and confirm the compiled Debug app’s local-network permission before
 installation.
 
 ## Happy path
