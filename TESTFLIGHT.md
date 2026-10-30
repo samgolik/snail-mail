@@ -11,8 +11,9 @@ not require a paid Apple account; upload and TestFlight distribution do.
    `com.samgolik.snailmail`.
 4. Configure Apple signing on a currently supported Xcode installation.
 5. Enable App Attest for the App ID after the paid Apple team is active. The
-   target already links the checked-in `production` entitlement; verify Xcode
-   preserves that capability when signing is configured.
+   Release target already links the checked-in `production` entitlement; verify
+   Xcode preserves that capability when signing is configured. Debug builds use
+   Firebase’s private debug provider and deliberately do not carry App Attest.
 6. Register the iOS app under Firebase **App Check** with App Attest. Launch a
    Debug simulator build, copy its generated debug token from the console, and
    register that token without committing it anywhere.

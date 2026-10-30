@@ -96,6 +96,16 @@ operations runbook.
 - **Revisit when:** The first signed TestFlight build is available. The initial
   notification should announce arrival without revealing letter contents.
 
+### separate device development from release attestation
+
+- **Decision:** Debug builds use Firebase App Check’s debug provider and no App
+  Attest entitlement; Release builds alone use App Attest. Free-team device builds
+  use the separate `com.samgolik.snailmail.dev` identifier.
+- **Why:** This enables command-line development on Sam’s physical phone without
+  weakening the TestFlight binary or requiring a paid capability for every Debug
+  install. The private debug token is generated under ignored `.build/`, registered
+  with Firebase, and never embedded in source or Release builds.
+
 ### protect the quiet visual identity
 
 - **Decision:** Preserve the restrained paper, clay, green, and powder palette,

@@ -69,6 +69,8 @@ installation.
 - Turn on Reduce Motion and confirm auth/root transitions do not animate.
 - Test on a small iPhone simulator and a current large iPhone simulator.
 - Install on a physical iPhone, accept the trust prompt if shown, and verify launch.
+- Confirm a Debug device build uses the `.dev` bundle ID and Firebase debug
+  attestation, while a Release build contains the production App Attest entitlement.
 - Archive a Release build and confirm validation finds a 1024×1024 app icon.
 
 ## Known MVP limits

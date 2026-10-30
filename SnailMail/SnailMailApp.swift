@@ -31,7 +31,7 @@ enum SnailFirebase {
 
 private final class SnailAppCheckProviderFactory: NSObject, AppCheckProviderFactory {
     func createProvider(with app: FirebaseApp) -> AppCheckProvider? {
-        #if targetEnvironment(simulator)
+        #if DEBUG
         return AppCheckDebugProvider(app: app)
         #else
         return AppAttestProvider(app: app)

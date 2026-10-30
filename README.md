@@ -59,23 +59,32 @@ This is usually faster than the Simulator on an older Mac. You need:
 - Developer Mode enabled under **Settings → Privacy & Security → Developer Mode**
 - The Mac trusted when the iPhone asks
 - An Apple ID already configured for development signing in the installed Xcode toolchain
-- Your Apple development team ID
+- A Personal Team or paid team already listed in Xcode’s saved account settings
 
 Then run:
 
 ```sh
 cd /path/to/SnailMail
-TEAM_ID=YOUR_TEAM_ID ./run-device.sh
+./run-device.sh
 ```
 
-The script finds the connected iPhone, builds with automatic signing, installs,
-and launches the app. A free Apple ID is sufficient for personal-device testing,
-though its development provisioning expires sooner than paid-account provisioning.
+The script finds the connected iPhone, prefers the saved free Personal Team,
+builds with automatic signing, registers a private Firebase App Check debug token,
+installs, and launches the app. A free Apple ID is sufficient for personal-device
+testing, though its development provisioning expires sooner than paid-account
+provisioning. The device Debug build uses `com.samgolik.snailmail.dev`, keeping it
+separate from the App Store identity. Override either choice with
+`TEAM_ID=... DEVICE_BUNDLE_ID=... ./run-device.sh`.
 
-To find your team ID, check an existing development provisioning profile or your
-Apple Developer account. If signing has never been configured on this Mac, the
-command-line tools alone cannot add the Apple ID; that one-time setup must be done
-with a compatible Xcode installation or on another Mac using the same account.
+The debug token lives only under ignored `.build/` output with owner-only file
+permissions. Never copy it into source control or distribute a Debug build. Release
+continues to use the App Store bundle ID and production App Attest entitlement.
+
+To choose a different saved team explicitly, use `TEAM_ID=YOUR_TEAM_ID`. If signing
+has never been configured on this Mac, automatic provisioning may create a
+development certificate from the saved Xcode account; otherwise that one-time
+account/certificate setup must be completed in Xcode or on another Mac using the
+same account.
 
 ## Product flow
 
@@ -139,7 +148,7 @@ reads and writes go through authenticated callable functions so profiles cannot
 be enumerated, friendships cannot be forged, and letter metadata cannot be
 tampered with. Outside the emulator, every function also requires a verified
 Firebase App Check token. The app sends App Check in the callable protocol header,
-uses a debug provider only in simulator builds, and uses App Attest on devices.
+uses a debug provider in Debug builds, and uses App Attest in Release builds.
 The production App Attest entitlement is checked in and linked to both app build
 configurations. After the Apple team is active, the owner must enable the matching
 App Attest capability for the App ID and register App Attest in Firebase. The app’s

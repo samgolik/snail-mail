@@ -28,7 +28,7 @@ check "firebase app check linked" "grep -q 'FirebaseAppCheck in Frameworks' Snai
 check "app check request header" "grep -q 'X-Firebase-AppCheck' SnailMail/MailStore.swift"
 check "production app check enforcement" "grep -q 'app verification failed' firebase/functions/src/index.ts"
 check "app attest production entitlement" "test -f SnailMail/SnailMail.entitlements && grep -q 'com.apple.developer.devicecheck.appattest-environment' SnailMail/SnailMail.entitlements && grep -q '<string>production</string>' SnailMail/SnailMail.entitlements"
-check "app attest entitlement linked" "test \"$(grep -c 'CODE_SIGN_ENTITLEMENTS = SnailMail/SnailMail.entitlements' SnailMail.xcodeproj/project.pbxproj)\" -eq 2"
+check "app attest limited to release" "test \"$(grep -c 'CODE_SIGN_ENTITLEMENTS = SnailMail/SnailMail.entitlements' SnailMail.xcodeproj/project.pbxproj)\" -eq 1 && grep -q '#if DEBUG' SnailMail/SnailMailApp.swift"
 check "clean project syntax" "plutil -lint SnailMail.xcodeproj/project.pbxproj"
 check "explicit info plists linked" "grep -q 'INFOPLIST_FILE = \"SnailMail/Info-Debug.plist\"' SnailMail.xcodeproj/project.pbxproj && grep -q 'INFOPLIST_FILE = \"SnailMail/Info-Release.plist\"' SnailMail.xcodeproj/project.pbxproj"
 check "local networking limited to debug" "test \"$(plutil -extract NSAppTransportSecurity.NSAllowsLocalNetworking raw -o - SnailMail/Info-Debug.plist)\" = true && ! plutil -extract NSAppTransportSecurity raw -o - SnailMail/Info-Release.plist >/dev/null 2>&1"
