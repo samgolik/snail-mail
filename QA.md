@@ -60,3 +60,6 @@
 - The recipient cannot open a letter before the server-side `arrivesAt` value.
 - Changing device time does not affect server delivery.
 - Letter bodies longer than 500 characters are rejected by the server.
+
+The repeatable emulator test is `firebase/functions/test/integration.mjs`.
+It passed the complete two-account social flow on October 29, 2026.

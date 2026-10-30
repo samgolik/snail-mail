@@ -11,6 +11,8 @@ struct MailboxView: View {
                                empty: "the road is quiet")
                 mailboxSection("arrived", letters: store.arrivedLetters,
                                empty: "your mailbox is waiting")
+                mailboxSection("sent", letters: store.sentLetters,
+                               empty: "no letters have left your desk")
             }
             .padding()
         }
@@ -68,15 +70,18 @@ private struct ProductionLetterRow: View {
     let letter: SnailLetter
 
     var body: some View {
+        let isReceived = letter.recipientID == store.profile?.id
         HStack(spacing: 14) {
             Image(systemName: letter.hasArrived(at: store.now) ? "envelope.open.fill" : "seal.fill")
                 .font(.title)
                 .foregroundStyle(Color.snailGreen)
             VStack(alignment: .leading, spacing: 6) {
-                Text("from \(store.person(id: letter.senderID)?.displayName.lowercased() ?? "a friend")")
+                Text(isReceived
+                     ? "from \(store.person(id: letter.senderID)?.displayName.lowercased() ?? "a friend")"
+                     : "to \(store.person(id: letter.recipientID)?.displayName.lowercased() ?? "a friend")")
                     .font(.headline)
                 if letter.hasArrived(at: store.now) {
-                    Text("ready to open").foregroundStyle(.secondary)
+                    Text(isReceived ? "ready to open" : "delivered").foregroundStyle(.secondary)
                 } else {
                     ProgressView(value: letter.progress(at: store.now)).tint(.snailGreen)
                     Text("traveling from \(letter.originCity.lowercased())")

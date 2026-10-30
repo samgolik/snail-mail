@@ -33,7 +33,12 @@ private struct AuthenticatedRoot: View {
             }
         }
         .task(id: auth.user?.uid) {
-            if auth.user != nil && !store.hasLoaded { await store.load() }
+            guard auth.user != nil else { return }
+            if !store.hasLoaded { await store.load() }
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(60))
+                if !Task.isCancelled { await store.load() }
+            }
         }
     }
 }

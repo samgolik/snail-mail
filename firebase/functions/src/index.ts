@@ -178,7 +178,15 @@ export const requestFriend = onCall({region: "us-east1"}, async (request) => {
   const friendshipID = [requesterID, recipientID].sort().join("_");
   const ref = db.collection("friendships").doc(friendshipID);
   await db.runTransaction(async (transaction: Transaction) => {
-    if ((await transaction.get(ref)).exists) {
+    const [existing, blockedByRequester, blockedByRecipient] = await Promise.all([
+      transaction.get(ref),
+      transaction.get(db.collection("blocks").doc(`${requesterID}_${recipientID}`)),
+      transaction.get(db.collection("blocks").doc(`${recipientID}_${requesterID}`)),
+    ]);
+    if (blockedByRequester.exists || blockedByRecipient.exists) {
+      throw new HttpsError("permission-denied", "this connection is not available");
+    }
+    if (existing.exists) {
       throw new HttpsError("already-exists", "a friend request already exists");
     }
     transaction.create(ref, {
@@ -190,6 +198,38 @@ export const requestFriend = onCall({region: "us-east1"}, async (request) => {
     });
   });
   return {friendshipID};
+});
+
+export const blockUser = onCall({region: "us-east1"}, async (request) => {
+  const blockerID = requireUser(request);
+  const targetID = requireText(request.data?.targetID, "targetID", 128);
+  if (blockerID === targetID) {
+    throw new HttpsError("invalid-argument", "you cannot block yourself");
+  }
+  const friendshipID = [blockerID, targetID].sort().join("_");
+  const batch = db.batch();
+  batch.set(db.collection("blocks").doc(`${blockerID}_${targetID}`), {
+    blockerID, targetID, createdAt: FieldValue.serverTimestamp(),
+  });
+  batch.delete(db.collection("friendships").doc(friendshipID));
+  await batch.commit();
+  return {blocked: true};
+});
+
+export const reportUser = onCall({region: "us-east1"}, async (request) => {
+  const reporterID = requireUser(request);
+  const targetID = requireText(request.data?.targetID, "targetID", 128);
+  const reason = requireText(request.data?.reason, "reason", 500);
+  const letterID = typeof request.data?.letterID === "string" ?
+    request.data.letterID.slice(0, 128) : null;
+  if (reporterID === targetID) {
+    throw new HttpsError("invalid-argument", "you cannot report yourself");
+  }
+  await db.collection("reports").add({
+    reporterID, targetID, letterID, reason,
+    status: "open", createdAt: FieldValue.serverTimestamp(),
+  });
+  return {reported: true};
 });
 
 export const respondToFriend = onCall({region: "us-east1"}, async (request) => {
@@ -261,20 +301,27 @@ export const sendLetter = onCall({region: "us-east1"}, async (request) => {
   const senderRef = db.collection("users").doc(senderID);
   const recipientRef = db.collection("users").doc(recipientID);
   const friendshipRef = db.collection("friendships").doc(friendshipID);
+  const senderBlockRef = db.collection("blocks").doc(`${senderID}_${recipientID}`);
+  const recipientBlockRef = db.collection("blocks").doc(`${recipientID}_${senderID}`);
   const letterRef = db.collection("letters").doc();
   const sealedRef = db.collection("sealedLetters").doc(letterRef.id);
 
   const result = await db.runTransaction(async (transaction: Transaction) => {
-    const [sender, recipient, friendship] = await Promise.all([
+    const [sender, recipient, friendship, senderBlock, recipientBlock] = await Promise.all([
       transaction.get(senderRef),
       transaction.get(recipientRef),
       transaction.get(friendshipRef),
+      transaction.get(senderBlockRef),
+      transaction.get(recipientBlockRef),
     ]);
     if (!sender.exists || !recipient.exists) {
       throw new HttpsError("not-found", "sender or recipient profile is missing");
     }
     if (!friendship.exists || friendship.data()?.status !== "accepted") {
       throw new HttpsError("permission-denied", "letters require an accepted friendship");
+    }
+    if (senderBlock.exists || recipientBlock.exists) {
+      throw new HttpsError("permission-denied", "this connection is not available");
     }
 
     const senderData = sender.data()!;
@@ -341,25 +388,31 @@ export const deleteAccount = onCall({region: "us-east1"}, async (request) => {
   const id = requireUser(request);
   const profileRef = db.collection("users").doc(id);
   const profile = await profileRef.get();
-  const [friendships, received, sent] = await Promise.all([
+  const [friendships, received, sent, blockedBy, blockedTargets, reports] = await Promise.all([
     db.collection("friendships").where("userIDs", "array-contains", id).get(),
     db.collection("letters").where("recipientID", "==", id).get(),
     db.collection("letters").where("senderID", "==", id).get(),
+    db.collection("blocks").where("targetID", "==", id).get(),
+    db.collection("blocks").where("blockerID", "==", id).get(),
+    db.collection("reports").where("reporterID", "==", id).get(),
   ]);
   const letters = [...received.docs, ...sent.docs]
     .filter((item, index, all) => all.findIndex((other) => other.id === item.id) === index);
-  const batch = db.batch();
-  friendships.docs.forEach((item: QueryDocumentSnapshot) => batch.delete(item.ref));
+  const writer = db.bulkWriter();
+  friendships.docs.forEach((item: QueryDocumentSnapshot) => writer.delete(item.ref));
+  blockedBy.docs.forEach((item: QueryDocumentSnapshot) => writer.delete(item.ref));
+  blockedTargets.docs.forEach((item: QueryDocumentSnapshot) => writer.delete(item.ref));
+  reports.docs.forEach((item: QueryDocumentSnapshot) => writer.delete(item.ref));
   letters.forEach((item) => {
-    batch.delete(item.ref);
-    batch.delete(db.collection("sealedLetters").doc(item.id));
+    writer.delete(item.ref);
+    writer.delete(db.collection("sealedLetters").doc(item.id));
   });
   const username = profile.data()?.usernameNormalized as string | undefined;
   const friendCode = profile.data()?.friendCode as string | undefined;
-  if (username) batch.delete(db.collection("usernames").doc(username));
-  if (friendCode) batch.delete(db.collection("friendCodes").doc(friendCode));
-  batch.delete(profileRef);
-  await batch.commit();
+  if (username) writer.delete(db.collection("usernames").doc(username));
+  if (friendCode) writer.delete(db.collection("friendCodes").doc(friendCode));
+  writer.delete(profileRef);
+  await writer.close();
   await getAuth().deleteUser(id);
   return {deleted: true};
 });

@@ -44,7 +44,8 @@ Data is linked to the user and used for **App Functionality**:
 - User Content → Other User Content (letter bodies)
 - Identifiers → User ID
 - Location → Coarse Location (city-derived coordinates)
-- Other Data → profile name, username, city, friend relationships, and delivery metadata
+- Other Data → profile name, username, city, friend relationships, blocks,
+  safety reports, and delivery metadata
 
 Select **No** for tracking. Select **No** for third-party advertising and
 developer advertising. Review Firebase’s current SDK disclosures again at

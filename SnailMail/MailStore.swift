@@ -100,6 +100,7 @@ final class AuthManager: ObservableObject {
         defer { isWorking = false }
         do {
             try await user.reload()
+            _ = try await user.getIDToken(forcingRefresh: true)
             self.user = Auth.auth().currentUser
             if isEmailVerified { noticeMessage = "email verified" }
         } catch {
@@ -331,6 +332,11 @@ final class ProductionStore: ObservableObject {
     var receivedLetters: [SnailLetter] {
         guard let id = profile?.id else { return [] }
         return letters.filter { $0.recipientID == id }.sorted { $0.sentAt > $1.sentAt }
+    }
+
+    var sentLetters: [SnailLetter] {
+        guard let id = profile?.id else { return [] }
+        return letters.filter { $0.senderID == id }.sorted { $0.sentAt > $1.sentAt }
     }
 
     var travelingLetters: [SnailLetter] { receivedLetters.filter { !$0.hasArrived(at: now) } }

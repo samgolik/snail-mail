@@ -143,9 +143,23 @@ Install Node.js 22 and the Firebase CLI, then:
 cd firebase/functions
 npm install
 npm run check
+npm run build
 cd ../..
-npx -y firebase-tools@latest emulators:start
+CHOKIDAR_USEPOLLING=1 npx -y firebase-tools@latest emulators:start
 ```
+
+The backend integration test creates two disposable emulator accounts and
+exercises profile setup, verified friend requests, sealed sending, early-open
+rejection, reporting, blocking, and account deletion:
+
+```sh
+cd firebase/functions
+npm run test:integration
+```
+
+Run it while the Auth, Firestore, and Functions emulators are active. On this
+older Intel Mac, `CHOKIDAR_USEPOLLING=1` prevents the Functions watcher from
+exhausting file descriptors.
 
 The remaining production setup is:
 

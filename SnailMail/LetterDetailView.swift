@@ -6,7 +6,19 @@ struct ProductionLetterDetailView: View {
 
     var body: some View {
         VStack(spacing: 24) {
-            if letter.hasArrived(at: store.now) {
+            if letter.senderID == store.profile?.id {
+                Image(systemName: letter.hasArrived(at: store.now) ? "checkmark.seal.fill" : "seal.fill")
+                    .font(.system(size: 62, weight: .light))
+                    .foregroundStyle(Color.snailGreen)
+                Text(letter.hasArrived(at: store.now) ? "delivered" : "still on the way")
+                    .font(.title.bold())
+                if !letter.hasArrived(at: store.now) {
+                    ProgressView(value: letter.progress(at: store.now)).tint(.snailGreen)
+                }
+                Text("your letter is \(letter.hasArrived(at: store.now) ? "waiting in" : "traveling toward") \(letter.destinationCity.lowercased()). the seal belongs to its recipient.")
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.secondary)
+            } else if letter.hasArrived(at: store.now) {
                 Image(systemName: store.openedBodies[letter.id] == nil ? "envelope.fill" : "envelope.open.fill")
                     .font(.system(size: 62, weight: .light))
                     .foregroundStyle(Color.snailGreen)
