@@ -10,6 +10,10 @@ Keep it running while testing. Debug simulator builds use the local Auth and
 Functions emulators and permit local HTTP traffic; Release and device builds use
 production and remain HTTPS-only.
 
+Launch with `./run-simulator.sh`; its preflight must report all backend ports
+ready and confirm the generated Debug app’s local-network permission before
+installation.
+
 ## Happy path
 
 - Launch on a fresh simulator and confirm the sign-up screen appears before the mailbox.

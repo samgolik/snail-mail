@@ -177,6 +177,12 @@ once, then preserves the local emulator session normally. If a previous emulator
 session left a port occupied, stop that old process before restarting the
 complete suite.
 
+`run-simulator.sh` refuses to install the app unless Auth, Firestore, and
+Functions are listening locally. After building, it also inspects the generated
+Debug Info.plist and refuses installation if the local-network exception is
+missing. This turns a disconnected build into a terminal error instead of the
+ambiguous in-app “post office is out of reach” state.
+
 The backend integration test creates two disposable emulator accounts and
 exercises profile setup, verified friend requests, sealed sending, early-open
 rejection, reporting, block/unblock, reconnect/removal, rate-limit enforcement,

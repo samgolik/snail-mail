@@ -20,6 +20,22 @@ if [[ "$developer_path" != *Xcode.app* ]]; then
   exit 1
 fi
 
+backend_names=("Functions" "Firestore" "Authentication")
+backend_ports=(5001 8080 9099)
+missing_backend=()
+for index in {1..3}; do
+  if ! lsof -nP -iTCP:"${backend_ports[$index]}" -sTCP:LISTEN >/dev/null 2>&1; then
+    missing_backend+=("${backend_names[$index]} (${backend_ports[$index]})")
+  fi
+done
+
+if (( ${#missing_backend} )); then
+  print -u2 "The local post office is not ready: ${(j:, :)missing_backend}."
+  print -u2 "In another terminal, run: nvm use 22 && ./run-backend.sh"
+  print -u2 "Keep that terminal open, then retry ./run-simulator.sh."
+  exit 1
+fi
+
 device_id="$(xcrun simctl list devices available -j | /usr/bin/python3 -c '
 import json, sys
 data = json.load(sys.stdin)
@@ -74,6 +90,12 @@ if ! xcodebuild \
 fi
 
 app_path="$derived_data/Build/Products/Debug-iphonesimulator/SnailMail.app"
+local_networking="$(plutil -extract NSAppTransportSecurity.NSAllowsLocalNetworking raw -o - "$app_path/Info.plist" 2>/dev/null || true)"
+if [[ "$local_networking" != "true" ]]; then
+  print -u2 "The Debug app is missing its local-network permission; refusing to install a disconnected build."
+  print -u2 "Full build log: $build_log"
+  exit 1
+fi
 
 print "Starting Simulator…"
 xcrun simctl boot "$device_id" 2>/dev/null || true
