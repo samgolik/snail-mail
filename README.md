@@ -84,6 +84,9 @@ Firebase Auth app-delegate swizzling is disabled for the SwiftUI lifecycle. A
 phone-auth silent notification, and reCAPTCHA callback URL to Firebase Auth.
 The SwiftUI scene also forwards opened URLs with `onOpenURL`, because reCAPTCHA
 redirects are delivered through the scene lifecycle on modern iOS versions.
+Release signing includes production APNs and background remote-notification
+support so Firebase can usually verify a physical device silently; reCAPTCHA
+remains the required fallback.
 
 Every text-entry screen exposes a keyboard **done** control and supports
 interactive dismissal while scrolling. Return-address entry accepts a human
