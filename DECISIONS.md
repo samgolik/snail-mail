@@ -5,6 +5,16 @@ mail. Each entry records the current decision, why it was made, and what would
 justify revisiting it. It is not a substitute for the release checklist or
 operations runbook.
 
+### normalize return-address cities instead of storing arbitrary text
+
+- **Decision:** Accept a familiar `city, region` search during onboarding and
+  profile editing, then use Apple's geocoder to save the canonical locality and
+  administrative region with approximate coordinates.
+- **Why:** Delivery timing needs consistent coordinates, while users should not
+  need to grant precise-location access or understand latitude and longitude.
+- **Privacy:** Friends see only the canonical city/region label. Coordinates are
+  private backend data used for delivery timing.
+
 ## 2026-10-30 — first hosted beta backend preparation
 
 ### use the verified phone number as the complete account identity

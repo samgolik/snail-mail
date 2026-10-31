@@ -97,6 +97,19 @@ struct SnailMailApp: App {
                 .environmentObject(production)
                 .environmentObject(auth)
                 .tint(.snailGreen)
+                .toolbar {
+                    ToolbarItemGroup(placement: .keyboard) {
+                        Spacer()
+                        Button("done") {
+                            UIApplication.shared.sendAction(
+                                #selector(UIResponder.resignFirstResponder),
+                                to: nil,
+                                from: nil,
+                                for: nil
+                            )
+                        }
+                    }
+                }
                 .onOpenURL { url in
                     _ = SnailFirebase.auth.canHandle(url)
                 }

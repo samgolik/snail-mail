@@ -29,6 +29,7 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
             }
         }
+        .scrollDismissesKeyboard(.interactively)
         .scrollContentBackground(.hidden)
         .background(PastelBackground())
         .foregroundStyle(Color.berryInk)
@@ -266,7 +267,6 @@ struct SettingsView: View {
         return "\(version) (\(build))"
     }
 }
-
 private struct ProfileEditorView: View {
     @EnvironmentObject private var store: ProductionStore
     @Environment(\.dismiss) private var dismiss
@@ -302,6 +302,7 @@ private struct ProfileEditorView: View {
                     Section { Text(error).foregroundStyle(.red) }
                 }
             }
+            .scrollDismissesKeyboard(.interactively)
             .scrollContentBackground(.hidden)
             .background(PastelBackground())
             .navigationTitle("edit address")
@@ -330,16 +331,13 @@ private struct ProfileEditorView: View {
         isLocating = true
         defer { isLocating = false }
         do {
-            let places = try await CLGeocoder().geocodeAddressString(city)
-            guard let coordinate = places.first?.location?.coordinate else {
-                throw ProfileEditorLocationError()
-            }
+            let resolvedCity = try await CityResolver.resolve(city)
             if await store.saveProfile(
                 displayName: displayName,
                 username: username,
-                city: city,
-                latitude: coordinate.latitude,
-                longitude: coordinate.longitude
+                city: resolvedCity.name,
+                latitude: resolvedCity.latitude,
+                longitude: resolvedCity.longitude
             ) {
                 dismiss()
             }
@@ -348,5 +346,3 @@ private struct ProfileEditorView: View {
         }
     }
 }
-
-private struct ProfileEditorLocationError: Error {}

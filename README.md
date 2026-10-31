@@ -85,6 +85,12 @@ phone-auth silent notification, and reCAPTCHA callback URL to Firebase Auth.
 The SwiftUI scene also forwards opened URLs with `onOpenURL`, because reCAPTCHA
 redirects are delivered through the scene lifecycle on modern iOS versions.
 
+Every text-entry screen exposes a keyboard **done** control and supports
+interactive dismissal while scrolling. Return-address entry accepts a human
+friendly `city, region` query, then geocodes and stores a canonical city/region
+label with approximate coordinates. The app never requests precise device
+location and never exposes coordinates to other users.
+
 ## Product flow
 
 1. Enter a mobile number and use its one-time SMS code to create an account or sign in.

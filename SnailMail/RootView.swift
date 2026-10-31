@@ -108,6 +108,7 @@ private struct TermsAcceptanceView: View {
                 }
                 .padding(.horizontal, 24)
             }
+            .scrollDismissesKeyboard(.interactively)
         }
         .foregroundStyle(Color.berryInk)
     }
@@ -262,6 +263,7 @@ private struct ProfileSetupView: View {
                 }
                 .padding(.horizontal, 24)
             }
+            .scrollDismissesKeyboard(.interactively)
         }
         .foregroundStyle(Color.berryInk)
     }
@@ -270,16 +272,13 @@ private struct ProfileSetupView: View {
         isLocating = true
         defer { isLocating = false }
         do {
-            let places = try await CLGeocoder().geocodeAddressString(city)
-            guard let coordinate = places.first?.location?.coordinate else {
-                throw ProfileLocationError()
-            }
+            let resolvedCity = try await CityResolver.resolve(city)
             _ = await store.saveProfile(
                 displayName: displayName,
                 username: username,
-                city: city,
-                latitude: coordinate.latitude,
-                longitude: coordinate.longitude
+                city: resolvedCity.name,
+                latitude: resolvedCity.latitude,
+                longitude: resolvedCity.longitude
             )
         } catch {
             store.errorMessage = "we couldn’t find that city — try “city, state”"
@@ -288,6 +287,39 @@ private struct ProfileSetupView: View {
 }
 
 private struct ProfileLocationError: Error {}
+
+struct ResolvedCity {
+    let name: String
+    let latitude: Double
+    let longitude: Double
+}
+
+enum CityResolver {
+    static func resolve(_ query: String) async throws -> ResolvedCity {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { throw ProfileLocationError() }
+
+        let placemarks = try await CLGeocoder().geocodeAddressString(trimmed)
+        guard let placemark = placemarks.first,
+              let coordinate = placemark.location?.coordinate,
+              let locality = placemark.locality ?? placemark.subAdministrativeArea else {
+            throw ProfileLocationError()
+        }
+
+        let region = placemark.administrativeArea ?? placemark.country
+        let canonicalName = [locality, region]
+            .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .joined(separator: ", ")
+
+        guard !canonicalName.isEmpty else { throw ProfileLocationError() }
+        return ResolvedCity(
+            name: canonicalName,
+            latitude: coordinate.latitude,
+            longitude: coordinate.longitude
+        )
+    }
+}
 
 private struct AuthView: View {
     @EnvironmentObject private var auth: AuthManager

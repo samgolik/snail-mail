@@ -81,6 +81,7 @@ struct ComposeView: View {
                           bodyText.count > 500 || store.isWorking || !auth.isPhoneVerified)
             }
         }
+        .scrollDismissesKeyboard(.interactively)
         .scrollContentBackground(.hidden)
         .background(PastelBackground())
         .foregroundStyle(Color.berryInk)
