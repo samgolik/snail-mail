@@ -79,6 +79,10 @@ and the Firebase App Check API must remain enabled for `snail-mail-btc`. Never
 share the token or distribute a Debug build. Release continues to use the App
 Store bundle ID and production App Attest entitlement.
 
+Firebase Auth app-delegate swizzling is disabled for the SwiftUI lifecycle. A
+`UIApplicationDelegateAdaptor` explicitly forwards the APNs device token,
+phone-auth silent notification, and reCAPTCHA callback URL to Firebase Auth.
+
 ## Product flow
 
 1. Enter a mobile number and use its one-time SMS code to create an account or sign in.

@@ -28,6 +28,17 @@ operations runbook.
 - **Revisit when:** Testers need international numbers. Before launch, document
   recovery and recycled-number handling because there is no email fallback.
 
+### bridge Firebase Auth through the SwiftUI app delegate explicitly
+
+- **Decision:** Disable Firebase app-delegate swizzling and attach a dedicated
+  `UIApplicationDelegateAdaptor` that forwards the APNs token, silent phone-auth
+  notification, and reCAPTCHA callback URL to Firebase Auth.
+- **Why:** Firebase requires the explicit delegate bridge for SwiftUI phone
+  authentication. A single manual path is more predictable than combining a
+  SwiftUI lifecycle with automatic method swizzling.
+- **Fallback:** If silent APNs verification is unavailable, Firebase uses the
+  registered custom URL scheme to complete reCAPTCHA verification.
+
 ### blaze is active and the guarded backend is live
 
 - **Observed:** The first deployment correctly failed while the project was

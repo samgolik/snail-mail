@@ -2,6 +2,44 @@ import SwiftUI
 import FirebaseCore
 import FirebaseAppCheck
 import FirebaseAuth
+import UIKit
+
+final class SnailMailAppDelegate: NSObject, UIApplicationDelegate {
+    func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+    ) -> Bool {
+        application.registerForRemoteNotifications()
+        return true
+    }
+
+    func application(
+        _ application: UIApplication,
+        didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
+    ) {
+        SnailFirebase.auth.setAPNSToken(deviceToken, type: .unknown)
+    }
+
+    func application(
+        _ application: UIApplication,
+        didReceiveRemoteNotification userInfo: [AnyHashable: Any],
+        fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
+    ) {
+        if SnailFirebase.auth.canHandleNotification(userInfo) {
+            completionHandler(.noData)
+            return
+        }
+        completionHandler(.noData)
+    }
+
+    func application(
+        _ app: UIApplication,
+        open url: URL,
+        options: [UIApplication.OpenURLOptionsKey: Any] = [:]
+    ) -> Bool {
+        SnailFirebase.auth.canHandle(url)
+    }
+}
 
 enum SnailFirebase {
     private static let localAppName = "SnailMailLocal"
@@ -41,6 +79,7 @@ private final class SnailAppCheckProviderFactory: NSObject, AppCheckProviderFact
 
 @main
 struct SnailMailApp: App {
+    @UIApplicationDelegateAdaptor(SnailMailAppDelegate.self) private var appDelegate
     @StateObject private var store = MailStore()
     @StateObject private var production = ProductionStore()
     @StateObject private var auth: AuthManager
