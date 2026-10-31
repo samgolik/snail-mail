@@ -97,6 +97,9 @@ struct SnailMailApp: App {
                 .environmentObject(production)
                 .environmentObject(auth)
                 .tint(.snailGreen)
+                .onOpenURL { url in
+                    _ = SnailFirebase.auth.canHandle(url)
+                }
         }
     }
 }

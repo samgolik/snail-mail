@@ -32,7 +32,8 @@ operations runbook.
 
 - **Decision:** Disable Firebase app-delegate swizzling and attach a dedicated
   `UIApplicationDelegateAdaptor` that forwards the APNs token, silent phone-auth
-  notification, and reCAPTCHA callback URL to Firebase Auth.
+  notification, and reCAPTCHA callback URL to Firebase Auth. Also forward opened
+  URLs from the SwiftUI scene with `onOpenURL`.
 - **Why:** Firebase requires the explicit delegate bridge for SwiftUI phone
   authentication. A single manual path is more predictable than combining a
   SwiftUI lifecycle with automatic method swizzling.

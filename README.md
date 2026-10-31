@@ -82,6 +82,8 @@ Store bundle ID and production App Attest entitlement.
 Firebase Auth app-delegate swizzling is disabled for the SwiftUI lifecycle. A
 `UIApplicationDelegateAdaptor` explicitly forwards the APNs device token,
 phone-auth silent notification, and reCAPTCHA callback URL to Firebase Auth.
+The SwiftUI scene also forwards opened URLs with `onOpenURL`, because reCAPTCHA
+redirects are delivered through the scene lifecycle on modern iOS versions.
 
 ## Product flow
 
