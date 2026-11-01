@@ -3,6 +3,10 @@
 The production code uses bundle ID `com.beattheclockstudios.snailmail`. Simulator QA does
 not require a paid Apple account; upload and TestFlight distribution do.
 
+The App Store Connect record is `Snail Mail: Slow Messages` (Apple ID
+`6829490432`). Release archives use the manually selected `Snail Mail App Store
+Connect` distribution profile.
+
 ## External prerequisites
 
 1. Renew the Apple Developer Program membership.

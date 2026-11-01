@@ -143,6 +143,12 @@ Current Firebase registration:
 - Firestore: Standard edition, default database, `us-east1`
 - Firebase Apple SDK: `12.19.3` (pinned for Xcode 16.4 / Swift 6.1 compatibility)
 - iOS products linked: Core, Authentication, and App Check
+
+Current Apple distribution registration:
+
+- App Store name: `Snail Mail: Slow Messages`
+- App Store Connect app ID: `6829490432`
+- Distribution profile: `Snail Mail App Store Connect`
 - Firestore and Functions backend configuration is retained but their unused,
   heavyweight iOS SDK products are intentionally not linked for the first beta
 - Firestore rules and mailbox indexes: deployed
