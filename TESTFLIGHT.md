@@ -7,6 +7,11 @@ The App Store Connect record is `Snail Mail: Slow Messages` (Apple ID
 `6829490432`). Release archives use the manually selected `Snail Mail App Store
 Connect` distribution profile.
 
+Because Apple requires the iOS 26 SDK, TestFlight release builds run on the
+manual GitHub Actions workflow in `.github/workflows/testflight.yml`. This keeps
+the older Intel development Mac useful for local simulator and device QA while
+the cloud runner performs only release signing and upload.
+
 ## External prerequisites
 
 1. Renew the Apple Developer Program membership.

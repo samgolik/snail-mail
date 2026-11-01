@@ -149,6 +149,8 @@ Current Apple distribution registration:
 - App Store name: `Snail Mail: Slow Messages`
 - App Store Connect app ID: `6829490432`
 - Distribution profile: `Snail Mail App Store Connect`
+- TestFlight builds run manually through `.github/workflows/testflight.yml` on
+  GitHub's `macos-26` runner so uploads use Apple's required iOS 26 SDK.
 - Firestore and Functions backend configuration is retained but their unused,
   heavyweight iOS SDK products are intentionally not linked for the first beta
 - Firestore rules and mailbox indexes: deployed
