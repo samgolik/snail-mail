@@ -72,16 +72,22 @@ jobs:
             -destination 'generic/platform=iOS' \
             -archivePath "$RUNNER_TEMP/SnailMail.xcarchive"
 
-      - name: Upload to App Store Connect
-        env:
-          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      - name: Export signed IPA
         run: |
           set -euo pipefail
           xcodebuild -exportArchive \
             -archivePath "$RUNNER_TEMP/SnailMail.xcarchive" \
-            -exportPath "$RUNNER_TEMP/TestFlightUpload" \
-            -exportOptionsPlist ci/ExportOptions.plist \
-            -authenticationKeyPath "$API_KEY_PATH" \
-            -authenticationKeyID "$APP_STORE_CONNECT_KEY_ID" \
-            -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID"
+            -exportPath "$RUNNER_TEMP/TestFlightExport" \
+            -exportOptionsPlist ci/ExportOptions.plist
+
+      - name: Upload to App Store Connect
+        env:
+          APP_STORE_CONNECT_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_APP_ID: "6829490432"
+          IPA_PATH: ${{ runner.temp }}/TestFlightExport/SnailMail.ipa
+          MARKETING_VERSION: "1.0"
+          BUILD_VERSION: "1"
+        run: |
+          set -euo pipefail
+          ruby ci/upload_build.rb
