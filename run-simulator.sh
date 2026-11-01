@@ -5,7 +5,7 @@ project_dir="${0:A:h}"
 derived_data="$project_dir/.build/DerivedData"
 build_log="$project_dir/.build/last-build.log"
 scheme="SnailMail"
-bundle_id="com.samgolik.snailmail"
+bundle_id="com.beattheclockstudios.snailmail"
 host_arch="$(uname -m)"
 
 if ! command -v xcodebuild >/dev/null || ! command -v xcrun >/dev/null; then

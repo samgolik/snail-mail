@@ -6,7 +6,7 @@
 - Subtitle: **messages worth waiting for**
 - Primary category: **Social Networking**
 - Secondary category: **Lifestyle**
-- Bundle ID: `com.samgolik.snailmail`
+- Bundle ID: `com.beattheclockstudios.snailmail`
 - Support URL: `https://snail-mail-btc.web.app/support`
 - Privacy URL: `https://snail-mail-btc.web.app/privacy`
 - Marketing URL: `https://snail-mail-btc.web.app`

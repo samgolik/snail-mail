@@ -139,7 +139,7 @@ narrow callable HTTPS API. Firestore is not directly accessible to the client.
 Current Firebase registration:
 
 - Project: `snail-mail-btc`
-- iOS bundle ID: `com.samgolik.snailmail`
+- iOS bundle ID: `com.beattheclockstudios.snailmail`
 - Firestore: Standard edition, default database, `us-east1`
 - Firebase Apple SDK: `12.19.3` (pinned for Xcode 16.4 / Swift 6.1 compatibility)
 - iOS products linked: Core, Authentication, and App Check
@@ -252,6 +252,6 @@ Run the local preflight check with:
 
 Uploading to TestFlight still requires an active Apple Developer Program
 membership, an Apple Distribution signing identity, and an App Store Connect
-app record for bundle ID `com.samgolik.snailmail`. The repository can be built
+app record for bundle ID `com.beattheclockstudios.snailmail`. The repository can be built
 and tested in the simulator without those credentials. See `TESTFLIGHT.md` for
 the shortest upload checklist and draft beta metadata.

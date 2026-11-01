@@ -8,7 +8,7 @@ small enough for one developer to follow consistently.
 - Owner: beat the clock studios
 - Support and privacy contact: `beattheclockstudios@gmail.com`
 - Firebase project: `snail-mail-btc`
-- Bundle ID: `com.samgolik.snailmail`
+- Bundle ID: `com.beattheclockstudios.snailmail`
 
 Never place passwords, ID tokens, letter contents, private keys, or unredacted
 user exports in issues, logs, screenshots, or source control.

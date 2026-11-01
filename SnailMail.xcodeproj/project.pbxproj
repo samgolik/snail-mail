@@ -307,7 +307,7 @@
 				OTHER_LDFLAGS = (
 					"-ObjC",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.samgolik.snailmail;
+				PRODUCT_BUNDLE_IDENTIFIER = com.beattheclockstudios.snailmail;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "Snail Mail iPhone Development";
 				SDKROOT = iphoneos;
@@ -336,7 +336,7 @@
 				OTHER_LDFLAGS = (
 					"-ObjC",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.samgolik.snailmail;
+				PRODUCT_BUNDLE_IDENTIFIER = com.beattheclockstudios.snailmail;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -358,7 +358,7 @@
 				OTHER_LDFLAGS = (
 					"-ObjC",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.samgolik.snailmail.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.beattheclockstudios.snailmail.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -378,7 +378,7 @@
 				OTHER_LDFLAGS = (
 					"-ObjC",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.samgolik.snailmail.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.beattheclockstudios.snailmail.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";

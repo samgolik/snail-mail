@@ -609,7 +609,7 @@ private struct TermsAcceptanceError: Error {}
 
 private enum CallableAPI {
     private static let logger = Logger(
-        subsystem: Bundle.main.bundleIdentifier ?? "com.samgolik.snailmail",
+        subsystem: Bundle.main.bundleIdentifier ?? "com.beattheclockstudios.snailmail",
         category: "callable"
     )
 

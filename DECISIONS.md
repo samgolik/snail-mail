@@ -143,7 +143,7 @@ operations runbook.
 
 - **Decision:** Debug builds use Firebase App Check’s debug provider and no App
   Attest entitlement; Release builds alone use App Attest. Free-team device builds
-  use the separate `com.samgolik.snailmail.dev` identifier.
+  use the separate `com.beattheclockstudios.snailmail.dev` identifier.
 - **Why:** This enables command-line development on Sam’s physical phone without
   weakening the TestFlight binary or requiring a paid capability for every Debug
   install. The private debug token is generated under ignored `.build/`, registered

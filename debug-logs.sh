@@ -1,7 +1,7 @@
 #!/bin/zsh
 set -euo pipefail
 
-bundle_id="com.samgolik.snailmail"
+bundle_id="com.beattheclockstudios.snailmail"
 
 if ! xcrun simctl list devices booted | grep -q "(Booted)"; then
   print -u2 "No iOS Simulator is booted. Run ./run-simulator.sh first."

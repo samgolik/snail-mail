@@ -1,6 +1,6 @@
 # TestFlight and App Store launch checklist
 
-The production code uses bundle ID `com.samgolik.snailmail`. Simulator QA does
+The production code uses bundle ID `com.beattheclockstudios.snailmail`. Simulator QA does
 not require a paid Apple account; upload and TestFlight distribution do.
 
 ## External prerequisites
@@ -8,7 +8,7 @@ not require a paid Apple account; upload and TestFlight distribution do.
 1. Renew the Apple Developer Program membership.
 2. Accept current agreements in Apple Developer and App Store Connect.
 3. Create the explicit App ID and App Store Connect record for
-   `com.samgolik.snailmail`.
+   `com.beattheclockstudios.snailmail`.
 4. Configure Apple signing on a currently supported Xcode installation.
 5. Enable App Attest for the App ID after the paid Apple team is active. The
    Release target already links the checked-in `production` entitlement; verify
