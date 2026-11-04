@@ -17,12 +17,12 @@ struct MailboxView: View {
                     }
                     .buttonStyle(.plain)
                     .foregroundStyle(Color.berryInk)
-                    .accessibilityHint("retries the mailbox connection")
+                    .accessibilityHint("retries the snailbox connection")
                 }
                 mailboxSection("traveling", letters: store.travelingLetters,
                                empty: "the road is quiet")
-                mailboxSection("arrived", letters: store.arrivedLetters,
-                               empty: "your mailbox is waiting")
+                    mailboxSection("ready to open", letters: store.arrivedLetters,
+                               empty: "your snailbox is fresh")
                 mailboxSection("sent", letters: store.sentLetters,
                                empty: "no letters have left your desk")
             }
@@ -30,7 +30,7 @@ struct MailboxView: View {
         }
         .refreshable { await store.load() }
         .background(PastelBackground())
-        .navigationTitle("snail mail")
+        .navigationTitle("snailbox")
         .foregroundStyle(Color.berryInk)
         .navigationDestination(for: SnailLetter.self) {
             ProductionLetterDetailView(letter: $0)
@@ -41,7 +41,7 @@ struct MailboxView: View {
         VStack(alignment: .leading, spacing: 5) {
             Text("hello, \(store.profile?.displayName.lowercased() ?? "friend")")
                 .font(.title2.bold())
-            Text("your tiny mailbox in \(store.profile?.city.lowercased() ?? "the world")")
+            Text("your tiny snailbox in \(store.profile?.city.lowercased() ?? "the world")")
                 .foregroundStyle(.secondary)
         }
     }
@@ -123,5 +123,56 @@ private struct ProductionLetterRow: View {
         }
         let percent = Int(letter.progress(at: store.now) * 100)
         return "letter \(direction) \(person), traveling, \(percent) percent of the journey complete"
+    }
+}
+
+struct ArchiveView: View {
+    @EnvironmentObject private var store: ProductionStore
+
+    var body: some View {
+        ScrollView {
+            LazyVStack(spacing: 12) {
+                if store.archivedLetters.isEmpty {
+                    ContentUnavailableView(
+                        "nothing tucked away",
+                        systemImage: "archivebox",
+                        description: Text("letters move here after you open them")
+                    )
+                    .padding(.top, 80)
+                } else {
+                    ForEach(store.archivedLetters) { letter in
+                        NavigationLink(value: letter) { archivedRow(letter) }
+                            .buttonStyle(.plain)
+                    }
+                }
+            }
+            .padding()
+        }
+        .background(PastelBackground())
+        .navigationTitle("archive")
+        .navigationDestination(for: SnailLetter.self) {
+            ProductionLetterDetailView(letter: $0)
+        }
+        .refreshable { await store.load() }
+    }
+
+    private func archivedRow(_ letter: SnailLetter) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: "envelope.open.fill")
+                .font(.title2)
+                .foregroundStyle(Color.snailGreen)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("from \(store.person(id: letter.senderID)?.displayName.lowercased() ?? "a friend")")
+                    .font(.headline)
+                Text("opened \((letter.openedAt ?? letter.arrivesAt).formatted(date: .abbreviated, time: .omitted).lowercased())")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Image(systemName: "chevron.right").foregroundStyle(.tertiary)
+        }
+        .padding()
+        .background(Color.card.opacity(0.88), in: RoundedRectangle(cornerRadius: 22))
+        .overlay { RoundedRectangle(cornerRadius: 22).stroke(Color.sand.opacity(0.9)) }
     }
 }

@@ -189,6 +189,7 @@ function letterJSON(id: string, data: DocumentData) {
     sentAt: (data.sentAt as Timestamp).toDate().toISOString(),
     arrivesAt: (data.arrivesAt as Timestamp).toDate().toISOString(),
     status: data.status,
+    openedAt: data.openedAt instanceof Timestamp ? data.openedAt.toDate().toISOString() : null,
   };
 }
 
@@ -266,11 +267,20 @@ export const acceptTerms = onCall({region: "us-east1"}, async (request) => {
 export const requestFriend = onCall({region: "us-east1"}, async (request) => {
   const requesterID = requireVerifiedUser(request);
   await requireTermsAccepted(requesterID);
-  const code = requireText(request.data?.friendCode, "friendCode", 10).toUpperCase();
+  const identifier = requireText(
+    request.data?.friendIdentifier ?? request.data?.friendCode,
+    "friendIdentifier",
+    24,
+  );
   await enforceDailyLimit(requesterID, "requestFriend", 30);
-  const codeDoc = await db.collection("friendCodes").doc(code).get();
-  const recipientID = codeDoc.data()?.userID as string | undefined;
-  if (!recipientID) throw new HttpsError("not-found", "friend code not found");
+  const normalized = identifier.replace(/^@/, "").toLowerCase();
+  const [codeDoc, usernameDoc] = await Promise.all([
+    db.collection("friendCodes").doc(identifier.toUpperCase()).get(),
+    db.collection("usernames").doc(normalized).get(),
+  ]);
+  const recipientID = (codeDoc.data()?.userID ?? usernameDoc.data()?.userID) as
+    string | undefined;
+  if (!recipientID) throw new HttpsError("not-found", "no snail mail address matched that handle or code");
   if (recipientID === requesterID) {
     throw new HttpsError("invalid-argument", "that is your own friend code");
   }
@@ -296,7 +306,16 @@ export const requestFriend = onCall({region: "us-east1"}, async (request) => {
       updatedAt: FieldValue.serverTimestamp(),
     });
   });
-  return {friendshipID};
+  const recipient = await db.collection("users").doc(recipientID).get();
+  if (!recipient.exists) throw new HttpsError("not-found", "that account no longer exists");
+  return {
+    connection: {
+      id: friendshipID,
+      status: "pending",
+      isIncoming: false,
+      profile: profileJSON(recipient.id, recipient.data()!),
+    },
+  };
 });
 
 export const blockUser = onCall({region: "us-east1"}, async (request) => {
@@ -382,7 +401,7 @@ export const respondToFriend = onCall({region: "us-east1"}, async (request) => {
     throw new HttpsError("invalid-argument", "accept must be true or false");
   }
   const ref = db.collection("friendships").doc(friendshipID);
-  await db.runTransaction(async (transaction: Transaction) => {
+  const otherID = await db.runTransaction(async (transaction: Transaction) => {
     const snapshot = await transaction.get(ref);
     const data = snapshot.data();
     if (!data || !(data.userIDs as string[]).includes(id) ||
@@ -394,8 +413,20 @@ export const respondToFriend = onCall({region: "us-east1"}, async (request) => {
     } else {
       transaction.delete(ref);
     }
+    return (data.userIDs as string[]).find((userID: string) => userID !== id)!;
   });
-  return {accepted: request.data.accept};
+  if (!request.data.accept) return {accepted: false, connection: null};
+  const other = await db.collection("users").doc(otherID).get();
+  if (!other.exists) throw new HttpsError("not-found", "that account no longer exists");
+  return {
+    accepted: true,
+    connection: {
+      id: friendshipID,
+      status: "accepted",
+      isIncoming: false,
+      profile: profileJSON(other.id, other.data()!),
+    },
+  };
 });
 
 export const loadHome = onCall({region: "us-east1"}, async (request) => {
@@ -542,7 +573,7 @@ export const openLetter = onCall({region: "us-east1"}, async (request) => {
 
     transaction.update(letterRef, {
       status: "arrived",
-      openedAt: FieldValue.serverTimestamp(),
+      openedAt: letterData.openedAt ?? FieldValue.serverTimestamp(),
     });
     return {body: sealed.data()!.body as string};
   });

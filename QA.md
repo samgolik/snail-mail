@@ -28,11 +28,18 @@ installation.
 - Enter the same phone number again and confirm its next SMS code returns to the same account.
 - Create two phone accounts on separate devices.
 - Exchange a friend code and accept the request from the recipient account.
+- Add a second tester by `@handle`; confirm the outgoing request appears without
+  waiting for a full snailbox refresh.
 - Edit the display name, username, and city; relaunch and confirm the new return
   address appears on both devices without changing the friend code.
 - Accept the server-recorded Terms and Community Guidelines prompt and confirm
   social features remain unavailable before acceptance.
 - Confirm both mailbox sections are initially empty.
+- Open an arrived letter and confirm it immediately leaves the snailbox, appears
+  in Archive, and remains readable after relaunching the app.
+- Confirm the letter detail background reaches both screen edges without white bars.
+- On profile setup and address editing, use **use my current city**, allow
+  when-in-use access, and confirm the app saves a city/region label.
 - Write a letter to the connected friend and verify blank messages cannot be sent.
 - Confirm the counter prevents messages longer than 500 characters.
 - Send, open the recipient account, and refresh **Mailbox**.
@@ -76,7 +83,9 @@ installation.
 ## Known MVP limits
 
 - Friend discovery intentionally uses private codes rather than public search.
-- Push notifications are not yet enabled; refresh fetches new mail.
+- User-visible arrival push notifications are not yet enabled; refresh fetches
+  new mail. Firebase Auth uses silent APNs verification to avoid reCAPTCHA when
+  Apple permits it, with reCAPTCHA retained as the required fallback.
 - The server caps fictional journeys at 30 days.
 
 ## Backend security checks

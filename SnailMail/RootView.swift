@@ -156,9 +156,13 @@ private struct MainTabView: View {
     var body: some View {
         TabView {
             NavigationStack { MailboxView() }
-                .tabItem { Label("mailbox", systemImage: "mail.stack") }
+                .tabItem { Label("snailbox", systemImage: "mail.stack") }
+            NavigationStack { ArchiveView() }
+                .tabItem { Label("archive", systemImage: "archivebox") }
             NavigationStack { ComposeView() }
                 .tabItem { Label("write", systemImage: "square.and.pencil") }
+            NavigationStack { AddressBookView() }
+                .tabItem { Label("addresses", systemImage: "book.closed") }
             NavigationStack { SettingsView() }
                 .tabItem { Label("you", systemImage: "person.crop.circle") }
         }
@@ -236,6 +240,10 @@ private struct ProfileSetupView: View {
                             .textContentType(.addressCity)
                             .authFieldStyle()
                     }
+                    Button("use my current city", systemImage: "location") {
+                        Task { await useCurrentCity() }
+                    }
+                    .disabled(isLocating)
                     if let error = store.errorMessage {
                         MessageRow(text: error, systemImage: "exclamationmark.circle", color: .red)
                     }
@@ -284,6 +292,16 @@ private struct ProfileSetupView: View {
             store.errorMessage = "we couldn’t find that city — try “city, state”"
         }
     }
+
+    private func useCurrentCity() async {
+        isLocating = true
+        defer { isLocating = false }
+        do {
+            city = try await CityResolver.currentCity().name
+        } catch {
+            store.errorMessage = "we couldn’t use your location — allow location access or type your city"
+        }
+    }
 }
 
 private struct ProfileLocationError: Error {}
@@ -318,6 +336,81 @@ enum CityResolver {
             latitude: coordinate.latitude,
             longitude: coordinate.longitude
         )
+    }
+
+    static func currentCity() async throws -> ResolvedCity {
+        let location = try await CurrentLocationRequest().start()
+        let placemarks = try await CLGeocoder().reverseGeocodeLocation(location)
+        guard let placemark = placemarks.first,
+              let locality = placemark.locality ?? placemark.subAdministrativeArea else {
+            throw ProfileLocationError()
+        }
+        let region = placemark.administrativeArea ?? placemark.country
+        let name = [locality, region]
+            .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .joined(separator: ", ")
+        guard !name.isEmpty else { throw ProfileLocationError() }
+        return ResolvedCity(
+            name: name,
+            latitude: location.coordinate.latitude,
+            longitude: location.coordinate.longitude
+        )
+    }
+}
+
+private final class CurrentLocationRequest: NSObject, CLLocationManagerDelegate {
+    private let manager = CLLocationManager()
+    private var continuation: CheckedContinuation<CLLocation, Error>?
+
+    override init() {
+        super.init()
+        manager.delegate = self
+        manager.desiredAccuracy = kCLLocationAccuracyKilometer
+    }
+
+    func start() async throws -> CLLocation {
+        try await withCheckedThrowingContinuation { continuation in
+            self.continuation = continuation
+            switch manager.authorizationStatus {
+            case .authorizedAlways, .authorizedWhenInUse:
+                manager.requestLocation()
+            case .notDetermined:
+                manager.requestWhenInUseAuthorization()
+            default:
+                finish(.failure(ProfileLocationError()))
+            }
+        }
+    }
+
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        guard continuation != nil else { return }
+        switch manager.authorizationStatus {
+        case .authorizedAlways, .authorizedWhenInUse:
+            manager.requestLocation()
+        case .denied, .restricted:
+            finish(.failure(ProfileLocationError()))
+        default:
+            break
+        }
+    }
+
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard let location = locations.last else {
+            finish(.failure(ProfileLocationError()))
+            return
+        }
+        finish(.success(location))
+    }
+
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        finish(.failure(error))
+    }
+
+    private func finish(_ result: Result<CLLocation, Error>) {
+        guard let continuation else { return }
+        self.continuation = nil
+        continuation.resume(with: result)
     }
 }
 

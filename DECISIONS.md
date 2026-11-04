@@ -139,6 +139,29 @@ operations runbook.
 - **Revisit when:** The first signed TestFlight build is available. The initial
   notification should announce arrival without revealing letter contents.
 
+### keep the snailbox fresh with a server-backed archive
+
+- **Decision:** `openedAt` is returned with letter metadata. Unopened arrivals
+  stay in the snailbox; opened arrivals move into Archive. The sealed body is
+  fetched again when an archived letter is viewed on another device.
+- **Why:** Local-only archive state would disagree across devices and resurrect
+  opened letters after reinstalling the app.
+
+### make the address book discoverable without uploading contacts
+
+- **Decision:** Friend requests accept an exact `@handle` or private friend
+  code and return the pending connection immediately.
+- **Why:** Handles are easier to exchange, while codes retain a non-searchable
+  option. The app still does not upload contacts or expose a public directory.
+
+### location is optional and city-level
+
+- **Decision:** Users can type a city or grant when-in-use location access to
+  fill it automatically. The app requests kilometer-level accuracy and stores
+  only the resolved city and coordinate used for journey timing.
+- **Why:** This removes free-text ambiguity without displaying or sharing a
+  precise device location.
+
 ### separate device development from release attestation
 
 - **Decision:** Debug builds use Firebase App Check’s debug provider and no App

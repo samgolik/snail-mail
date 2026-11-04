@@ -10,6 +10,7 @@ struct ProductionLetterDetailView: View {
     @State private var reportSent = false
 
     var body: some View {
+        ScrollView {
         VStack(spacing: 24) {
             if letter.senderID == store.profile?.id {
                 Image(systemName: letter.hasArrived(at: store.now) ? "checkmark.seal.fill" : "seal.fill")
@@ -67,13 +68,20 @@ struct ProductionLetterDetailView: View {
             if let error = store.errorMessage {
                 Text(error).font(.caption).foregroundStyle(.red)
             }
-            Spacer()
         }
-        .padding()
-        .background(PastelBackground())
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 24)
+        }
+        .background(PastelBackground().ignoresSafeArea())
         .foregroundStyle(Color.berryInk)
         .navigationTitle("letter")
         .navigationBarTitleDisplayMode(.inline)
+        .task(id: letter.id) {
+            if letter.openedAt != nil && store.openedBodies[letter.id] == nil {
+                await store.open(letter)
+            }
+        }
         .toolbar {
             if isReceived, sender != nil {
                 ToolbarItem(placement: .topBarTrailing) {

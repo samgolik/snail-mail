@@ -16,7 +16,6 @@ struct SettingsView: View {
     var body: some View {
         Form {
             identitySection
-            friendsSection
             blockedSection
             accountSection
             Section("feedback") {
@@ -197,7 +196,7 @@ struct SettingsView: View {
                 .autocorrectionDisabled()
             Button("send friend request") {
                 Task {
-                    if await store.requestFriend(code: friendCode) {
+                    if await store.requestFriend(identifier: friendCode) {
                         friendCode = ""
                     }
                 }
@@ -267,6 +266,153 @@ struct SettingsView: View {
         return "\(version) (\(build))"
     }
 }
+
+struct AddressBookView: View {
+    @EnvironmentObject private var store: ProductionStore
+    @EnvironmentObject private var auth: AuthManager
+    @State private var identifier = ""
+    @State private var requestSent = false
+    @State private var personToRemove: SnailProfile?
+
+    var body: some View {
+        Form {
+            Section {
+                HStack(spacing: 10) {
+                    TextField("@handle or friend code", text: $identifier)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .submitLabel(.send)
+                        .onSubmit { sendRequest() }
+                    Button {
+                        sendRequest()
+                    } label: {
+                        Image(systemName: "paperplane.fill")
+                    }
+                    .disabled(!canSend)
+                    .accessibilityLabel("send friend request")
+                }
+                Text("ask for a handle, or share your private code when you want more privacy.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                if let code = store.profile?.friendCode {
+                    ShareLink(item: "find me on snail mail — @\(store.profile?.username.replacingOccurrences(of: "@", with: "") ?? "") or private code \(code)") {
+                        Label("share my address", systemImage: "square.and.arrow.up")
+                    }
+                }
+            } header: {
+                Text("add an address")
+            }
+
+            if !store.incomingRequests.isEmpty {
+                Section("requests for you") {
+                    ForEach(store.incomingRequests) { connection in
+                        VStack(alignment: .leading, spacing: 10) {
+                            addressLabel(connection.profile)
+                            HStack {
+                                Button("accept") {
+                                    Task { await store.respond(to: connection, accept: true) }
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .tint(.snailGreen)
+                                Button("decline", role: .destructive) {
+                                    Task { await store.respond(to: connection, accept: false) }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if !store.outgoingRequests.isEmpty {
+                Section("waiting for a reply") {
+                    ForEach(store.outgoingRequests) { connection in
+                        LabeledContent {
+                            Text("sent").foregroundStyle(.secondary)
+                        } label: {
+                            addressLabel(connection.profile)
+                        }
+                    }
+                }
+            }
+
+            Section("your address book") {
+                if store.friends.isEmpty {
+                    ContentUnavailableView(
+                        "no addresses yet",
+                        systemImage: "book.closed",
+                        description: Text("add a friend above to begin exchanging letters")
+                    )
+                } else {
+                    ForEach(store.friends) { friend in
+                        HStack {
+                            addressLabel(friend)
+                            Spacer()
+                            Menu {
+                                Button("remove address", systemImage: "person.badge.minus", role: .destructive) {
+                                    personToRemove = friend
+                                }
+                            } label: {
+                                Image(systemName: "ellipsis.circle")
+                            }
+                        }
+                    }
+                }
+            }
+
+            if let error = store.errorMessage {
+                Section { Text(error).font(.caption).foregroundStyle(.red) }
+            }
+        }
+        .scrollDismissesKeyboard(.interactively)
+        .scrollContentBackground(.hidden)
+        .background(PastelBackground())
+        .navigationTitle("address book")
+        .refreshable { await store.load() }
+        .alert("request sent", isPresented: $requestSent) {
+            Button("lovely", role: .cancel) {}
+        } message: {
+            Text("their address will appear here as soon as they accept.")
+        }
+        .confirmationDialog(
+            "remove \(personToRemove?.displayName.lowercased() ?? "this address")?",
+            isPresented: Binding(
+                get: { personToRemove != nil },
+                set: { if !$0 { personToRemove = nil } }
+            )
+        ) {
+            Button("remove", role: .destructive) {
+                guard let person = personToRemove else { return }
+                personToRemove = nil
+                Task { _ = await store.removeFriend(person) }
+            }
+        }
+    }
+
+    private var canSend: Bool {
+        !identifier.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        !store.isWorking && auth.isPhoneVerified
+    }
+
+    private func sendRequest() {
+        guard canSend else { return }
+        let value = identifier
+        Task {
+            if await store.requestFriend(identifier: value) {
+                identifier = ""
+                requestSent = true
+            }
+        }
+    }
+
+    private func addressLabel(_ profile: SnailProfile) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(profile.displayName.lowercased()).font(.body.weight(.medium))
+            Text("\(profile.username.lowercased()) · \(profile.city.lowercased())")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+}
 private struct ProfileEditorView: View {
     @EnvironmentObject private var store: ProductionStore
     @Environment(\.dismiss) private var dismiss
@@ -292,9 +438,13 @@ private struct ProfileEditorView: View {
                         .autocorrectionDisabled()
                     TextField("city, state", text: $city)
                         .textContentType(.addressCity)
+                    Button("use my current city", systemImage: "location") {
+                        Task { await useCurrentCity() }
+                    }
+                    .disabled(isLocating)
                 }
                 Section {
-                    Text("your city is converted to approximate coordinates for delivery timing. exact device location is never requested.")
+                    Text("only your city and approximate coordinates are saved for delivery timing. your precise device location is not stored or shared.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -343,6 +493,16 @@ private struct ProfileEditorView: View {
             }
         } catch {
             store.errorMessage = "we couldn’t find that city — try “city, state”"
+        }
+    }
+
+    private func useCurrentCity() async {
+        isLocating = true
+        defer { isLocating = false }
+        do {
+            city = try await CityResolver.currentCity().name
+        } catch {
+            store.errorMessage = "we couldn’t use your location — allow location access or type your city"
         }
     }
 }

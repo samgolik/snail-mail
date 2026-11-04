@@ -238,6 +238,7 @@ struct SnailLetter: Codable, Identifiable, Hashable {
     let sentAt: Date
     let arrivesAt: Date
     let status: String
+    let openedAt: Date?
 
     func hasArrived(at date: Date = .now) -> Bool { date >= arrivesAt }
 
@@ -258,6 +259,11 @@ private struct HomeResponse: Decodable {
 
 private struct ProfileResponse: Decodable { let profile: SnailProfile }
 private struct OpenLetterResponse: Decodable { let body: String }
+private struct FriendRequestResponse: Decodable { let connection: SnailConnection }
+private struct FriendActionResponse: Decodable {
+    let accepted: Bool
+    let connection: SnailConnection?
+}
 private struct EmptyResponse: Decodable {}
 private struct TermsResponse: Decodable { let accepted: Bool }
 
@@ -329,7 +335,13 @@ final class ProductionStore: ObservableObject {
     }
 
     var travelingLetters: [SnailLetter] { receivedLetters.filter { !$0.hasArrived(at: now) } }
-    var arrivedLetters: [SnailLetter] { receivedLetters.filter { $0.hasArrived(at: now) } }
+    var arrivedLetters: [SnailLetter] {
+        receivedLetters.filter { $0.hasArrived(at: now) && $0.openedAt == nil }
+    }
+
+    var archivedLetters: [SnailLetter] {
+        receivedLetters.filter { $0.openedAt != nil }
+    }
 
     func person(id: String) -> SnailProfile? {
         if profile?.id == id { return profile }
@@ -397,15 +409,15 @@ final class ProductionStore: ObservableObject {
         }
     }
 
-    func requestFriend(code: String) async -> Bool {
-        let success = await perform {
-            let _: EmptyResponse = try await CallableAPI.call(
+    func requestFriend(identifier: String) async -> Bool {
+        await perform {
+            let response: FriendRequestResponse = try await CallableAPI.call(
                 "requestFriend",
-                payload: FriendCodePayload(friendCode: code)
+                payload: FriendIdentifierPayload(friendIdentifier: identifier)
             )
+            connections.removeAll { $0.id == response.connection.id }
+            connections.append(response.connection)
         }
-        if success { await load() }
-        return success
     }
 
     func acceptTerms() async -> Bool {
@@ -423,13 +435,14 @@ final class ProductionStore: ObservableObject {
     }
 
     func respond(to connection: SnailConnection, accept: Bool) async {
-        let success = await perform {
-            let _: EmptyResponse = try await CallableAPI.call(
+        _ = await perform {
+            let response: FriendActionResponse = try await CallableAPI.call(
                 "respondToFriend",
                 payload: FriendResponsePayload(friendshipID: connection.id, accept: accept)
             )
+            connections.removeAll { $0.id == connection.id }
+            if let accepted = response.connection { connections.append(accepted) }
         }
-        if success { await load() }
     }
 
     func block(_ person: SnailProfile) async -> Bool {
@@ -495,6 +508,22 @@ final class ProductionStore: ObservableObject {
             )
             guard self.sessionUserID == expectedUserID else { return }
             openedBodies[letter.id] = response.body
+            if let index = letters.firstIndex(where: { $0.id == letter.id }) {
+                let current = letters[index]
+                letters[index] = SnailLetter(
+                    id: current.id,
+                    senderID: current.senderID,
+                    recipientID: current.recipientID,
+                    originCity: current.originCity,
+                    destinationCity: current.destinationCity,
+                    distanceMiles: current.distanceMiles,
+                    snailDays: current.snailDays,
+                    sentAt: current.sentAt,
+                    arrivesAt: current.arrivesAt,
+                    status: "arrived",
+                    openedAt: current.openedAt ?? .now
+                )
+            }
         }
     }
 
@@ -594,7 +623,7 @@ private struct ProfilePayload: Encodable {
     let latitude: Double
     let longitude: Double
 }
-private struct FriendCodePayload: Encodable { let friendCode: String }
+private struct FriendIdentifierPayload: Encodable { let friendIdentifier: String }
 private struct TermsPayload: Encodable { let version: String }
 private struct FriendResponsePayload: Encodable { let friendshipID: String; let accept: Bool }
 private struct SendLetterPayload: Encodable { let recipientID: String; let body: String }

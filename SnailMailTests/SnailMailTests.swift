@@ -38,7 +38,7 @@ final class SnailMailTests: XCTestCase {
             id: "letter", senderID: "sam", recipientID: "justin",
             originCity: "Washington, DC", destinationCity: "Columbus, OH",
             distanceMiles: 395, snailDays: 27, sentAt: sentAt,
-            arrivesAt: sentAt.addingTimeInterval(100), status: "traveling"
+            arrivesAt: sentAt.addingTimeInterval(100), status: "traveling", openedAt: nil
         )
 
         XCTAssertEqual(letter.progress(at: sentAt.addingTimeInterval(-1)), 0)

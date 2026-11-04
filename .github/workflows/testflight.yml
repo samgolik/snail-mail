@@ -86,8 +86,8 @@ jobs:
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_APP_ID: "6829490432"
           IPA_PATH: ${{ runner.temp }}/TestFlightExport/SnailMail.ipa
-          MARKETING_VERSION: "1.0"
-          BUILD_VERSION: "1"
         run: |
           set -euo pipefail
+          export MARKETING_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :ApplicationProperties:CFBundleShortVersionString' "$RUNNER_TEMP/SnailMail.xcarchive/Info.plist")"
+          export BUILD_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :ApplicationProperties:CFBundleVersion' "$RUNNER_TEMP/SnailMail.xcarchive/Info.plist")"
           ruby ci/upload_build.rb

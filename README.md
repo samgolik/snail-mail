@@ -13,6 +13,14 @@ contrast, Reduce Motion support, and lowercase copy throughout.
 The asset catalog includes a full-resolution, full-bleed snail-and-envelope app
 icon ready for TestFlight packaging.
 
+The current beta calls the inbox the **snailbox**. Opening a received letter
+moves it into a persistent archive, while traveling and unopened letters keep
+the snailbox fresh. A dedicated address book accepts either `@handles` or
+private friend codes, shows incoming and outgoing requests, and updates as soon
+as a request succeeds. Return-address setup accepts a typed city or optional
+when-in-use location access; only the resolved city and approximate coordinate
+are stored.
+
 ## Run it
 
 1. Open `SnailMail.xcodeproj` in Xcode 16 or newer.
@@ -98,7 +106,7 @@ location and never exposes coordinates to other users.
 
 1. Enter a mobile number and use its one-time SMS code to create an account or sign in.
 2. Make a return address with a display name, username, and city.
-3. Exchange friend codes and accept the incoming request.
+3. Add a friend by `@handle` or private friend code and accept the request.
 4. Write a letter; the server seals its body and calculates arrival.
 5. The recipient watches it travel and can open it only after server time passes.
 
