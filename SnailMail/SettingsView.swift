@@ -4,13 +4,8 @@ import CoreLocation
 struct SettingsView: View {
     @EnvironmentObject private var store: ProductionStore
     @EnvironmentObject private var auth: AuthManager
-    @State private var friendCode = ""
     @State private var confirmSignOut = false
     @State private var confirmDelete = false
-    @State private var personToBlock: SnailProfile?
-    @State private var personToRemove: SnailProfile?
-    @State private var personToReport: SnailProfile?
-    @State private var reportReason = ""
     @State private var showingProfileEditor = false
 
     var body: some View {
@@ -58,159 +53,17 @@ struct SettingsView: View {
         } message: {
             Text("this permanently removes your profile, connections, and every sent or received letter. it cannot be undone.")
         }
-        .confirmationDialog(
-            "block \(personToBlock?.displayName.lowercased() ?? "this person")?",
-            isPresented: Binding(
-                get: { personToBlock != nil },
-                set: { if !$0 { personToBlock = nil } }
-            )
-        ) {
-            Button("block", role: .destructive) {
-                guard let person = personToBlock else { return }
-                Task { _ = await store.block(person) }
-                personToBlock = nil
-            }
-        } message: {
-            Text("you will no longer be connected or able to exchange letters.")
-        }
-        .confirmationDialog(
-            "remove \(personToRemove?.displayName.lowercased() ?? "this friend")?",
-            isPresented: Binding(
-                get: { personToRemove != nil },
-                set: { if !$0 { personToRemove = nil } }
-            )
-        ) {
-            Button("remove connection", role: .destructive) {
-                guard let person = personToRemove else { return }
-                Task { _ = await store.removeFriend(person) }
-                personToRemove = nil
-            }
-        } message: {
-            Text("old letters stay in both mailboxes. either person can send a new request later.")
-        }
-        .alert(
-            "report \(personToReport?.displayName.lowercased() ?? "this person")",
-            isPresented: Binding(
-                get: { personToReport != nil },
-                set: { if !$0 { personToReport = nil } }
-            )
-        ) {
-            TextField("what happened?", text: $reportReason)
-            Button("cancel", role: .cancel) {
-                personToReport = nil
-                reportReason = ""
-            }
-            Button("send report") {
-                guard let person = personToReport else { return }
-                let reason = reportReason
-                personToReport = nil
-                reportReason = ""
-                Task { _ = await store.report(person, reason: reason) }
-            }
-            .disabled(reportReason.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-        } message: {
-            Text("reports are private and reviewed for safety.")
-        }
     }
 
     private var identitySection: some View {
-        Section("your return address") {
+        Section("your home snailbox") {
             if let profile = store.profile {
                 LabeledContent("name", value: profile.displayName.lowercased())
                 LabeledContent("handle", value: profile.username.lowercased())
                 LabeledContent("city", value: profile.city.lowercased())
-                if let friendCode = profile.friendCode, !friendCode.isEmpty {
-                    LabeledContent("friend code", value: friendCode)
-                        .textSelection(.enabled)
-                    ShareLink(
-                        item: "find me on snail mail with friend code \(friendCode)",
-                        subject: Text("my snail mail address")
-                    ) {
-                        Label("share my friend code", systemImage: "square.and.arrow.up")
-                    }
-                }
                 Button("edit return address", systemImage: "pencil") {
                     showingProfileEditor = true
                 }
-            }
-        }
-    }
-
-    private var friendsSection: some View {
-        Section("friends") {
-            if store.friends.isEmpty {
-                Text("no addresses in your book yet")
-                    .foregroundStyle(.secondary)
-            } else {
-                ForEach(store.friends) { friend in
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text(friend.displayName.lowercased())
-                            Text(friend.city.lowercased())
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        Menu {
-                            Button("report", systemImage: "exclamationmark.bubble") {
-                                personToReport = friend
-                            }
-                            Button("block", systemImage: "hand.raised", role: .destructive) {
-                                personToBlock = friend
-                            }
-                            Button("remove friend", systemImage: "person.badge.minus", role: .destructive) {
-                                personToRemove = friend
-                            }
-                        } label: {
-                            Image(systemName: "ellipsis.circle")
-                        }
-                    }
-                }
-            }
-
-            ForEach(store.incomingRequests) { connection in
-                VStack(alignment: .leading, spacing: 10) {
-                    Text("\(connection.profile.displayName.lowercased()) wants to exchange letters")
-                    HStack {
-                        Button("accept") {
-                            Task { await store.respond(to: connection, accept: true) }
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .tint(.snailGreen)
-                        Button("decline", role: .destructive) {
-                            Task { await store.respond(to: connection, accept: false) }
-                        }
-                    }
-                }
-            }
-
-            ForEach(store.outgoingRequests) { connection in
-                LabeledContent(
-                    connection.profile.displayName.lowercased(),
-                    value: "request sent"
-                )
-            }
-
-            TextField("friend code", text: $friendCode)
-                .textInputAutocapitalization(.characters)
-                .autocorrectionDisabled()
-            Button("send friend request") {
-                Task {
-                    if await store.requestFriend(identifier: friendCode) {
-                        friendCode = ""
-                    }
-                }
-            }
-            .disabled(friendCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
-                      store.isWorking || !auth.isPhoneVerified)
-
-            if !auth.isPhoneVerified {
-                Text("verify your phone before adding friends")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            if let error = store.errorMessage {
-                Text(error).font(.caption).foregroundStyle(.red)
             }
         }
     }
@@ -273,12 +126,15 @@ struct AddressBookView: View {
     @State private var identifier = ""
     @State private var requestSent = false
     @State private var personToRemove: SnailProfile?
+    @State private var personToBlock: SnailProfile?
+    @State private var personToReport: SnailProfile?
+    @State private var reportReason = ""
 
     var body: some View {
         Form {
             Section {
                 HStack(spacing: 10) {
-                    TextField("@handle or friend code", text: $identifier)
+                    TextField("@handle", text: $identifier)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .submitLabel(.send)
@@ -291,11 +147,12 @@ struct AddressBookView: View {
                     .disabled(!canSend)
                     .accessibilityLabel("send friend request")
                 }
-                Text("ask for a handle, or share your private code when you want more privacy.")
+                Text("enter the exact handle your friend chose.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                if let code = store.profile?.friendCode {
-                    ShareLink(item: "find me on snail mail — @\(store.profile?.username.replacingOccurrences(of: "@", with: "") ?? "") or private code \(code)") {
+                if let username = store.profile?.username,
+                   let inviteURL = inviteURL(for: username) {
+                    ShareLink(item: inviteURL, subject: Text("my snail mail address"), message: Text("add me on snail mail: \(username)")) {
                         Label("share my address", systemImage: "square.and.arrow.up")
                     }
                 }
@@ -348,6 +205,12 @@ struct AddressBookView: View {
                             addressLabel(friend)
                             Spacer()
                             Menu {
+                                Button("report", systemImage: "exclamationmark.bubble") {
+                                    personToReport = friend
+                                }
+                                Button("block", systemImage: "hand.raised", role: .destructive) {
+                                    personToBlock = friend
+                                }
                                 Button("remove address", systemImage: "person.badge.minus", role: .destructive) {
                                     personToRemove = friend
                                 }
@@ -368,6 +231,10 @@ struct AddressBookView: View {
         .background(PastelBackground())
         .navigationTitle("address book")
         .refreshable { await store.load() }
+        .onAppear { applyPendingInvite() }
+        .onChange(of: store.pendingFriendHandle) { _, _ in
+            applyPendingInvite()
+        }
         .alert("request sent", isPresented: $requestSent) {
             Button("lovely", role: .cancel) {}
         } message: {
@@ -386,11 +253,63 @@ struct AddressBookView: View {
                 Task { _ = await store.removeFriend(person) }
             }
         }
+        .confirmationDialog(
+            "block \(personToBlock?.displayName.lowercased() ?? "this person")?",
+            isPresented: Binding(
+                get: { personToBlock != nil },
+                set: { if !$0 { personToBlock = nil } }
+            )
+        ) {
+            Button("block", role: .destructive) {
+                guard let person = personToBlock else { return }
+                personToBlock = nil
+                Task { _ = await store.block(person) }
+            }
+        } message: {
+            Text("you will no longer be connected or able to exchange letters.")
+        }
+        .alert(
+            "report \(personToReport?.displayName.lowercased() ?? "this person")",
+            isPresented: Binding(
+                get: { personToReport != nil },
+                set: { if !$0 { personToReport = nil } }
+            )
+        ) {
+            TextField("what happened?", text: $reportReason)
+            Button("cancel", role: .cancel) {
+                personToReport = nil
+                reportReason = ""
+            }
+            Button("send report") {
+                guard let person = personToReport else { return }
+                let reason = reportReason
+                personToReport = nil
+                reportReason = ""
+                Task { _ = await store.report(person, reason: reason) }
+            }
+            .disabled(reportReason.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        } message: {
+            Text("reports are private and reviewed for safety.")
+        }
     }
 
     private var canSend: Bool {
         !identifier.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
         !store.isWorking && auth.isPhoneVerified
+    }
+
+    private func inviteURL(for username: String) -> URL? {
+        var components = URLComponents(string: "https://snail-mail-btc.web.app/friend")
+        components?.queryItems = [
+            URLQueryItem(name: "handle", value: username.replacingOccurrences(of: "@", with: ""))
+        ]
+        return components?.url
+    }
+
+    private func applyPendingInvite() {
+        if let handle = store.consumeFriendInvite() {
+            identifier = handle
+        }
     }
 
     private func sendRequest() {
@@ -430,7 +349,7 @@ private struct ProfileEditorView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("your return address") {
+                Section("your home snailbox") {
                     TextField("name", text: $displayName)
                         .textContentType(.name)
                     TextField("username", text: $username)
@@ -455,7 +374,7 @@ private struct ProfileEditorView: View {
             .scrollDismissesKeyboard(.interactively)
             .scrollContentBackground(.hidden)
             .background(PastelBackground())
-            .navigationTitle("edit address")
+            .navigationTitle("edit snailbox")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

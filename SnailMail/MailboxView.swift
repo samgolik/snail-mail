@@ -23,8 +23,8 @@ struct MailboxView: View {
                                empty: "the road is quiet")
                     mailboxSection("ready to open", letters: store.arrivedLetters,
                                empty: "your snailbox is fresh")
-                mailboxSection("sent", letters: store.sentLetters,
-                               empty: "no letters have left your desk")
+                mailboxSection("on their way", letters: store.sentLetters,
+                               empty: "no snails are traveling from you")
             }
             .padding()
         }
@@ -162,9 +162,11 @@ struct ArchiveView: View {
                 .font(.title2)
                 .foregroundStyle(Color.snailGreen)
             VStack(alignment: .leading, spacing: 4) {
-                Text("from \(store.person(id: letter.senderID)?.displayName.lowercased() ?? "a friend")")
+                Text(letter.senderID == store.profile?.id
+                     ? "to \(store.person(id: letter.recipientID)?.displayName.lowercased() ?? "a friend")"
+                     : "from \(store.person(id: letter.senderID)?.displayName.lowercased() ?? "a friend")")
                     .font(.headline)
-                Text("opened \((letter.openedAt ?? letter.arrivesAt).formatted(date: .abbreviated, time: .omitted).lowercased())")
+                Text("\(letter.senderID == store.profile?.id ? "delivered" : "opened") \((letter.openedAt ?? letter.arrivesAt).formatted(date: .abbreviated, time: .omitted).lowercased())")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

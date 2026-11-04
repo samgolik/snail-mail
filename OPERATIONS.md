@@ -120,6 +120,8 @@ the first TestFlight build, finish the owner-controlled Firebase App Attest
 registration, Apple App ID capability, and simulator debug-token registration.
 The target already links its checked-in production entitlement. Never commit a
 debug token. Also confirm production usage alerts.
-Authenticated write actions already have server-side daily limits. Add push
-notifications only after the Apple signing/APNs setup is available. These are not
-allowed to delay account deletion, reporting, blocking, or security fixes.
+Authenticated write actions already have server-side daily limits. Push tokens
+are private per-user subdocuments; invalid tokens are pruned after failed sends.
+Arrival notifications use a scale-to-zero task queue with bounded retries and
+concurrency. Notification failures must never delay account deletion, reporting,
+blocking, or security fixes.

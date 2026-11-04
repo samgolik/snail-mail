@@ -8,9 +8,10 @@
   <h2>information we process</h2>
   <ul>
     <li>your verified mobile phone number and Firebase account identifier;</li>
-    <li>the display name, username, city, approximate city coordinates, and friend code you add to your profile;</li>
+    <li>the display name, username, home snailbox city, and approximate city coordinates you add to your profile;</li>
     <li>friend requests, connections, blocks, safety reports, and the version and time of your terms acceptance;</li>
     <li>letter contents and delivery metadata, including sender, recipient, cities, and timestamps; and</li>
+    <li>the city-level location used when you send a letter and a Firebase messaging token used to deliver notifications; and</li>
     <li>basic technical information and Apple App Attest security proofs processed by Firebase to authenticate requests and keep the service secure.</li>
   </ul>
   <h2>how it is used</h2>
@@ -18,7 +19,7 @@
   <h2>sealed letters</h2>
   <p>letter bodies are stored separately from mailbox metadata. the app cannot read a body directly. our server releases it only to the authenticated recipient after the server-calculated arrival time.</p>
   <h2>profile privacy</h2>
-  <p>friends and past correspondents receive only your display name, username, and city. your private friend code and the approximate coordinates used to calculate delivery time are returned only to your own signed-in account.</p>
+  <p>friends and past correspondents receive only your display name, username, and city. approximate coordinates used to calculate delivery time are not returned to other users. precise device location is not stored.</p>
   <h2>sharing and service providers</h2>
   <p>Google Firebase provides authentication, database, server, and hosting infrastructure. phone numbers are sent to and stored by Google for authentication, spam prevention, and abuse prevention. information may be processed by Google as our service provider under its applicable data-processing terms. we may disclose information when required by law or to protect users and the service.</p>
   <h2>retention and deletion</h2>

@@ -27,11 +27,11 @@ installation.
 - Sign back in and confirm the mailbox opens.
 - Enter the same phone number again and confirm its next SMS code returns to the same account.
 - Create two phone accounts on separate devices.
-- Exchange a friend code and accept the request from the recipient account.
+- Exchange an exact `@handle` and accept the request from the recipient account.
 - Add a second tester by `@handle`; confirm the outgoing request appears without
   waiting for a full snailbox refresh.
 - Edit the display name, username, and city; relaunch and confirm the new return
-  address appears on both devices without changing the friend code.
+  address appears on both devices without changing the handle.
 - Accept the server-recorded Terms and Community Guidelines prompt and confirm
   social features remain unavailable before acceptance.
 - Confirm both mailbox sections are initially empty.
@@ -82,10 +82,12 @@ installation.
 
 ## Known MVP limits
 
-- Friend discovery intentionally uses private codes rather than public search.
-- User-visible arrival push notifications are not yet enabled; refresh fetches
-  new mail. Firebase Auth uses silent APNs verification to avoid reCAPTCHA when
-  Apple permits it, with reCAPTCHA retained as the required fallback.
+- Friend discovery uses exact handles and explicit invitation links rather than
+  contact uploading or a browsable public directory.
+- On two physical devices, enable notifications and confirm privacy-safe pushes
+  for requests, acceptances, snail dispatch, and arrival. Confirm foreground
+  banners and background delivery. Firebase Auth still retains reCAPTCHA as its
+  required fallback when silent APNs verification is unavailable.
 - The server caps fictional journeys at 30 days.
 
 ## Backend security checks
@@ -94,8 +96,7 @@ installation.
 - Production callers without a valid Firebase App Check token are rejected before
   user authorization; the emulator bypass is limited to `FUNCTIONS_EMULATOR=true`.
 - Only accepted friends can send letters to each other.
-- Friend responses never include another account’s friend code or delivery
-  coordinates.
+- Friend responses never include another account’s delivery coordinates.
 - Neither sender nor recipient can read `sealedLetters` directly.
 - A block in either direction prevents new friend requests and letters.
 - Only the blocker can see and remove their block; unblocking does not silently

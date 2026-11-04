@@ -15,11 +15,11 @@ icon ready for TestFlight packaging.
 
 The current beta calls the inbox the **snailbox**. Opening a received letter
 moves it into a persistent archive, while traveling and unopened letters keep
-the snailbox fresh. A dedicated address book accepts either `@handles` or
-private friend codes, shows incoming and outgoing requests, and updates as soon
-as a request succeeds. Return-address setup accepts a typed city or optional
-when-in-use location access; only the resolved city and approximate coordinate
-are stored.
+the snailbox fresh; sent letters move there after delivery too. A dedicated
+address book uses exact `@handles`, shows incoming and outgoing requests, and
+creates textable invitation links. The profile city is the home snailbox
+destination. An outgoing snail starts from the sender’s live city-level
+location, which is captured only when sending.
 
 ## Run it
 
@@ -88,8 +88,9 @@ share the token or distribute a Debug build. Release continues to use the App
 Store bundle ID and production App Attest entitlement.
 
 Firebase Auth app-delegate swizzling is disabled for the SwiftUI lifecycle. A
-`UIApplicationDelegateAdaptor` explicitly forwards the APNs device token,
-phone-auth silent notification, and reCAPTCHA callback URL to Firebase Auth.
+`UIApplicationDelegateAdaptor` explicitly forwards the APNs device token to
+both Firebase Auth and Firebase Messaging, and forwards phone-auth silent
+notifications and the reCAPTCHA callback URL to Firebase Auth.
 The SwiftUI scene also forwards opened URLs with `onOpenURL`, because reCAPTCHA
 redirects are delivered through the scene lifecycle on modern iOS versions.
 Release signing includes production APNs and background remote-notification
@@ -98,16 +99,16 @@ remains the required fallback.
 
 Every text-entry screen exposes a keyboard **done** control and supports
 interactive dismissal while scrolling. Return-address entry accepts a human
-friendly `city, region` query, then geocodes and stores a canonical city/region
-label with approximate coordinates. The app never requests precise device
-location and never exposes coordinates to other users.
+friendly `city, region` query, then geocodes and stores a home snailbox city.
+Sending requests coarse when-in-use location and posts only a city-level origin.
+Coordinates are never exposed to other users.
 
 ## Product flow
 
 1. Enter a mobile number and use its one-time SMS code to create an account or sign in.
 2. Make a return address with a display name, username, and city.
-3. Add a friend by `@handle` or private friend code and accept the request.
-4. Write a letter; the server seals its body and calculates arrival.
+3. Add a friend by exact `@handle` or share an invitation link.
+4. Write a letter; location services set its origin and the server seals its body and calculates arrival.
 5. The recipient watches it travel and can open it only after server time passes.
 
 Run unit tests with **Product → Test** (`⌘U`) or:
@@ -132,10 +133,10 @@ The `firebase/` directory contains the first production backend boundary:
 - Completely private `sealedLetters` documents
 - A callable `sendLetter` function that verifies friendship and calculates arrival using server time
 - A callable `openLetter` function that releases the body only to the recipient after arrival
-- Callable profile setup, unique friend codes, friend request/acceptance, and mailbox bootstrap
+- Callable profile setup, handle-based friend request/acceptance, and snailbox bootstrap
 - Validated reporting, reversible blocking, and connection removal
 - Versioned Terms of Use and Community Guidelines acceptance before social actions
-- Private profile shaping so friend codes and delivery coordinates are never returned to other accounts
+- Private profile shaping so delivery coordinates are never returned to other accounts
 - Per-account daily limits for profile edits, friend requests, letters, and reports
 - Complete in-app account deletion that removes friendships, letters, sealed bodies, profile reservations, and Firebase Auth identity
 - Firestore indexes for sender and recipient mailboxes
@@ -183,7 +184,7 @@ production device testing; the callable Functions are already live.
 
 The app opens on a phone-number welcome flow. A verified number creates a new
 account or returns to its existing account without a password. A signed-in user creates a
-return address, exchanges private friend codes, accepts connections, and sends
+home snailbox, exchanges exact handles, accepts connections, and sends
 cross-device letters whose bodies remain in a server-only collection until
 arrival. Sign-out and permanent account deletion are available in-app.
 

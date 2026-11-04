@@ -50,6 +50,9 @@ private struct AuthenticatedRoot: View {
             guard let userID = auth.user?.uid else { return }
             store.prepareSession(userID: userID)
             await store.load()
+            if let token = UserDefaults.standard.string(forKey: "snailFCMToken") {
+                await store.registerPushToken(token)
+            }
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(60))
                 if !Task.isCancelled { await store.load() }
@@ -57,6 +60,13 @@ private struct AuthenticatedRoot: View {
         }
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active, store.hasLoaded else { return }
+            Task { await store.load() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .snailPushToken)) { note in
+            guard let token = note.object as? String else { return }
+            Task { await store.registerPushToken(token) }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .snailPushReceived)) { _ in
             Task { await store.load() }
         }
     }
@@ -166,6 +176,7 @@ private struct MainTabView: View {
             NavigationStack { SettingsView() }
                 .tabItem { Label("you", systemImage: "person.crop.circle") }
         }
+        .task { await SnailNotifications.requestPermission() }
     }
 }
 
@@ -223,7 +234,7 @@ private struct ProfileSetupView: View {
                         .font(.system(size: 50, weight: .light))
                         .foregroundStyle(Color.snailGreen)
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("make your return address")
+                        Text("set up your home snailbox")
                             .font(.largeTitle.weight(.semibold))
                         Text("friends will see your name, handle, and city on every little journey.")
                             .foregroundStyle(.secondary)
@@ -254,7 +265,7 @@ private struct ProfileSetupView: View {
                             if store.isWorking || isLocating {
                                 ProgressView().tint(.white)
                             } else {
-                                Text("set my return address").fontWeight(.semibold)
+                                Text("set my home snailbox").fontWeight(.semibold)
                             }
                         }
                         .frame(maxWidth: .infinity)
@@ -264,7 +275,7 @@ private struct ProfileSetupView: View {
                     .tint(.snailGreen)
                     .disabled(displayName.isEmpty || username.isEmpty || city.isEmpty ||
                               store.isWorking || isLocating)
-                    Text("your exact location is never shared. the city is converted to approximate coordinates only to calculate snail time.")
+                    Text("this city is where friends send your snails. your live location is used only when you send one.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     Spacer(minLength: 30)

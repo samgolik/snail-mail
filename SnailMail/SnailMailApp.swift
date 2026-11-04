@@ -2,13 +2,17 @@ import SwiftUI
 import FirebaseCore
 import FirebaseAppCheck
 import FirebaseAuth
+import FirebaseMessaging
 import UIKit
+import UserNotifications
 
-final class SnailMailAppDelegate: NSObject, UIApplicationDelegate {
+final class SnailMailAppDelegate: NSObject, UIApplicationDelegate, MessagingDelegate, UNUserNotificationCenterDelegate {
     func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
+        Messaging.messaging().delegate = self
+        UNUserNotificationCenter.current().delegate = self
         application.registerForRemoteNotifications()
         return true
     }
@@ -17,7 +21,34 @@ final class SnailMailAppDelegate: NSObject, UIApplicationDelegate {
         _ application: UIApplication,
         didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
     ) {
+        #if DEBUG && targetEnvironment(simulator)
+        return
+        #else
         SnailFirebase.auth.setAPNSToken(deviceToken, type: .unknown)
+        Messaging.messaging().apnsToken = deviceToken
+        #endif
+    }
+
+    func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+        guard let fcmToken, !fcmToken.isEmpty else { return }
+        UserDefaults.standard.set(fcmToken, forKey: "snailFCMToken")
+        NotificationCenter.default.post(name: .snailPushToken, object: fcmToken)
+    }
+
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification
+    ) async -> UNNotificationPresentationOptions {
+        NotificationCenter.default.post(name: .snailPushReceived, object: nil)
+        return [.banner, .sound, .badge]
+    }
+
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse
+    ) async {
+        NotificationCenter.default.post(name: .snailPushReceived, object: nil)
+        await MainActor.run { UIApplication.shared.applicationIconBadgeNumber = 0 }
     }
 
     func application(
@@ -38,6 +69,17 @@ final class SnailMailAppDelegate: NSObject, UIApplicationDelegate {
         options: [UIApplication.OpenURLOptionsKey: Any] = [:]
     ) -> Bool {
         SnailFirebase.auth.canHandle(url)
+    }
+}
+
+enum SnailNotifications {
+    static func requestPermission() async {
+        let center = UNUserNotificationCenter.current()
+        let settings = await center.notificationSettings()
+        if settings.authorizationStatus == .notDetermined {
+            _ = try? await center.requestAuthorization(options: [.alert, .sound, .badge])
+        }
+        await MainActor.run { UIApplication.shared.registerForRemoteNotifications() }
     }
 }
 
@@ -111,8 +153,19 @@ struct SnailMailApp: App {
                     }
                 }
                 .onOpenURL { url in
-                    _ = SnailFirebase.auth.canHandle(url)
+                    if !SnailFirebase.auth.canHandle(url),
+                       url.scheme == "snailmail",
+                       url.host == "friend",
+                       let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+                       let handle = components.queryItems?.first(where: { $0.name == "handle" })?.value {
+                        production.receiveFriendInvite(handle)
+                    }
                 }
         }
     }
+}
+
+extension Notification.Name {
+    static let snailPushToken = Notification.Name("snailPushToken")
+    static let snailPushReceived = Notification.Name("snailPushReceived")
 }

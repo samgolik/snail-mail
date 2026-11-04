@@ -101,13 +101,13 @@ operations runbook.
 - **Revisit when:** Only to repair a verified release-blocking configuration
   issue. Do not weaken this as an outage workaround.
 
-### keep the MVP relationship model invitation-only
+### use handles and explicit invitation links
 
-- **Decision:** Friends connect using private friend codes. Do not add public
-  user search, contact uploading, or address-book discovery before tester input.
-- **Why:** It is simpler, more private, and reduces spam and moderation surface.
-- **Revisit when:** Testers consistently report that exchanging codes is the
-  main barrier to successful first use.
+- **Decision:** Friends connect using exact handles or an HTTPS invitation link
+  that opens a prefilled request. Do not upload contacts or expose a browsable
+  public directory.
+- **Why:** Tester feedback showed codes were unnecessary friction. Exact handles
+  preserve deliberate discovery and invitation links make texting effortless.
 
 ### retain safety context for old correspondence
 
@@ -129,15 +129,13 @@ operations runbook.
 - **Question for Sam:** After real usage, should the cap remain 30 days, become
   shorter for early beta, or turn into a playful non-linear distance curve?
 
-### defer notifications until Apple signing is available
+### send privacy-safe event notifications
 
-- **Decision:** Do not add APNs/FCM push notifications before the Apple team,
-  App ID, and signing capabilities are restored.
-- **Why:** Notifications require owner-controlled Apple configuration and are
-  not necessary to validate composing, waiting, arrival, friendship, and safety
-  flows.
-- **Revisit when:** The first signed TestFlight build is available. The initial
-  notification should announce arrival without revealing letter contents.
+- **Decision:** Use FCM over APNs for friend request, acceptance, snail dispatch,
+  and arrival notifications. Never include letter contents. Arrival uses one
+  Cloud Task scheduled for the server-calculated delivery time.
+- **Why:** These are meaningful asynchronous events. A task per letter avoids a
+  continuously running polling service and keeps scale-to-zero cost controls.
 
 ### keep the snailbox fresh with a server-backed archive
 
@@ -147,20 +145,18 @@ operations runbook.
 - **Why:** Local-only archive state would disagree across devices and resurrect
   opened letters after reinstalling the app.
 
-### make the address book discoverable without uploading contacts
+### make the address book immediate without uploading contacts
 
-- **Decision:** Friend requests accept an exact `@handle` or private friend
-  code and return the pending connection immediately.
-- **Why:** Handles are easier to exchange, while codes retain a non-searchable
-  option. The app still does not upload contacts or expose a public directory.
+- **Decision:** Friend requests return the pending connection immediately.
+- **Why:** The address book should feel responsive without uploading contacts
+  or exposing a public directory.
 
-### location is optional and city-level
+### destinations are saved; origins are live and city-level
 
-- **Decision:** Users can type a city or grant when-in-use location access to
-  fill it automatically. The app requests kilometer-level accuracy and stores
-  only the resolved city and coordinate used for journey timing.
-- **Why:** This removes free-text ambiguity without displaying or sharing a
-  precise device location.
+- **Decision:** A profile’s city is its home snailbox destination. Every send
+  requires when-in-use location and uses the sender’s current city-level origin.
+- **Why:** Snails should start where the sender actually is, while recipients
+  still need a stable destination. Exact locations are not displayed or shared.
 
 ### separate device development from release attestation
 
@@ -184,10 +180,10 @@ operations runbook.
 
 ### minimize profile data at the callable boundary
 
-- **Decision:** A user receives their own friend code and approximate delivery
-  coordinates, but other accounts receive only display name, username, and city.
+- **Decision:** A user receives their own approximate delivery coordinates, but
+  other accounts receive only display name, username, and city.
 - **Why:** The server calculates delivery time, so clients do not need another
-  person’s coordinates. Friend codes are invitations, not public identifiers.
+  person’s coordinates.
 - **Verification:** The emulator integration test fails if a friendship response
   contains `friendCode`, `latitude`, or `longitude` for the other account.
 
@@ -211,10 +207,9 @@ These are hypotheses, not committed scope:
 
 1. A tiny journey visualization that makes waiting delightful without exposing
    exact locations.
-2. Arrival notifications with privacy-safe copy and no message preview.
-3. A first-letter onboarding path that gets two friends connected quickly.
-4. Optional stationery choices that never alter readability or delivery speed.
-5. Gentle correspondence streaks only if they do not create urgency or guilt.
+2. A first-letter onboarding path that gets two friends connected quickly.
+3. Optional stationery choices that never alter readability or delivery speed.
+4. Gentle correspondence streaks only if they do not create urgency or guilt.
 
 Avoid public feeds, read receipts, typing indicators, infinite discovery, paid
 speed-ups, or mechanics that undermine delayed correspondence. The product

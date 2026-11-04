@@ -22,7 +22,7 @@ fictional snail carry it to a friend.
 
 snail mail is a slower social app for messages worth waiting for.
 
-Exchange a private friend code, write a letter, and watch it travel between your
+Exchange an exact handle, write a letter, and watch it travel between your
 cities at a fictional snail’s pace. The contents stay sealed until the
 server-calculated arrival time—no peeking and no rushing the road.
 
@@ -63,7 +63,7 @@ submission time in case Apple’s taxonomy or Firebase behavior has changed.
 
 Two verified accounts and an accepted friendship are needed to exercise the
 full flow. Provide App Review with dedicated credentials for both accounts and
-their friend codes. Explain that delivery is intentionally delayed and supply a
+their handles. Explain that delivery is intentionally delayed and supply a
 server-created letter that has already arrived so Review can test opening
 without waiting.
 

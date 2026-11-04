@@ -14,6 +14,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>app-1-1047837587884-ios-b992ea7af15e9e3dba2209</string>
+				<string>snailmail</string>
 			</array>
 		</dict>
 	</array>

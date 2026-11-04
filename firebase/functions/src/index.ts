@@ -1,6 +1,8 @@
-import {randomBytes} from "node:crypto";
+import {createHash} from "node:crypto";
 import {initializeApp} from "firebase-admin/app";
 import {getAuth} from "firebase-admin/auth";
+import {getFunctions} from "firebase-admin/functions";
+import {getMessaging} from "firebase-admin/messaging";
 import {setGlobalOptions} from "firebase-functions/v2";
 import {
   DocumentData,
@@ -12,6 +14,7 @@ import {
   Transaction,
 } from "firebase-admin/firestore";
 import {HttpsError, onCall} from "firebase-functions/v2/https";
+import {onTaskDispatched} from "firebase-functions/v2/tasks";
 
 setGlobalOptions({
   region: "us-east1",
@@ -34,6 +37,50 @@ const MAX_BODY_LENGTH = 500;
 const MILES_PER_SNAIL_DAY = 15;
 const MAX_SNAIL_DAYS = 30;
 const CURRENT_TERMS_VERSION = "2026-10-30";
+
+async function sendPush(
+  userID: string,
+  title: string,
+  body: string,
+  event: string,
+): Promise<void> {
+  if (process.env.FUNCTIONS_EMULATOR === "true") return;
+  const snapshot = await db.collection("users").doc(userID)
+    .collection("pushTokens").limit(20).get();
+  const tokens = snapshot.docs.map((item) => item.data().token as string)
+    .filter((token) => typeof token === "string" && token.length > 0);
+  if (tokens.length === 0) return;
+  const response = await getMessaging().sendEachForMulticast({
+    tokens,
+    notification: {title, body},
+    data: {event},
+    apns: {payload: {aps: {sound: "default"}}},
+  });
+  const invalidCodes = new Set([
+    "messaging/invalid-registration-token",
+    "messaging/registration-token-not-registered",
+  ]);
+  const removals = response.responses.flatMap((result, index) =>
+    !result.success && result.error && invalidCodes.has(result.error.code) ? [index] : []);
+  if (removals.length > 0) {
+    const batch = db.batch();
+    removals.forEach((index) => batch.delete(snapshot.docs[index].ref));
+    await batch.commit();
+  }
+}
+
+async function bestEffortPush(
+  userID: string,
+  title: string,
+  body: string,
+  event: string,
+): Promise<void> {
+  try {
+    await sendPush(userID, title, body, event);
+  } catch (error) {
+    console.error("push delivery failed", {userID, event, error});
+  }
+}
 
 type CallableIdentity = {
   auth?: {uid: string; token: {[key: string]: unknown}};
@@ -173,7 +220,6 @@ function profileJSON(id: string, data: DocumentData, includePrivate = false) {
     ...shared,
     latitude: data.latitude,
     longitude: data.longitude,
-    friendCode: data.friendCode,
   };
 }
 
@@ -206,30 +252,18 @@ export const saveProfile = onCall({region: "us-east1"}, async (request) => {
   const longitude = requireNumber(request.data?.longitude, "longitude", -180, 180);
   await enforceDailyLimit(id, "saveProfile", 20);
   const userRef = db.collection("users").doc(id);
-  const initial = await userRef.get();
-  const friendCode = initial.data()?.friendCode ??
-    randomBytes(5).toString("hex").toUpperCase();
-
   await db.runTransaction(async (transaction: Transaction) => {
     const current = await transaction.get(userRef);
     const usernameRef = db.collection("usernames").doc(username);
-    const codeRef = db.collection("friendCodes").doc(friendCode);
-    const [reservedUsername, reservedCode] = await Promise.all([
-      transaction.get(usernameRef),
-      transaction.get(codeRef),
-    ]);
+    const reservedUsername = await transaction.get(usernameRef);
     if (reservedUsername.exists && reservedUsername.data()?.userID !== id) {
       throw new HttpsError("already-exists", "that username is already taken");
-    }
-    if (reservedCode.exists && reservedCode.data()?.userID !== id) {
-      throw new HttpsError("aborted", "please try saving your profile again");
     }
     const oldUsername = current.data()?.usernameNormalized as string | undefined;
     if (oldUsername && oldUsername !== username) {
       transaction.delete(db.collection("usernames").doc(oldUsername));
     }
     transaction.set(usernameRef, {userID: id});
-    transaction.set(codeRef, {userID: id});
     transaction.set(userRef, {
       displayName,
       username: `@${username}`,
@@ -237,13 +271,12 @@ export const saveProfile = onCall({region: "us-east1"}, async (request) => {
       city,
       latitude,
       longitude,
-      friendCode,
       createdAt: current.data()?.createdAt ?? FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     });
   });
   return {profile: {id, displayName, username: `@${username}`, city,
-    latitude, longitude, friendCode}};
+    latitude, longitude}};
 });
 
 export const acceptTerms = onCall({region: "us-east1"}, async (request) => {
@@ -308,6 +341,13 @@ export const requestFriend = onCall({region: "us-east1"}, async (request) => {
   });
   const recipient = await db.collection("users").doc(recipientID).get();
   if (!recipient.exists) throw new HttpsError("not-found", "that account no longer exists");
+  const requester = await db.collection("users").doc(requesterID).get();
+  await bestEffortPush(
+    recipientID,
+    "new address request",
+    `${requester.data()?.displayName ?? "someone"} wants to exchange snail mail.`,
+    "friend_request",
+  );
   return {
     connection: {
       id: friendshipID,
@@ -418,6 +458,13 @@ export const respondToFriend = onCall({region: "us-east1"}, async (request) => {
   if (!request.data.accept) return {accepted: false, connection: null};
   const other = await db.collection("users").doc(otherID).get();
   if (!other.exists) throw new HttpsError("not-found", "that account no longer exists");
+  const accepter = await db.collection("users").doc(id).get();
+  await bestEffortPush(
+    otherID,
+    "address accepted",
+    `${accepter.data()?.displayName ?? "your friend"} is now in your address book.`,
+    "friend_accepted",
+  );
   return {
     accepted: true,
     connection: {
@@ -476,11 +523,28 @@ export const loadHome = onCall({region: "us-east1"}, async (request) => {
   };
 });
 
+export const registerPushToken = onCall({region: "us-east1"}, async (request) => {
+  const userID = requireUser(request);
+  const token = requireText(request.data?.token, "token", 4096);
+  const tokenID = createHash("sha256").update(token).digest("hex");
+  await db.collection("users").doc(userID).collection("pushTokens").doc(tokenID).set({
+    token,
+    platform: "ios",
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+  return {registered: true};
+});
+
 export const sendLetter = onCall({region: "us-east1"}, async (request) => {
   const senderID = requireVerifiedUser(request);
 
   const recipientID = requireText(request.data?.recipientID, "recipientID", 128);
   const body = requireText(request.data?.body, "body", MAX_BODY_LENGTH);
+  const requestedOrigin = request.data?.originCity == null ? null : {
+    city: requireText(request.data.originCity, "originCity", 80),
+    latitude: requireNumber(request.data.originLatitude, "originLatitude", -90, 90),
+    longitude: requireNumber(request.data.originLongitude, "originLongitude", -180, 180),
+  };
   if (recipientID === senderID) {
     throw new HttpsError("invalid-argument", "you cannot send a letter to yourself");
   }
@@ -521,7 +585,11 @@ export const sendLetter = onCall({region: "us-east1"}, async (request) => {
 
     const senderData = sender.data()!;
     const recipientData = recipient.data()!;
-    const miles = Math.round(distanceMiles(coordinates(senderData), coordinates(recipientData)));
+    const origin = requestedOrigin ?? {
+      city: senderData.city as string,
+      ...coordinates(senderData),
+    };
+    const miles = Math.round(distanceMiles(origin, coordinates(recipientData)));
     const snailDays = Math.min(
       Math.max(Math.ceil(miles / MILES_PER_SNAIL_DAY), 1),
       MAX_SNAIL_DAYS,
@@ -532,7 +600,7 @@ export const sendLetter = onCall({region: "us-east1"}, async (request) => {
     transaction.create(letterRef, {
       senderID,
       recipientID,
-      originCity: senderData.city,
+      originCity: origin.city,
       destinationCity: recipientData.city,
       distanceMiles: miles,
       snailDays,
@@ -542,11 +610,64 @@ export const sendLetter = onCall({region: "us-east1"}, async (request) => {
     });
     transaction.create(sealedRef, {body, createdAt: sentAt});
 
-    return {letterID: letterRef.id, arrivesAt: arrivesAt.toDate().toISOString()};
+    return {
+      letterID: letterRef.id,
+      arrivesAt: arrivesAt.toDate().toISOString(),
+      senderName: senderData.displayName as string,
+    };
   });
+
+  await bestEffortPush(
+    recipientID,
+    "a snail is on the way",
+    `${result.senderName} sent you snail mail.`,
+    "letter_sent",
+  );
+  if (process.env.FUNCTIONS_EMULATOR !== "true") {
+    try {
+      await getFunctions().taskQueue<{letterID: string; recipientID: string}>(
+        "locations/us-east1/functions/notifyLetterArrival",
+      ).enqueue(
+        {letterID: result.letterID, recipientID},
+        {scheduleTime: new Date(result.arrivesAt)},
+      );
+    } catch (error) {
+      console.error("arrival notification could not be scheduled", {
+        letterID: result.letterID,
+        error,
+      });
+    }
+  }
 
   return result;
 });
+
+export const notifyLetterArrival = onTaskDispatched(
+  {
+    region: "us-east1",
+    retryConfig: {maxAttempts: 3, minBackoffSeconds: 60},
+    rateLimits: {maxConcurrentDispatches: 2, maxDispatchesPerSecond: 5},
+    minInstances: 0,
+    maxInstances: 2,
+  },
+  async (request) => {
+    const letterID = requireText(request.data?.letterID, "letterID", 128);
+    const recipientID = requireText(request.data?.recipientID, "recipientID", 128);
+    const letter = await db.collection("letters").doc(letterID).get();
+    const data = letter.data();
+    if (!data || data.recipientID !== recipientID) return;
+    const arrivesAt = data.arrivesAt as Timestamp;
+    if (arrivesAt.toMillis() > Date.now() + 5_000) {
+      throw new Error("arrival task ran before the letter arrived");
+    }
+    await sendPush(
+      recipientID,
+      "your snail has arrived",
+      "A sealed letter is waiting in your snailbox.",
+      "letter_arrived",
+    );
+  },
+);
 
 export const openLetter = onCall({region: "us-east1"}, async (request) => {
   const userID = requireUser(request);

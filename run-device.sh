@@ -4,7 +4,7 @@ set -euo pipefail
 project_dir="${0:A:h}"
 derived_data="$project_dir/.build/DeviceDerivedData"
 scheme="SnailMail"
-bundle_id="${DEVICE_BUNDLE_ID:-com.beattheclockstudios.snailmail.dev}"
+bundle_id="${DEVICE_BUNDLE_ID:-com.beattheclockstudios.snailmail}"
 team_id="${TEAM_ID:-}"
 
 if [[ -z "$team_id" ]]; then

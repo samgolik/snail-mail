@@ -217,7 +217,6 @@ struct SnailProfile: Codable, Identifiable, Hashable {
     let city: String
     let latitude: Double?
     let longitude: Double?
-    let friendCode: String?
 }
 
 struct SnailConnection: Codable, Identifiable, Hashable {
@@ -266,6 +265,7 @@ private struct FriendActionResponse: Decodable {
 }
 private struct EmptyResponse: Decodable {}
 private struct TermsResponse: Decodable { let accepted: Bool }
+private struct PushTokenResponse: Decodable { let registered: Bool }
 
 enum HomeLoadState: Equatable {
     case idle
@@ -291,6 +291,7 @@ final class ProductionStore: ObservableObject {
     @Published private(set) var isWorking = false
     @Published var errorMessage: String?
     @Published var now = Date()
+    @Published private(set) var pendingFriendHandle: String?
 
     private var timer: Timer?
     private var workingOperations: Set<UUID> = []
@@ -305,6 +306,15 @@ final class ProductionStore: ObservableObject {
     deinit { timer?.invalidate() }
 
     var hasLoaded: Bool { loadState == .loaded }
+
+    func receiveFriendInvite(_ handle: String) {
+        pendingFriendHandle = handle.replacingOccurrences(of: "@", with: "").lowercased()
+    }
+
+    func consumeFriendInvite() -> String? {
+        defer { pendingFriendHandle = nil }
+        return pendingFriendHandle
+    }
 
     func prepareSession(userID: String) {
         guard sessionUserID != userID else { return }
@@ -331,7 +341,8 @@ final class ProductionStore: ObservableObject {
 
     var sentLetters: [SnailLetter] {
         guard let id = profile?.id else { return [] }
-        return letters.filter { $0.senderID == id }.sorted { $0.sentAt > $1.sentAt }
+        return letters.filter { $0.senderID == id && !$0.hasArrived(at: now) }
+            .sorted { $0.sentAt > $1.sentAt }
     }
 
     var travelingLetters: [SnailLetter] { receivedLetters.filter { !$0.hasArrived(at: now) } }
@@ -340,7 +351,11 @@ final class ProductionStore: ObservableObject {
     }
 
     var archivedLetters: [SnailLetter] {
-        receivedLetters.filter { $0.openedAt != nil }
+        guard let id = profile?.id else { return [] }
+        return letters.filter {
+            ($0.recipientID == id && $0.openedAt != nil) ||
+            ($0.senderID == id && $0.hasArrived(at: now))
+        }.sorted { ($0.openedAt ?? $0.arrivesAt) > ($1.openedAt ?? $1.arrivesAt) }
     }
 
     func person(id: String) -> SnailProfile? {
@@ -487,15 +502,36 @@ final class ProductionStore: ObservableObject {
         }
     }
 
-    func send(body: String, to recipient: SnailProfile) async -> Bool {
+    func send(body: String, to recipient: SnailProfile, from origin: ResolvedCity) async -> Bool {
         let success = await perform {
             let _: EmptyResponse = try await CallableAPI.call(
                 "sendLetter",
-                payload: SendLetterPayload(recipientID: recipient.id, body: body)
+                payload: SendLetterPayload(
+                    recipientID: recipient.id,
+                    body: body,
+                    originCity: origin.name,
+                    originLatitude: origin.latitude,
+                    originLongitude: origin.longitude
+                )
             )
         }
         if success { await load() }
         return success
+    }
+
+    func registerPushToken(_ token: String) async {
+        guard sessionUserID != nil, !token.isEmpty else { return }
+        do {
+            let response: PushTokenResponse = try await CallableAPI.call(
+                "registerPushToken",
+                payload: PushTokenPayload(token: token)
+            )
+            guard response.registered else { return }
+        } catch {
+            #if DEBUG
+            print("[snail-mail][notifications] token registration failed: \(error.localizedDescription)")
+            #endif
+        }
     }
 
     func open(_ letter: SnailLetter) async {
@@ -626,7 +662,14 @@ private struct ProfilePayload: Encodable {
 private struct FriendIdentifierPayload: Encodable { let friendIdentifier: String }
 private struct TermsPayload: Encodable { let version: String }
 private struct FriendResponsePayload: Encodable { let friendshipID: String; let accept: Bool }
-private struct SendLetterPayload: Encodable { let recipientID: String; let body: String }
+private struct SendLetterPayload: Encodable {
+    let recipientID: String
+    let body: String
+    let originCity: String
+    let originLatitude: Double
+    let originLongitude: Double
+}
+private struct PushTokenPayload: Encodable { let token: String }
 private struct LetterPayload: Encodable { let letterID: String }
 private struct TargetPayload: Encodable { let targetID: String }
 private struct ReportPayload: Encodable {

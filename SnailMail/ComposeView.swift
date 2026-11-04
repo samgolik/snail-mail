@@ -6,6 +6,8 @@ struct ComposeView: View {
     @State private var bodyText = ""
     @State private var recipientID = ""
     @State private var showingSent = false
+    @State private var isLocating = false
+    @State private var currentOrigin: ResolvedCity?
 
     private var recipient: SnailProfile? {
         store.friends.first { $0.id == recipientID } ?? store.friends.first
@@ -47,11 +49,11 @@ struct ComposeView: View {
                         .frame(maxWidth: .infinity, alignment: .trailing)
                         .accessibilityLabel("\(bodyText.count) of 500 characters")
                 }
-                if let recipient, let origin = store.profile {
+                if let recipient {
                     Section("the little journey") {
-                        LabeledContent("from", value: origin.city.lowercased())
+                        LabeledContent("from", value: currentOrigin?.name.lowercased() ?? "your current location")
                         LabeledContent("to", value: recipient.city.lowercased())
-                        Text("the postmark and arrival time are set by the server when your letter leaves.")
+                        Text("your snail starts from wherever you are when you send. only the city-level postmark is saved.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -62,13 +64,21 @@ struct ComposeView: View {
                 Button {
                     guard let recipient else { return }
                     Task {
-                        if await store.send(body: bodyText, to: recipient) {
-                            bodyText = ""
-                            showingSent = true
+                        isLocating = true
+                        defer { isLocating = false }
+                        do {
+                            let origin = try await CityResolver.currentCity()
+                            currentOrigin = origin
+                            if await store.send(body: bodyText, to: recipient, from: origin) {
+                                bodyText = ""
+                                showingSent = true
+                            }
+                        } catch {
+                            store.errorMessage = "we need your current city to start this snail — allow location access and try again"
                         }
                     }
                 } label: {
-                    if store.isWorking {
+                    if store.isWorking || isLocating {
                         ProgressView().frame(maxWidth: .infinity)
                     } else {
                         Label("send by snail", systemImage: "paperplane.fill")
@@ -78,7 +88,7 @@ struct ComposeView: View {
                     }
                 }
                 .disabled(bodyText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
-                          bodyText.count > 500 || store.isWorking || !auth.isPhoneVerified)
+                          bodyText.count > 500 || store.isWorking || isLocating || !auth.isPhoneVerified)
             }
         }
         .scrollDismissesKeyboard(.interactively)
