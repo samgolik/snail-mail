@@ -136,7 +136,6 @@ struct ArchiveView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
-                trailHeader
                 if store.archivedLetters.isEmpty {
                     ContentUnavailableView(
                         "no trail yet",
@@ -163,22 +162,6 @@ struct ArchiveView: View {
             ProductionLetterDetailView(letter: $0)
         }
         .refreshable { await store.load() }
-    }
-
-    private var trailHeader: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "circle.grid.2x2.fill")
-                .foregroundStyle(Color.snailGreen)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("all trails").font(.headline)
-                Text("\(store.archivedLetters.count) keepsake\(store.archivedLetters.count == 1 ? "" : "s")")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-        }
-        .padding(12)
-        .background(Color.card.opacity(0.78), in: RoundedRectangle(cornerRadius: 14))
     }
 
     private func archivedTile(_ letter: SnailLetter, index: Int) -> some View {
