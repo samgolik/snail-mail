@@ -181,7 +181,7 @@ Current Apple distribution registration:
 - Distribution profile: `Snail Mail App Store Connect`
 - TestFlight builds run manually through `.github/workflows/testflight.yml` on
   GitHub's `macos-26` runner so uploads use Apple's required iOS 26 SDK.
-- The current TestFlight candidate is version `1.0` build `4`.
+- The current TestFlight candidate is version `1.0` build `5`.
 - The workflow uploads through Apple's Build Upload API after exporting the
   signed IPA, avoiding account-state dependencies in Xcode's upload client.
 - Firestore and Functions backend configuration is retained but their unused,
