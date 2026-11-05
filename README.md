@@ -67,7 +67,9 @@ This is usually faster than the Simulator on an older Mac. You need:
 - Developer Mode enabled under **Settings → Privacy & Security → Developer Mode**
 - The Mac trusted when the iPhone asks
 - The Beat the Clock Apple Development certificate and the
-  `Snail Mail iPhone Development` profile installed on the Mac
+  `Snail Mail iPhone Development Push` profile installed on the Mac. This is
+  an explicit profile for `com.beattheclockstudios.snailmail`; the older
+  wildcard development profile cannot carry the Push Notifications entitlement.
 
 Then run:
 

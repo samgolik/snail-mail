@@ -313,7 +313,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.beattheclockstudios.snailmail;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				PROVISIONING_PROFILE_SPECIFIER = "Snail Mail iPhone Development";
+				PROVISIONING_PROFILE_SPECIFIER = "Snail Mail iPhone Development Push";
 				SDKROOT = iphoneos;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
