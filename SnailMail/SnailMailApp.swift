@@ -16,28 +16,6 @@ final class SnailMailAppDelegate: NSObject, UIApplicationDelegate, MessagingDele
         return true
     }
 
-    func application(
-        _ application: UIApplication,
-        didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
-    ) {
-        #if DEBUG && targetEnvironment(simulator)
-        return
-        #else
-        // iOS can deliver this callback while Firebase is still restoring its
-        // keychain. Leave UIKit's callback before touching Firebase's serial
-        // token stores so their synchronous updates cannot re-enter and trap.
-        DispatchQueue.main.async {
-            #if DEBUG
-            SnailFirebase.auth.setAPNSToken(deviceToken, type: .sandbox)
-            Messaging.messaging().setAPNSToken(deviceToken, type: .sandbox)
-            #else
-            SnailFirebase.auth.setAPNSToken(deviceToken, type: .prod)
-            Messaging.messaging().setAPNSToken(deviceToken, type: .prod)
-            #endif
-        }
-        #endif
-    }
-
     func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
         guard let fcmToken, !fcmToken.isEmpty else { return }
         UserDefaults.standard.set(fcmToken, forKey: "snailFCMToken")
@@ -60,25 +38,6 @@ final class SnailMailAppDelegate: NSObject, UIApplicationDelegate, MessagingDele
         await MainActor.run { UIApplication.shared.applicationIconBadgeNumber = 0 }
     }
 
-    func application(
-        _ application: UIApplication,
-        didReceiveRemoteNotification userInfo: [AnyHashable: Any],
-        fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
-    ) {
-        if SnailFirebase.auth.canHandleNotification(userInfo) {
-            completionHandler(.noData)
-            return
-        }
-        completionHandler(.noData)
-    }
-
-    func application(
-        _ app: UIApplication,
-        open url: URL,
-        options: [UIApplication.OpenURLOptionsKey: Any] = [:]
-    ) -> Bool {
-        SnailFirebase.auth.canHandle(url)
-    }
 }
 
 enum SnailNotifications {

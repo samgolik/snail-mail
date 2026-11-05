@@ -89,14 +89,15 @@ and the Firebase App Check API must remain enabled for `snail-mail-btc`. Never
 share the token or distribute a Debug build. Release continues to use the App
 Store bundle ID and production App Attest entitlement.
 
-Firebase Auth app-delegate swizzling is disabled for the SwiftUI lifecycle. A
-`UIApplicationDelegateAdaptor` explicitly forwards the APNs device token to
-both Firebase Auth and Firebase Messaging, and forwards phone-auth silent
-notifications and the reCAPTCHA callback URL to Firebase Auth.
+Firebase's App Delegate proxy is enabled so Firebase Auth and Messaging receive
+APNs tokens only after their own internal initialization is complete. The app
+delegate remains responsible for foreground presentation and FCM-token updates,
+while Firebase owns phone-auth silent notifications and APNs forwarding.
 Remote-notification registration starts on demand for phone verification or
-after sign-in, rather than during app launch. The APNs-token handoff is deferred
-out of UIKit's callback to avoid racing Firebase's keychain restoration on
-iOS 27.
+after sign-in, rather than during app launch. This avoids manually calling
+Firebase Auth while its keychain-backed token manager is still being created on
+iOS 27. The SwiftUI scene still forwards opened URLs as a fallback for phone
+authentication's reCAPTCHA return path.
 The SwiftUI scene also forwards opened URLs with `onOpenURL`, because reCAPTCHA
 redirects are delivered through the scene lifecycle on modern iOS versions.
 Release signing includes production APNs, background remote-notification, and
