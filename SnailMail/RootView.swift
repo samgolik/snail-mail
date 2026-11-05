@@ -435,8 +435,14 @@ private final class CurrentLocationRequest: NSObject, CLLocationManagerDelegate 
     func start() async throws -> CLLocation {
         try await withCheckedThrowingContinuation { continuation in
             self.continuation = continuation
+            if let cached = manager.location,
+               cached.horizontalAccuracy >= 0,
+               Date().timeIntervalSince(cached.timestamp) < 300 {
+                finish(.success(cached))
+                return
+            }
             timeoutTask = Task { [weak self] in
-                try? await Task.sleep(for: .seconds(12))
+                try? await Task.sleep(for: .seconds(7))
                 guard !Task.isCancelled else { return }
                 self?.finish(.failure(ProfileLocationError()))
             }

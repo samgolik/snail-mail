@@ -107,8 +107,11 @@ friendly `city, region` query, then geocodes and stores a home snailbox city.
 Sending requests coarse when-in-use location and posts only a city-level origin.
 The write screen resolves that origin up front, explains a missing permission
 before composition, links to Settings when access is disabled, and keeps Send
-unavailable until the starting city is ready. Coordinates are never exposed to
-other users.
+unavailable until the starting city is ready. It reuses a recent iOS location
+and the resolved city while the write tab remains alive instead of repeatedly
+starting lookups. It distinguishes app permission from system-wide Location
+Services and stops with a clear action after seven seconds. Coordinates are
+never exposed to other users.
 
 ## Product flow
 

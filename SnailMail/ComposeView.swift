@@ -4,7 +4,7 @@ import UIKit
 
 struct ComposeView: View {
     private enum OriginState: Equatable {
-        case checking, ready, permissionNeeded, denied, unavailable
+        case checking, ready, permissionNeeded, denied, servicesDisabled, unavailable
     }
 
     @EnvironmentObject private var store: ProductionStore
@@ -103,7 +103,7 @@ struct ComposeView: View {
         }
         .task { await prepareOrigin() }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active && originState == .denied {
+            if phase == .active && [.denied, .servicesDisabled, .unavailable].contains(originState) {
                 Task { await prepareOrigin() }
             }
         }
@@ -138,6 +138,13 @@ struct ComposeView: View {
                 Label("location access is off, so sending is paused", systemImage: "location.slash")
                     .foregroundStyle(.red)
                 Button("open location settings") { openSettings() }
+            case .servicesDisabled:
+                Label("location services are off on this iPhone", systemImage: "location.slash.fill")
+                    .foregroundStyle(.red)
+                Text("turn on Location Services in Settings before sending a letter.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Button("open location settings") { openSettings() }
             case .unavailable:
                 Label("we couldn’t find your current city", systemImage: "location.slash")
                     .foregroundStyle(.secondary)
@@ -152,6 +159,12 @@ struct ComposeView: View {
     }
 
     private func prepareOrigin() async {
+        if originState == .ready, currentOrigin != nil { return }
+        guard CLLocationManager.locationServicesEnabled() else {
+            currentOrigin = nil
+            originState = .servicesDisabled
+            return
+        }
         switch CLLocationManager().authorizationStatus {
         case .authorizedAlways, .authorizedWhenInUse:
             await resolveOrigin()
