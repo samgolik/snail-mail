@@ -2,7 +2,7 @@
 
 A SwiftUI beta for delayed messages. It includes passwordless Firebase phone
 signup and sign-in with one-time SMS codes; server-backed profiles and friend
-requests; editable return addresses; removable connections and manageable blocks;
+requests; editable snailing addresses; removable connections and manageable blocks;
 cross-device mailboxes; server-calculated travel time; sealed letters; reporting;
 permanent account deletion;
 launch recovery; and automated backend coverage.
@@ -14,10 +14,10 @@ The asset catalog includes a full-resolution, full-bleed snail-and-envelope app
 icon ready for TestFlight packaging.
 
 The current beta calls the inbox the **snailbox**. Opening a received letter
-moves it into a persistent archive, while traveling and unopened letters keep
-the snailbox fresh; sent letters move there after delivery too. A dedicated
-address book uses exact `@handles`, shows incoming and outgoing requests, and
-creates textable invitation links. The profile city is the home snailbox
+moves it into a visual **snail trail** gallery, while traveling and unopened
+letters keep the snailbox fresh; sent letters join the trail after delivery too.
+The friends tab uses typo-tolerant username search, shows incoming and outgoing
+requests, and creates textable invitation links. The profile city is the home snailbox
 destination. An outgoing snail starts from the sender’s live city-level
 location, which is captured only when sending.
 
@@ -95,12 +95,14 @@ both Firebase Auth and Firebase Messaging, and forwards phone-auth silent
 notifications and the reCAPTCHA callback URL to Firebase Auth.
 The SwiftUI scene also forwards opened URLs with `onOpenURL`, because reCAPTCHA
 redirects are delivered through the scene lifecycle on modern iOS versions.
-Release signing includes production APNs and background remote-notification
-support so Firebase can usually verify a physical device silently; reCAPTCHA
-remains the required fallback.
+Release signing includes production APNs, background remote-notification, and
+background-fetch support so Firebase can usually verify a physical device
+silently; reCAPTCHA remains Firebase's required fallback when silent APNs is
+unavailable. The SMS field uses Apple's one-time-code content type and receives
+focus as soon as a code is sent so iOS can offer its keyboard autofill chip.
 
 Every text-entry screen exposes a keyboard **done** control and supports
-interactive dismissal while scrolling. Return-address entry accepts a human
+interactive dismissal while scrolling. Snailing-address entry accepts a human
 friendly `city, region` query, then geocodes and stores a home snailbox city.
 Sending requests coarse when-in-use location and posts only a city-level origin.
 Coordinates are never exposed to other users.
@@ -108,9 +110,9 @@ Coordinates are never exposed to other users.
 ## Product flow
 
 1. Enter a mobile number and use its one-time SMS code to create an account or sign in.
-2. Make a return address by choosing a username first, a friendly “what should
+2. Make a snailing address by choosing a username first, a friendly “what should
    people call you?” name, and a city from a structured U.S. state picker.
-3. Search for friends by username prefix, add them from the results, or share
+3. Search for friends with typo-tolerant matching, add them from the results, or share
    an invitation link.
 4. Write a letter; location services set its origin and the server seals its body and calculates arrival.
 5. The recipient watches it travel and can open it only after server time passes.

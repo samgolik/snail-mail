@@ -170,11 +170,11 @@ private struct MainTabView: View {
             NavigationStack { MailboxView().onAppear { store.clearError() } }
                 .tabItem { Label("snailbox", systemImage: "mail.stack") }
             NavigationStack { ArchiveView().onAppear { store.clearError() } }
-                .tabItem { Label("archive", systemImage: "archivebox") }
+                .tabItem { Label("snail trail", systemImage: "point.topleft.down.to.point.bottomright.curvepath") }
             NavigationStack { ComposeView().onAppear { store.clearError() } }
                 .tabItem { Label("write", systemImage: "square.and.pencil") }
             NavigationStack { AddressBookView().onAppear { store.clearError() } }
-                .tabItem { Label("addresses", systemImage: "book.closed") }
+                .tabItem { Label("friends", systemImage: "person.2") }
             NavigationStack { SettingsView().onAppear { store.clearError() } }
                 .tabItem { Label("you", systemImage: "person.crop.circle") }
         }
@@ -239,7 +239,7 @@ private struct ProfileSetupView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("set up your home snailbox")
                             .font(.largeTitle.weight(.semibold))
-                        Text("choose the address your friends will recognize on every little journey.")
+                        Text("choose the snailing address your friends will recognize on every little journey.")
                             .foregroundStyle(.secondary)
                     }
                     VStack(spacing: 14) {
@@ -357,7 +357,8 @@ enum CityResolver {
     }
 
     static func currentCity() async throws -> ResolvedCity {
-        let location = try await CurrentLocationRequest().start()
+        let request = CurrentLocationRequest()
+        let location = try await request.start()
         let placemarks = try await CLGeocoder().reverseGeocodeLocation(location)
         guard let placemark = placemarks.first,
               let locality = placemark.locality ?? placemark.subAdministrativeArea else {
@@ -422,6 +423,7 @@ enum USRegions {
 private final class CurrentLocationRequest: NSObject, CLLocationManagerDelegate {
     private let manager = CLLocationManager()
     private var continuation: CheckedContinuation<CLLocation, Error>?
+    private var timeoutTask: Task<Void, Never>?
 
     override init() {
         super.init()
@@ -432,6 +434,11 @@ private final class CurrentLocationRequest: NSObject, CLLocationManagerDelegate 
     func start() async throws -> CLLocation {
         try await withCheckedThrowingContinuation { continuation in
             self.continuation = continuation
+            timeoutTask = Task { [weak self] in
+                try? await Task.sleep(for: .seconds(12))
+                guard !Task.isCancelled else { return }
+                self?.finish(.failure(ProfileLocationError()))
+            }
             switch manager.authorizationStatus {
             case .authorizedAlways, .authorizedWhenInUse:
                 manager.requestLocation()
@@ -470,16 +477,21 @@ private final class CurrentLocationRequest: NSObject, CLLocationManagerDelegate 
     private func finish(_ result: Result<CLLocation, Error>) {
         guard let continuation else { return }
         self.continuation = nil
+        timeoutTask?.cancel()
+        timeoutTask = nil
         continuation.resume(with: result)
     }
 }
 
 private struct AuthView: View {
+    private enum Field { case phone, code }
+
     @EnvironmentObject private var auth: AuthManager
     @State private var phoneNumber = ""
     @State private var verificationCode = ""
     @State private var codeSent = false
     @State private var agreedToCreateAccount = false
+    @FocusState private var focusedField: Field?
 
     var body: some View {
         ZStack {
@@ -519,12 +531,14 @@ private struct AuthView: View {
             TextField("mobile number", text: $phoneNumber)
                 .textContentType(.telephoneNumber)
                 .keyboardType(.phonePad)
+                .focused($focusedField, equals: .phone)
                 .authFieldStyle()
 
             if codeSent {
                 TextField("6-digit code", text: $verificationCode)
                     .textContentType(.oneTimeCode)
                     .keyboardType(.numberPad)
+                    .focused($focusedField, equals: .code)
                     .authFieldStyle()
             } else {
                 Text("we’ll text a one-time code. new numbers create an account; returning numbers sign in. standard rates may apply.")
@@ -556,6 +570,7 @@ private struct AuthView: View {
                         _ = await auth.signInWithPhone(code: verificationCode)
                     } else {
                         codeSent = await auth.requestPhoneVerification(phoneNumber)
+                        if codeSent { focusedField = .code }
                     }
                 }
             } label: {
@@ -580,6 +595,7 @@ private struct AuthView: View {
                 Button("use a different number") {
                     verificationCode = ""
                     codeSent = false
+                    focusedField = .phone
                     auth.clearMessages()
                 }
                 .font(.subheadline)

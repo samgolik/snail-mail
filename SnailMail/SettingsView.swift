@@ -61,7 +61,7 @@ struct SettingsView: View {
                 LabeledContent("name", value: profile.displayName.lowercased())
                 LabeledContent("handle", value: profile.username.lowercased())
                 LabeledContent("city", value: profile.city.lowercased())
-                Button("edit return address", systemImage: "pencil") {
+                Button("edit snailing address", systemImage: "pencil") {
                     showingProfileEditor = true
                 }
             }
@@ -129,6 +129,7 @@ struct AddressBookView: View {
     @State private var personToBlock: SnailProfile?
     @State private var personToReport: SnailProfile?
     @State private var reportReason = ""
+    @State private var didSearch = false
 
     var body: some View {
         Form {
@@ -152,12 +153,22 @@ struct AddressBookView: View {
                     .foregroundStyle(.secondary)
                 if let username = store.profile?.username,
                    let inviteURL = inviteURL(for: username) {
-                    ShareLink(item: inviteURL, subject: Text("my snail mail address"), message: Text("add me on snail mail: \(username)")) {
-                        Label("share my address", systemImage: "square.and.arrow.up")
+                    ShareLink(
+                        item: inviteURL,
+                        subject: Text("my snailing address"),
+                        message: Text("send me a slow note on snail mail — my snailing address is \(username)")
+                    ) {
+                        Label("invite a friend", systemImage: "paperplane")
+                            .frame(maxWidth: .infinity)
                     }
+                    .buttonStyle(.borderedProminent)
+                    .tint(.snailGreen)
+                    Text("share a link by text or any app. they can find your snailing address in one tap.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             } header: {
-                Text("add an address")
+                Text("find a friend")
             }
 
             if !store.friendSearchResults.isEmpty {
@@ -171,6 +182,14 @@ struct AddressBookView: View {
                                 .disabled(store.isWorking)
                         }
                     }
+                }
+            } else if didSearch && store.errorMessage == nil {
+                Section {
+                    ContentUnavailableView(
+                        "no usernames found",
+                        systemImage: "magnifyingglass",
+                        description: Text("try a nearby spelling or fewer letters")
+                    )
                 }
             }
 
@@ -208,10 +227,10 @@ struct AddressBookView: View {
                 }
             }
 
-            Section("your address book") {
+            Section("your snailing addresses") {
                 if store.friends.isEmpty {
                     ContentUnavailableView(
-                        "no addresses yet",
+                        "no snailing addresses yet",
                         systemImage: "book.closed",
                         description: Text("add a friend above to begin exchanging letters")
                     )
@@ -227,7 +246,7 @@ struct AddressBookView: View {
                                 Button("block", systemImage: "hand.raised", role: .destructive) {
                                     personToBlock = friend
                                 }
-                                Button("remove address", systemImage: "person.badge.minus", role: .destructive) {
+                                Button("remove snailing address", systemImage: "person.badge.minus", role: .destructive) {
                                     personToRemove = friend
                                 }
                             } label: {
@@ -245,7 +264,7 @@ struct AddressBookView: View {
         .scrollDismissesKeyboard(.interactively)
         .scrollContentBackground(.hidden)
         .background(PastelBackground())
-        .navigationTitle("address book")
+        .navigationTitle("friends")
         .refreshable { await store.load() }
         .onAppear { applyPendingInvite() }
         .onChange(of: store.pendingFriendHandle) { _, _ in
@@ -254,10 +273,10 @@ struct AddressBookView: View {
         .alert("request sent", isPresented: $requestSent) {
             Button("lovely", role: .cancel) {}
         } message: {
-            Text("their address will appear here as soon as they accept.")
+            Text("their snailing address will appear here as soon as they accept.")
         }
         .confirmationDialog(
-            "remove \(personToRemove?.displayName.lowercased() ?? "this address")?",
+            "remove \(personToRemove?.displayName.lowercased() ?? "this snailing address")?",
             isPresented: Binding(
                 get: { personToRemove != nil },
                 set: { if !$0 { personToRemove = nil } }
@@ -332,13 +351,17 @@ struct AddressBookView: View {
 
     private func search() {
         guard canSearch else { return }
-        Task { await store.searchUsers(query: identifier) }
+        Task {
+            await store.searchUsers(query: identifier)
+            didSearch = true
+        }
     }
 
     private func sendRequest(to person: SnailProfile) {
         Task {
             if await store.requestFriend(identifier: person.username) {
                 identifier = ""
+                didSearch = false
                 store.clearFriendSearch()
                 requestSent = true
             }

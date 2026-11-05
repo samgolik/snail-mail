@@ -128,53 +128,105 @@ private struct ProductionLetterRow: View {
 
 struct ArchiveView: View {
     @EnvironmentObject private var store: ProductionStore
+    private let columns = [
+        GridItem(.flexible(), spacing: 14),
+        GridItem(.flexible(), spacing: 14)
+    ]
 
     var body: some View {
         ScrollView {
-            LazyVStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 18) {
+                trailHeader
                 if store.archivedLetters.isEmpty {
                     ContentUnavailableView(
-                        "nothing tucked away",
-                        systemImage: "archivebox",
-                        description: Text("letters move here after you open them")
+                        "no trail yet",
+                        systemImage: "sparkles",
+                        description: Text("opened and delivered letters leave their little trail here")
                     )
-                    .padding(.top, 80)
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 56)
                 } else {
-                    ForEach(store.archivedLetters) { letter in
-                        NavigationLink(value: letter) { archivedRow(letter) }
-                            .buttonStyle(.plain)
+                    LazyVGrid(columns: columns, spacing: 14) {
+                        ForEach(Array(store.archivedLetters.enumerated()), id: \.element.id) { index, letter in
+                            NavigationLink(value: letter) { archivedTile(letter, index: index) }
+                                .buttonStyle(.plain)
+                        }
                     }
                 }
             }
-            .padding()
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
         }
         .background(PastelBackground())
-        .navigationTitle("archive")
+        .navigationTitle("snail trail")
         .navigationDestination(for: SnailLetter.self) {
             ProductionLetterDetailView(letter: $0)
         }
         .refreshable { await store.load() }
     }
 
-    private func archivedRow(_ letter: SnailLetter) -> some View {
-        HStack(spacing: 14) {
-            Image(systemName: "envelope.open.fill")
-                .font(.title2)
+    private var trailHeader: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "circle.grid.2x2.fill")
                 .foregroundStyle(Color.snailGreen)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(letter.senderID == store.profile?.id
-                     ? "to \(store.person(id: letter.recipientID)?.displayName.lowercased() ?? "a friend")"
-                     : "from \(store.person(id: letter.senderID)?.displayName.lowercased() ?? "a friend")")
-                    .font(.headline)
-                Text("\(letter.senderID == store.profile?.id ? "delivered" : "opened") \((letter.openedAt ?? letter.arrivesAt).formatted(date: .abbreviated, time: .omitted).lowercased())")
+            VStack(alignment: .leading, spacing: 2) {
+                Text("all trails").font(.headline)
+                Text("\(store.archivedLetters.count) keepsake\(store.archivedLetters.count == 1 ? "" : "s")")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            Image(systemName: "chevron.right").foregroundStyle(.tertiary)
         }
-        .padding()
-        .background(Color.card.opacity(0.88), in: RoundedRectangle(cornerRadius: 22))
-        .overlay { RoundedRectangle(cornerRadius: 22).stroke(Color.sand.opacity(0.9)) }
+        .padding(12)
+        .background(Color.card.opacity(0.78), in: RoundedRectangle(cornerRadius: 14))
+    }
+
+    private func archivedTile(_ letter: SnailLetter, index: Int) -> some View {
+        let sent = letter.senderID == store.profile?.id
+        let person = sent
+            ? store.person(id: letter.recipientID)?.displayName.lowercased() ?? "a friend"
+            : store.person(id: letter.senderID)?.displayName.lowercased() ?? "a friend"
+        return VStack(alignment: .leading, spacing: 10) {
+            ZStack {
+                SlimeTrail(seed: index)
+                    .stroke(
+                        Color.snailGreen.opacity(0.28),
+                        style: StrokeStyle(lineWidth: 7, lineCap: .round, dash: [2, 9])
+                    )
+                Image(systemName: sent ? "envelope.fill" : "envelope.open.fill")
+                    .font(.system(size: 35, weight: .light))
+                    .foregroundStyle(Color.snailGreen)
+                    .padding(16)
+                    .background(Color.paper.opacity(0.92), in: RoundedRectangle(cornerRadius: 18))
+                    .shadow(color: Color.powderBlue.opacity(0.28), radius: 8, y: 4)
+            }
+            .frame(height: 104)
+            Text(sent ? "to \(person)" : "from \(person)")
+                .font(.subheadline.weight(.semibold))
+                .lineLimit(1)
+            Text((letter.openedAt ?? letter.arrivesAt).formatted(date: .abbreviated, time: .omitted).lowercased())
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.card.opacity(0.9), in: RoundedRectangle(cornerRadius: 18))
+        .overlay { RoundedRectangle(cornerRadius: 18).stroke(Color.sand.opacity(0.8)) }
+    }
+}
+
+private struct SlimeTrail: Shape {
+    let seed: Int
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let flip = seed.isMultiple(of: 2)
+        path.move(to: CGPoint(x: flip ? rect.maxX : rect.minX, y: rect.maxY * 0.78))
+        path.addCurve(
+            to: CGPoint(x: flip ? rect.minX : rect.maxX, y: rect.minY * 1.8),
+            control1: CGPoint(x: rect.midX * 1.35, y: rect.midY * 1.45),
+            control2: CGPoint(x: rect.midX * 0.65, y: rect.midY * 0.35)
+        )
+        return path
     }
 }

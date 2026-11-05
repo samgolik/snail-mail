@@ -8,6 +8,7 @@ struct ProductionLetterDetailView: View {
     @State private var showingBlock = false
     @State private var reportReason = ""
     @State private var reportSent = false
+    @State private var isLoadingOpenedLetter = false
 
     var body: some View {
         ScrollView {
@@ -25,7 +26,15 @@ struct ProductionLetterDetailView: View {
                 Image(systemName: store.openedBodies[letter.id] == nil ? "envelope.fill" : "envelope.open.fill")
                     .font(.system(size: 62, weight: .light))
                     .foregroundStyle(Color.snailGreen)
-                if let body = store.openedBodies[letter.id] {
+                if isLoadingOpenedLetter && store.openedBodies[letter.id] == nil {
+                    VStack(spacing: 12) {
+                        ProgressView()
+                        Text("unfolding your letter…")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 180)
+                } else if let body = store.openedBodies[letter.id] {
                     VStack(alignment: .leading, spacing: 18) {
                         Text(body).font(.title3)
                         Divider()
@@ -79,7 +88,9 @@ struct ProductionLetterDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task(id: letter.id) {
             if isReceived && letter.openedAt != nil && store.openedBodies[letter.id] == nil {
+                isLoadingOpenedLetter = true
                 await store.open(letter)
+                isLoadingOpenedLetter = false
             }
         }
         .toolbar {

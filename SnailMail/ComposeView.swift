@@ -17,7 +17,7 @@ struct ComposeView: View {
         Form {
             if store.friends.isEmpty {
                 ContentUnavailableView(
-                    "no address yet",
+                    "no snailing address yet",
                     systemImage: "person.2.badge.plus",
                     description: Text("connect with a friend under you before writing your first letter")
                 )
@@ -32,10 +32,11 @@ struct ComposeView: View {
                 Section("to") {
                     Picker("friend", selection: $recipientID) {
                         ForEach(store.friends) { friend in
-                            Text("\(friend.displayName.lowercased()) · \(friend.city.lowercased())")
+                            Text(friend.displayName.lowercased())
                                 .tag(friend.id)
                         }
                     }
+                    .pickerStyle(.navigationLink)
                 }
                 Section("your letter") {
                     TextEditor(text: $bodyText)
@@ -51,8 +52,8 @@ struct ComposeView: View {
                 }
                 if let recipient {
                     Section("the little journey") {
-                        LabeledContent("from", value: currentOrigin?.name.lowercased() ?? "your current location")
-                        LabeledContent("to", value: recipient.city.lowercased())
+                        journeyRow("from", currentOrigin?.name.lowercased() ?? "your current location")
+                        journeyRow("to", recipient.city.lowercased())
                         Text("your snail starts from wherever you are when you send. only the city-level postmark is saved.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -104,5 +105,13 @@ struct ComposeView: View {
         } message: {
             Text("the letter is sealed. your friend can open it when it arrives.")
         }
+    }
+
+    private func journeyRow(_ label: String, _ value: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label).font(.caption).foregroundStyle(.secondary)
+            Text(value).lineLimit(2).fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

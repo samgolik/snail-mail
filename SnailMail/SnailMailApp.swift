@@ -24,7 +24,11 @@ final class SnailMailAppDelegate: NSObject, UIApplicationDelegate, MessagingDele
         #if DEBUG && targetEnvironment(simulator)
         return
         #else
-        SnailFirebase.auth.setAPNSToken(deviceToken, type: .unknown)
+        #if DEBUG
+        SnailFirebase.auth.setAPNSToken(deviceToken, type: .sandbox)
+        #else
+        SnailFirebase.auth.setAPNSToken(deviceToken, type: .prod)
+        #endif
         Messaging.messaging().apnsToken = deviceToken
         #endif
     }

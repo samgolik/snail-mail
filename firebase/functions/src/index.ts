@@ -209,6 +209,23 @@ function distanceMiles(origin: Coordinates, destination: Coordinates): number {
   return earthRadiusMiles * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+function editDistance(left: string, right: string): number {
+  const previous = Array.from({length: right.length + 1}, (_, index) => index);
+  for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
+    const current = [leftIndex];
+    for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
+      current[rightIndex] = Math.min(
+        current[rightIndex - 1] + 1,
+        previous[rightIndex] + 1,
+        previous[rightIndex - 1] +
+          (left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1),
+      );
+    }
+    previous.splice(0, previous.length, ...current);
+  }
+  return previous[right.length];
+}
+
 function profileJSON(id: string, data: DocumentData, includePrivate = false) {
   const shared = {
     id,
@@ -289,7 +306,7 @@ export const acceptTerms = onCall({region: "us-east1"}, async (request) => {
   const profileRef = db.collection("users").doc(id);
   const profile = await profileRef.get();
   if (!profile.exists) {
-    throw new HttpsError("failed-precondition", "make your return address first");
+    throw new HttpsError("failed-precondition", "make your snailing address first");
   }
   await profileRef.set({
     termsVersion: version,
@@ -314,7 +331,7 @@ export const requestFriend = onCall({region: "us-east1"}, async (request) => {
   ]);
   const recipientID = (codeDoc.data()?.userID ?? usernameDoc.data()?.userID) as
     string | undefined;
-  if (!recipientID) throw new HttpsError("not-found", "no snail mail address matched that handle or code");
+  if (!recipientID) throw new HttpsError("not-found", "no snailing address matched that username");
   if (recipientID === requesterID) {
     throw new HttpsError("invalid-argument", "that is your own friend code");
   }
@@ -345,7 +362,7 @@ export const requestFriend = onCall({region: "us-east1"}, async (request) => {
   const requester = await db.collection("users").doc(requesterID).get();
   await bestEffortPush(
     recipientID,
-    "new address request",
+    "new snailing request",
     `${requester.data()?.displayName ?? "someone"} wants to exchange snail mail.`,
     "friend_request",
   );
@@ -370,14 +387,9 @@ export const searchUsers = onCall({region: "us-east1"}, async (request) => {
       "search with at least two letters, numbers, or underscores",
     );
   }
-  await enforceDailyLimit(requesterID, "searchUsers", 200);
+  await enforceDailyLimit(requesterID, "searchUsers", 50);
   const [matches, friendships, blockedBy, blocking] = await Promise.all([
-    db.collection("usernames")
-      .orderBy(FieldPath.documentId())
-      .startAt(query)
-      .endAt(`${query}\uf8ff`)
-      .limit(12)
-      .get(),
+    db.collection("usernames").orderBy(FieldPath.documentId()).limit(100).get(),
     db.collection("friendships").where("userIDs", "array-contains", requesterID).get(),
     db.collection("blocks").where("targetID", "==", requesterID).limit(100).get(),
     db.collection("blocks").where("blockerID", "==", requesterID).limit(100).get(),
@@ -388,8 +400,19 @@ export const searchUsers = onCall({region: "us-east1"}, async (request) => {
   });
   blockedBy.docs.forEach((item) => unavailable.add(item.data().blockerID as string));
   blocking.docs.forEach((item) => unavailable.add(item.data().targetID as string));
-  const ids = matches.docs
-    .map((item) => item.data().userID as string)
+  const rankedMatches = matches.docs.map((item) => {
+    const username = item.id.toLowerCase();
+    const distance = editDistance(query, username);
+    const score = username === query ? -100 :
+      username.startsWith(query) ? -50 + username.length - query.length :
+        username.includes(query) ? -20 + username.indexOf(query) : distance;
+    const allowedDistance = query.length <= 4 ? 1 : 2;
+    return {item, score, matches: username.includes(query) || distance <= allowedDistance};
+  }).filter((entry) => entry.matches)
+    .sort((left, right) => left.score - right.score)
+    .slice(0, 12);
+  const ids = rankedMatches
+    .map(({item}) => item.data().userID as string)
     .filter((id) => typeof id === "string" && !unavailable.has(id));
   const profiles = await Promise.all(ids.map((id) => db.collection("users").doc(id).get()));
   return {
@@ -502,8 +525,8 @@ export const respondToFriend = onCall({region: "us-east1"}, async (request) => {
   const accepter = await db.collection("users").doc(id).get();
   await bestEffortPush(
     otherID,
-    "address accepted",
-    `${accepter.data()?.displayName ?? "your friend"} is now in your address book.`,
+    "snailing address accepted",
+    `${accepter.data()?.displayName ?? "your friend"} is ready for slow mail.`,
     "friend_accepted",
   );
   return {
