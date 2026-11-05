@@ -40,6 +40,7 @@ final class AuthManager: ObservableObject {
         clearMessages()
         defer { isWorking = false }
         do {
+            await SnailNotifications.prepareForPhoneAuth()
             let verificationID = try await PhoneAuthProvider.provider()
                 .verifyPhoneNumber(phoneNumber, uiDelegate: nil)
             UserDefaults.standard.set(verificationID, forKey: "phoneAuthVerificationID")

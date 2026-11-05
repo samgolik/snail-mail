@@ -13,7 +13,6 @@ final class SnailMailAppDelegate: NSObject, UIApplicationDelegate, MessagingDele
     ) -> Bool {
         Messaging.messaging().delegate = self
         UNUserNotificationCenter.current().delegate = self
-        application.registerForRemoteNotifications()
         return true
     }
 
@@ -24,12 +23,18 @@ final class SnailMailAppDelegate: NSObject, UIApplicationDelegate, MessagingDele
         #if DEBUG && targetEnvironment(simulator)
         return
         #else
-        #if DEBUG
-        SnailFirebase.auth.setAPNSToken(deviceToken, type: .sandbox)
-        #else
-        SnailFirebase.auth.setAPNSToken(deviceToken, type: .prod)
-        #endif
-        Messaging.messaging().apnsToken = deviceToken
+        // iOS can deliver this callback while Firebase is still restoring its
+        // keychain. Leave UIKit's callback before touching Firebase's serial
+        // token stores so their synchronous updates cannot re-enter and trap.
+        DispatchQueue.main.async {
+            #if DEBUG
+            SnailFirebase.auth.setAPNSToken(deviceToken, type: .sandbox)
+            Messaging.messaging().setAPNSToken(deviceToken, type: .sandbox)
+            #else
+            SnailFirebase.auth.setAPNSToken(deviceToken, type: .prod)
+            Messaging.messaging().setAPNSToken(deviceToken, type: .prod)
+            #endif
+        }
         #endif
     }
 
@@ -77,6 +82,13 @@ final class SnailMailAppDelegate: NSObject, UIApplicationDelegate, MessagingDele
 }
 
 enum SnailNotifications {
+    static func prepareForPhoneAuth() async {
+        await MainActor.run { UIApplication.shared.registerForRemoteNotifications() }
+        // Firebase Auth waits for the APNs token when necessary. Yielding here
+        // gives an already-available token a chance to reach its token manager.
+        await Task.yield()
+    }
+
     static func requestPermission() async {
         let center = UNUserNotificationCenter.current()
         let settings = await center.notificationSettings()

@@ -93,6 +93,10 @@ Firebase Auth app-delegate swizzling is disabled for the SwiftUI lifecycle. A
 `UIApplicationDelegateAdaptor` explicitly forwards the APNs device token to
 both Firebase Auth and Firebase Messaging, and forwards phone-auth silent
 notifications and the reCAPTCHA callback URL to Firebase Auth.
+Remote-notification registration starts on demand for phone verification or
+after sign-in, rather than during app launch. The APNs-token handoff is deferred
+out of UIKit's callback to avoid racing Firebase's keychain restoration on
+iOS 27.
 The SwiftUI scene also forwards opened URLs with `onOpenURL`, because reCAPTCHA
 redirects are delivered through the scene lifecycle on modern iOS versions.
 Release signing includes production APNs, background remote-notification, and
