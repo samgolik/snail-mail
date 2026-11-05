@@ -16,6 +16,7 @@ struct RootView: View {
                 AuthView()
             }
         }
+        .fontDesign(.rounded)
         .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: auth.isAuthenticated)
     }
 }
