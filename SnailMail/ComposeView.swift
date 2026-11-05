@@ -1,13 +1,20 @@
 import SwiftUI
+import CoreLocation
+import UIKit
 
 struct ComposeView: View {
+    private enum OriginState: Equatable {
+        case checking, ready, permissionNeeded, denied, unavailable
+    }
+
     @EnvironmentObject private var store: ProductionStore
     @EnvironmentObject private var auth: AuthManager
+    @Environment(\.scenePhase) private var scenePhase
     @State private var bodyText = ""
     @State private var recipientID = ""
     @State private var showingSent = false
-    @State private var isLocating = false
     @State private var currentOrigin: ResolvedCity?
+    @State private var originState: OriginState = .checking
 
     private var recipient: SnailProfile? {
         store.friends.first { $0.id == recipientID } ?? store.friends.first
@@ -38,6 +45,7 @@ struct ComposeView: View {
                     }
                     .pickerStyle(.navigationLink)
                 }
+                originSection
                 Section("your letter") {
                     TextEditor(text: $bodyText)
                         .frame(minHeight: 220)
@@ -63,23 +71,15 @@ struct ComposeView: View {
                     Section { Text(error).font(.caption).foregroundStyle(.red) }
                 }
                 Button {
-                    guard let recipient else { return }
+                    guard let recipient, let origin = currentOrigin else { return }
                     Task {
-                        isLocating = true
-                        defer { isLocating = false }
-                        do {
-                            let origin = try await CityResolver.currentCity()
-                            currentOrigin = origin
-                            if await store.send(body: bodyText, to: recipient, from: origin) {
-                                bodyText = ""
-                                showingSent = true
-                            }
-                        } catch {
-                            store.errorMessage = "we need your current city to start this snail — allow location access and try again"
+                        if await store.send(body: bodyText, to: recipient, from: origin) {
+                            bodyText = ""
+                            showingSent = true
                         }
                     }
                 } label: {
-                    if store.isWorking || isLocating {
+                    if store.isWorking {
                         ProgressView().frame(maxWidth: .infinity)
                     } else {
                         Label("send by snail", systemImage: "paperplane.fill")
@@ -89,7 +89,8 @@ struct ComposeView: View {
                     }
                 }
                 .disabled(bodyText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
-                          bodyText.count > 500 || store.isWorking || isLocating || !auth.isPhoneVerified)
+                          bodyText.count > 500 || store.isWorking ||
+                          originState != .ready || !auth.isPhoneVerified)
             }
         }
         .scrollDismissesKeyboard(.interactively)
@@ -100,11 +101,89 @@ struct ComposeView: View {
         .onAppear {
             if recipientID.isEmpty { recipientID = store.friends.first?.id ?? "" }
         }
+        .task { await prepareOrigin() }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active && originState == .denied {
+                Task { await prepareOrigin() }
+            }
+        }
         .alert("your snail is on its way", isPresented: $showingSent) {
             Button("lovely", role: .cancel) {}
         } message: {
             Text("the letter is sealed. your friend can open it when it arrives.")
         }
+    }
+
+    @ViewBuilder
+    private var originSection: some View {
+        Section("starting point") {
+            switch originState {
+            case .checking:
+                HStack(spacing: 10) {
+                    ProgressView()
+                    Text("finding your current city…")
+                }
+                .foregroundStyle(.secondary)
+            case .ready:
+                Label(currentOrigin?.name.lowercased() ?? "current city ready", systemImage: "location.fill")
+                    .foregroundStyle(Color.snailGreen)
+            case .permissionNeeded:
+                Label("location is needed before a letter can be sent", systemImage: "location.circle")
+                Button("allow location") {
+                    Task { await requestOriginPermission() }
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.snailGreen)
+            case .denied:
+                Label("location access is off, so sending is paused", systemImage: "location.slash")
+                    .foregroundStyle(.red)
+                Button("open location settings") { openSettings() }
+            case .unavailable:
+                Label("we couldn’t find your current city", systemImage: "location.slash")
+                    .foregroundStyle(.secondary)
+                Button("try location again") {
+                    Task { await requestOriginPermission() }
+                }
+            }
+            Text("snail mail saves only the city-level postmark, never your precise location.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private func prepareOrigin() async {
+        switch CLLocationManager().authorizationStatus {
+        case .authorizedAlways, .authorizedWhenInUse:
+            await resolveOrigin()
+        case .notDetermined:
+            originState = .permissionNeeded
+        case .denied, .restricted:
+            currentOrigin = nil
+            originState = .denied
+        @unknown default:
+            originState = .unavailable
+        }
+    }
+
+    private func requestOriginPermission() async {
+        await resolveOrigin()
+    }
+
+    private func resolveOrigin() async {
+        originState = .checking
+        do {
+            currentOrigin = try await CityResolver.currentCity()
+            originState = .ready
+        } catch {
+            currentOrigin = nil
+            let status = CLLocationManager().authorizationStatus
+            originState = (status == .denied || status == .restricted) ? .denied : .unavailable
+        }
+    }
+
+    private func openSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
     }
 
     private func journeyRow(_ label: String, _ value: String) -> some View {

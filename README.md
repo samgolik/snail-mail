@@ -105,7 +105,10 @@ Every text-entry screen exposes a keyboard **done** control and supports
 interactive dismissal while scrolling. Snailing-address entry accepts a human
 friendly `city, region` query, then geocodes and stores a home snailbox city.
 Sending requests coarse when-in-use location and posts only a city-level origin.
-Coordinates are never exposed to other users.
+The write screen resolves that origin up front, explains a missing permission
+before composition, links to Settings when access is disabled, and keeps Send
+unavailable until the starting city is ready. Coordinates are never exposed to
+other users.
 
 ## Product flow
 
