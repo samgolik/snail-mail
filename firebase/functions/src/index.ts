@@ -7,6 +7,7 @@ import {setGlobalOptions} from "firebase-functions/v2";
 import {
   DocumentData,
   DocumentSnapshot,
+  FieldPath,
   FieldValue,
   getFirestore,
   QueryDocumentSnapshot,
@@ -355,6 +356,46 @@ export const requestFriend = onCall({region: "us-east1"}, async (request) => {
       isIncoming: false,
       profile: profileJSON(recipient.id, recipient.data()!),
     },
+  };
+});
+
+export const searchUsers = onCall({region: "us-east1"}, async (request) => {
+  const requesterID = requireVerifiedUser(request);
+  await requireTermsAccepted(requesterID);
+  const query = requireText(request.data?.query, "query", 24)
+    .replace(/^@/, "").toLowerCase();
+  if (!/^[a-z0-9_]{2,24}$/.test(query)) {
+    throw new HttpsError(
+      "invalid-argument",
+      "search with at least two letters, numbers, or underscores",
+    );
+  }
+  await enforceDailyLimit(requesterID, "searchUsers", 200);
+  const [matches, friendships, blockedBy, blocking] = await Promise.all([
+    db.collection("usernames")
+      .orderBy(FieldPath.documentId())
+      .startAt(query)
+      .endAt(`${query}\uf8ff`)
+      .limit(12)
+      .get(),
+    db.collection("friendships").where("userIDs", "array-contains", requesterID).get(),
+    db.collection("blocks").where("targetID", "==", requesterID).limit(100).get(),
+    db.collection("blocks").where("blockerID", "==", requesterID).limit(100).get(),
+  ]);
+  const unavailable = new Set<string>([requesterID]);
+  friendships.docs.forEach((item) => {
+    (item.data().userIDs as string[]).forEach((id) => unavailable.add(id));
+  });
+  blockedBy.docs.forEach((item) => unavailable.add(item.data().blockerID as string));
+  blocking.docs.forEach((item) => unavailable.add(item.data().targetID as string));
+  const ids = matches.docs
+    .map((item) => item.data().userID as string)
+    .filter((id) => typeof id === "string" && !unavailable.has(id));
+  const profiles = await Promise.all(ids.map((id) => db.collection("users").doc(id).get()));
+  return {
+    profiles: profiles
+      .filter((item) => item.exists)
+      .map((item) => profileJSON(item.id, item.data()!)),
   };
 });
 

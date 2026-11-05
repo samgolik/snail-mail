@@ -134,20 +134,20 @@ struct AddressBookView: View {
         Form {
             Section {
                 HStack(spacing: 10) {
-                    TextField("@handle", text: $identifier)
+                    TextField("search usernames", text: $identifier)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
-                        .submitLabel(.send)
-                        .onSubmit { sendRequest() }
+                        .submitLabel(.search)
+                        .onSubmit { search() }
                     Button {
-                        sendRequest()
+                        search()
                     } label: {
-                        Image(systemName: "paperplane.fill")
+                        Image(systemName: "magnifyingglass")
                     }
-                    .disabled(!canSend)
-                    .accessibilityLabel("send friend request")
+                    .disabled(!canSearch)
+                    .accessibilityLabel("search usernames")
                 }
-                Text("enter the exact handle your friend chose.")
+                Text("type at least two characters. only usernames are searched.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 if let username = store.profile?.username,
@@ -158,6 +158,20 @@ struct AddressBookView: View {
                 }
             } header: {
                 Text("add an address")
+            }
+
+            if !store.friendSearchResults.isEmpty {
+                Section("people") {
+                    ForEach(store.friendSearchResults) { person in
+                        HStack {
+                            addressLabel(person)
+                            Spacer()
+                            Button("add") { sendRequest(to: person) }
+                                .buttonStyle(.bordered)
+                                .disabled(store.isWorking)
+                        }
+                    }
+                }
             }
 
             if !store.incomingRequests.isEmpty {
@@ -171,9 +185,11 @@ struct AddressBookView: View {
                                 }
                                 .buttonStyle(.borderedProminent)
                                 .tint(.snailGreen)
+                                .disabled(store.isWorking)
                                 Button("decline", role: .destructive) {
                                     Task { await store.respond(to: connection, accept: false) }
                                 }
+                                .disabled(store.isWorking)
                             }
                         }
                     }
@@ -293,8 +309,9 @@ struct AddressBookView: View {
         }
     }
 
-    private var canSend: Bool {
-        !identifier.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+    private var canSearch: Bool {
+        identifier.trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "@", with: "").count >= 2 &&
         !store.isWorking && auth.isPhoneVerified
     }
 
@@ -309,15 +326,20 @@ struct AddressBookView: View {
     private func applyPendingInvite() {
         if let handle = store.consumeFriendInvite() {
             identifier = handle
+            search()
         }
     }
 
-    private func sendRequest() {
-        guard canSend else { return }
-        let value = identifier
+    private func search() {
+        guard canSearch else { return }
+        Task { await store.searchUsers(query: identifier) }
+    }
+
+    private func sendRequest(to person: SnailProfile) {
         Task {
-            if await store.requestFriend(identifier: value) {
+            if await store.requestFriend(identifier: person.username) {
                 identifier = ""
+                store.clearFriendSearch()
                 requestSent = true
             }
         }
@@ -338,25 +360,29 @@ private struct ProfileEditorView: View {
     @State private var displayName: String
     @State private var username: String
     @State private var city: String
+    @State private var region: String
     @State private var isLocating = false
 
     init(profile: SnailProfile) {
         _displayName = State(initialValue: profile.displayName)
         _username = State(initialValue: profile.username.replacingOccurrences(of: "@", with: ""))
-        _city = State(initialValue: profile.city)
+        let parts = profile.city.split(separator: ",", maxSplits: 1).map {
+            String($0).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        _city = State(initialValue: parts.first ?? profile.city)
+        _region = State(initialValue: parts.count > 1 ? parts[1] : "")
     }
 
     var body: some View {
         NavigationStack {
             Form {
                 Section("your home snailbox") {
-                    TextField("name", text: $displayName)
-                        .textContentType(.name)
                     TextField("username", text: $username)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
-                    TextField("city, state", text: $city)
-                        .textContentType(.addressCity)
+                    TextField("what should people call you?", text: $displayName)
+                        .textContentType(.nickname)
+                    CityStateFields(city: $city, region: $region)
                     Button("use my current city", systemImage: "location") {
                         Task { await useCurrentCity() }
                     }
@@ -393,14 +419,15 @@ private struct ProfileEditorView: View {
     private var canSave: Bool {
         !displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
         !username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        !city.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        !city.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        !region.isEmpty
     }
 
     private func save() async {
         isLocating = true
         defer { isLocating = false }
         do {
-            let resolvedCity = try await CityResolver.resolve(city)
+            let resolvedCity = try await CityResolver.resolve("\(city), \(region)")
             if await store.saveProfile(
                 displayName: displayName,
                 username: username,
@@ -419,7 +446,9 @@ private struct ProfileEditorView: View {
         isLocating = true
         defer { isLocating = false }
         do {
-            city = try await CityResolver.currentCity().name
+            let resolved = try await CityResolver.currentCity()
+            city = resolved.city
+            region = resolved.region
         } catch {
             store.errorMessage = "we couldn’t use your location — allow location access or type your city"
         }

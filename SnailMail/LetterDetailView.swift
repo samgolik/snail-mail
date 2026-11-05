@@ -78,7 +78,7 @@ struct ProductionLetterDetailView: View {
         .navigationTitle("letter")
         .navigationBarTitleDisplayMode(.inline)
         .task(id: letter.id) {
-            if letter.openedAt != nil && store.openedBodies[letter.id] == nil {
+            if isReceived && letter.openedAt != nil && store.openedBodies[letter.id] == nil {
                 await store.open(letter)
             }
         }

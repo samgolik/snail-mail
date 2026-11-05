@@ -259,6 +259,7 @@ private struct HomeResponse: Decodable {
 private struct ProfileResponse: Decodable { let profile: SnailProfile }
 private struct OpenLetterResponse: Decodable { let body: String }
 private struct FriendRequestResponse: Decodable { let connection: SnailConnection }
+private struct FriendSearchResponse: Decodable { let profiles: [SnailProfile] }
 private struct FriendActionResponse: Decodable {
     let accepted: Bool
     let connection: SnailConnection?
@@ -292,6 +293,7 @@ final class ProductionStore: ObservableObject {
     @Published var errorMessage: String?
     @Published var now = Date()
     @Published private(set) var pendingFriendHandle: String?
+    @Published private(set) var friendSearchResults: [SnailProfile] = []
 
     private var timer: Timer?
     private var workingOperations: Set<UUID> = []
@@ -435,6 +437,31 @@ final class ProductionStore: ObservableObject {
         }
     }
 
+    func searchUsers(query: String) async {
+        let clean = query.replacingOccurrences(of: "@", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        guard clean.count >= 2 else {
+            friendSearchResults = []
+            return
+        }
+        _ = await perform {
+            let response: FriendSearchResponse = try await CallableAPI.call(
+                "searchUsers",
+                payload: FriendSearchPayload(query: clean)
+            )
+            friendSearchResults = response.profiles
+        }
+    }
+
+    func clearFriendSearch() {
+        friendSearchResults = []
+    }
+
+    func clearError() {
+        errorMessage = nil
+    }
+
     func acceptTerms() async -> Bool {
         let success = await perform {
             let response: TermsResponse = try await CallableAPI.call(
@@ -450,13 +477,17 @@ final class ProductionStore: ObservableObject {
     }
 
     func respond(to connection: SnailConnection, accept: Bool) async {
-        _ = await perform {
+        let success = await perform {
             let response: FriendActionResponse = try await CallableAPI.call(
                 "respondToFriend",
                 payload: FriendResponsePayload(friendshipID: connection.id, accept: accept)
             )
             connections.removeAll { $0.id == connection.id }
             if let accepted = response.connection { connections.append(accepted) }
+        }
+        if !success, errorMessage?.contains("request cannot be changed") == true {
+            errorMessage = nil
+            await load()
         }
     }
 
@@ -535,7 +566,9 @@ final class ProductionStore: ObservableObject {
     }
 
     func open(_ letter: SnailLetter) async {
-        guard letter.hasArrived(at: now), openedBodies[letter.id] == nil else { return }
+        guard letter.recipientID == profile?.id,
+              letter.hasArrived(at: now),
+              openedBodies[letter.id] == nil else { return }
         let expectedUserID = sessionUserID
         _ = await perform {
             let response: OpenLetterResponse = try await CallableAPI.call(
@@ -586,6 +619,7 @@ final class ProductionStore: ObservableObject {
         correspondents = []
         letters = []
         openedBodies = [:]
+        friendSearchResults = []
         loadState = .idle
         loadErrorMessage = nil
         loadDiagnosticID = nil
@@ -660,6 +694,7 @@ private struct ProfilePayload: Encodable {
     let longitude: Double
 }
 private struct FriendIdentifierPayload: Encodable { let friendIdentifier: String }
+private struct FriendSearchPayload: Encodable { let query: String }
 private struct TermsPayload: Encodable { let version: String }
 private struct FriendResponsePayload: Encodable { let friendshipID: String; let accept: Bool }
 private struct SendLetterPayload: Encodable {

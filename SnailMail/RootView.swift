@@ -163,17 +163,19 @@ private struct ConnectionProblemView: View {
 }
 
 private struct MainTabView: View {
+    @EnvironmentObject private var store: ProductionStore
+
     var body: some View {
         TabView {
-            NavigationStack { MailboxView() }
+            NavigationStack { MailboxView().onAppear { store.clearError() } }
                 .tabItem { Label("snailbox", systemImage: "mail.stack") }
-            NavigationStack { ArchiveView() }
+            NavigationStack { ArchiveView().onAppear { store.clearError() } }
                 .tabItem { Label("archive", systemImage: "archivebox") }
-            NavigationStack { ComposeView() }
+            NavigationStack { ComposeView().onAppear { store.clearError() } }
                 .tabItem { Label("write", systemImage: "square.and.pencil") }
-            NavigationStack { AddressBookView() }
+            NavigationStack { AddressBookView().onAppear { store.clearError() } }
                 .tabItem { Label("addresses", systemImage: "book.closed") }
-            NavigationStack { SettingsView() }
+            NavigationStack { SettingsView().onAppear { store.clearError() } }
                 .tabItem { Label("you", systemImage: "person.crop.circle") }
         }
         .task { await SnailNotifications.requestPermission() }
@@ -222,6 +224,7 @@ private struct ProfileSetupView: View {
     @State private var displayName = ""
     @State private var username = ""
     @State private var city = ""
+    @State private var region = ""
     @State private var isLocating = false
 
     var body: some View {
@@ -236,20 +239,18 @@ private struct ProfileSetupView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("set up your home snailbox")
                             .font(.largeTitle.weight(.semibold))
-                        Text("friends will see your name, handle, and city on every little journey.")
+                        Text("choose the address your friends will recognize on every little journey.")
                             .foregroundStyle(.secondary)
                     }
                     VStack(spacing: 14) {
-                        TextField("name", text: $displayName)
-                            .textContentType(.name)
-                            .authFieldStyle()
                         TextField("username", text: $username)
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled()
                             .authFieldStyle()
-                        TextField("city, state", text: $city)
-                            .textContentType(.addressCity)
+                        TextField("what should people call you?", text: $displayName)
+                            .textContentType(.nickname)
                             .authFieldStyle()
+                        CityStateFields(city: $city, region: $region)
                     }
                     Button("use my current city", systemImage: "location") {
                         Task { await useCurrentCity() }
@@ -273,7 +274,7 @@ private struct ProfileSetupView: View {
                     .buttonStyle(.borderedProminent)
                     .controlSize(.large)
                     .tint(.snailGreen)
-                    .disabled(displayName.isEmpty || username.isEmpty || city.isEmpty ||
+                    .disabled(displayName.isEmpty || username.isEmpty || city.isEmpty || region.isEmpty ||
                               store.isWorking || isLocating)
                     Text("this city is where friends send your snails. your live location is used only when you send one.")
                         .font(.caption)
@@ -291,7 +292,7 @@ private struct ProfileSetupView: View {
         isLocating = true
         defer { isLocating = false }
         do {
-            let resolvedCity = try await CityResolver.resolve(city)
+            let resolvedCity = try await CityResolver.resolve("\(city), \(region)")
             _ = await store.saveProfile(
                 displayName: displayName,
                 username: username,
@@ -308,7 +309,9 @@ private struct ProfileSetupView: View {
         isLocating = true
         defer { isLocating = false }
         do {
-            city = try await CityResolver.currentCity().name
+            let resolved = try await CityResolver.currentCity()
+            city = resolved.city
+            region = resolved.region
         } catch {
             store.errorMessage = "we couldn’t use your location — allow location access or type your city"
         }
@@ -319,6 +322,8 @@ private struct ProfileLocationError: Error {}
 
 struct ResolvedCity {
     let name: String
+    let city: String
+    let region: String
     let latitude: Double
     let longitude: Double
 }
@@ -344,6 +349,8 @@ enum CityResolver {
         guard !canonicalName.isEmpty else { throw ProfileLocationError() }
         return ResolvedCity(
             name: canonicalName,
+            city: locality,
+            region: region ?? "",
             latitude: coordinate.latitude,
             longitude: coordinate.longitude
         )
@@ -364,10 +371,52 @@ enum CityResolver {
         guard !name.isEmpty else { throw ProfileLocationError() }
         return ResolvedCity(
             name: name,
+            city: locality,
+            region: region ?? "",
             latitude: location.coordinate.latitude,
             longitude: location.coordinate.longitude
         )
     }
+}
+
+struct CityStateFields: View {
+    @Binding var city: String
+    @Binding var region: String
+
+    var body: some View {
+        TextField("city", text: $city)
+            .textContentType(.addressCity)
+            .authFieldStyle()
+        Picker("state", selection: $region) {
+            Text("choose a state").tag("")
+            ForEach(USRegions.all, id: \.abbreviation) { item in
+                Text(item.name.lowercased()).tag(item.abbreviation)
+            }
+        }
+        .pickerStyle(.menu)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 16)
+        .frame(minHeight: 50)
+        .background(Color.paper.opacity(0.72), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+}
+
+enum USRegions {
+    static let all: [(name: String, abbreviation: String)] = [
+        ("Alabama", "AL"), ("Alaska", "AK"), ("Arizona", "AZ"), ("Arkansas", "AR"),
+        ("California", "CA"), ("Colorado", "CO"), ("Connecticut", "CT"), ("Delaware", "DE"),
+        ("District of Columbia", "DC"), ("Florida", "FL"), ("Georgia", "GA"), ("Hawaii", "HI"),
+        ("Idaho", "ID"), ("Illinois", "IL"), ("Indiana", "IN"), ("Iowa", "IA"),
+        ("Kansas", "KS"), ("Kentucky", "KY"), ("Louisiana", "LA"), ("Maine", "ME"),
+        ("Maryland", "MD"), ("Massachusetts", "MA"), ("Michigan", "MI"), ("Minnesota", "MN"),
+        ("Mississippi", "MS"), ("Missouri", "MO"), ("Montana", "MT"), ("Nebraska", "NE"),
+        ("Nevada", "NV"), ("New Hampshire", "NH"), ("New Jersey", "NJ"), ("New Mexico", "NM"),
+        ("New York", "NY"), ("North Carolina", "NC"), ("North Dakota", "ND"), ("Ohio", "OH"),
+        ("Oklahoma", "OK"), ("Oregon", "OR"), ("Pennsylvania", "PA"), ("Rhode Island", "RI"),
+        ("South Carolina", "SC"), ("South Dakota", "SD"), ("Tennessee", "TN"), ("Texas", "TX"),
+        ("Utah", "UT"), ("Vermont", "VT"), ("Virginia", "VA"), ("Washington", "WA"),
+        ("West Virginia", "WV"), ("Wisconsin", "WI"), ("Wyoming", "WY")
+    ]
 }
 
 private final class CurrentLocationRequest: NSObject, CLLocationManagerDelegate {

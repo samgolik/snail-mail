@@ -108,10 +108,16 @@ Coordinates are never exposed to other users.
 ## Product flow
 
 1. Enter a mobile number and use its one-time SMS code to create an account or sign in.
-2. Make a return address with a display name, username, and city.
-3. Add a friend by exact `@handle` or share an invitation link.
+2. Make a return address by choosing a username first, a friendly “what should
+   people call you?” name, and a city from a structured U.S. state picker.
+3. Search for friends by username prefix, add them from the results, or share
+   an invitation link.
 4. Write a letter; location services set its origin and the server seals its body and calculates arrival.
 5. The recipient watches it travel and can open it only after server time passes.
+
+Action errors are cleared when moving between tabs. Archived sent letters never
+call the recipient-only open endpoint, and repeated friend-request responses
+quietly refresh instead of leaking stale server errors into unrelated screens.
 
 Run unit tests with **Product → Test** (`⌘U`) or:
 
