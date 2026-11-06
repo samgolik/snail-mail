@@ -105,10 +105,10 @@ struct SettingsView: View {
             }
             Button("sign out") { confirmSignOut = true }
             Button("delete account", role: .destructive) { confirmDelete = true }
-            Link("privacy policy", destination: URL(string: "https://snail-mail-btc.web.app/privacy")!)
-            Link("terms of use", destination: URL(string: "https://snail-mail-btc.web.app/terms")!)
-            Link("community guidelines", destination: URL(string: "https://snail-mail-btc.web.app/community")!)
-            Link("support", destination: URL(string: "https://snail-mail-btc.web.app/support")!)
+            Link("privacy policy", destination: SnailLinks.page("privacy"))
+            Link("terms of use", destination: SnailLinks.page("terms"))
+            Link("community guidelines", destination: SnailLinks.page("community"))
+            Link("support", destination: SnailLinks.page("support"))
             LabeledContent("version", value: appVersion)
         }
     }
@@ -335,11 +335,7 @@ struct AddressBookView: View {
     }
 
     private func inviteURL(for username: String) -> URL? {
-        var components = URLComponents(string: "https://snail-mail-btc.web.app/friend")
-        components?.queryItems = [
-            URLQueryItem(name: "handle", value: username.replacingOccurrences(of: "@", with: ""))
-        ]
-        return components?.url
+        SnailLinks.friendInvite(handle: username)
     }
 
     private func applyPendingInvite() {

@@ -268,6 +268,7 @@ private struct FriendActionResponse: Decodable {
 private struct EmptyResponse: Decodable {}
 private struct TermsResponse: Decodable { let accepted: Bool }
 private struct PushTokenResponse: Decodable { let registered: Bool }
+private struct SendLetterResponse: Decodable { let letter: SnailLetter }
 
 enum HomeLoadState: Equatable {
     case idle
@@ -535,8 +536,8 @@ final class ProductionStore: ObservableObject {
     }
 
     func send(body: String, to recipient: SnailProfile, from origin: ResolvedCity) async -> Bool {
-        let success = await perform {
-            let _: EmptyResponse = try await CallableAPI.call(
+        await perform {
+            let response: SendLetterResponse = try await CallableAPI.call(
                 "sendLetter",
                 payload: SendLetterPayload(
                     recipientID: recipient.id,
@@ -546,9 +547,9 @@ final class ProductionStore: ObservableObject {
                     originLongitude: origin.longitude
                 )
             )
+            letters.removeAll { $0.id == response.letter.id }
+            letters.append(response.letter)
         }
-        if success { await load() }
-        return success
     }
 
     func registerPushToken(_ token: String) async {
@@ -735,6 +736,7 @@ private enum CallableAPI {
         _ name: String,
         payload: Payload
     ) async throws -> Result {
+        let startedAt = ContinuousClock.now
         let diagnosticID = String(UUID().uuidString.prefix(8)).uppercased()
         log("request \(name) started", id: diagnosticID)
 
@@ -747,9 +749,16 @@ private enum CallableAPI {
             )
         }
 
+        async let pendingToken = user.getIDToken()
+        #if DEBUG && targetEnvironment(simulator)
+        let appCheckToken: String? = nil
+        #else
+        async let pendingAppCheckToken = AppCheck.appCheck().token(forcingRefresh: false).token
+        #endif
+
         let token: String
         do {
-            token = try await user.getIDToken()
+            token = try await pendingToken
             log("firebase id token prepared", id: diagnosticID)
         } catch {
             let nsError = error as NSError
@@ -766,12 +775,11 @@ private enum CallableAPI {
         }
 
         #if DEBUG && targetEnvironment(simulator)
-        let appCheckToken: String? = nil
         log("app check skipped for local simulator", id: diagnosticID)
         #else
         let appCheckToken: String?
         do {
-            appCheckToken = try await AppCheck.appCheck().token(forcingRefresh: false).token
+            appCheckToken = try await pendingAppCheckToken
             log("app check token prepared", id: diagnosticID)
         } catch {
             let nsError = error as NSError
@@ -850,7 +858,8 @@ private enum CallableAPI {
         }
         if (200..<300).contains(http.statusCode),
            let result = try? decoder.decode(CallableResult<Result>.self, from: data) {
-            log("request completed", id: diagnosticID)
+            let elapsed = startedAt.duration(to: .now)
+            log("request completed in \(elapsed.formatted(.units(allowed: [.seconds, .milliseconds], width: .abbreviated)))", id: diagnosticID)
             return result.result
         }
         if let failure = try? decoder.decode(CallableFailure.self, from: data) {

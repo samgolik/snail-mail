@@ -3,6 +3,7 @@ import FirebaseCore
 import FirebaseAppCheck
 import FirebaseAuth
 import FirebaseMessaging
+import FirebaseCrashlytics
 import UIKit
 import UserNotifications
 
@@ -35,7 +36,7 @@ final class SnailMailAppDelegate: NSObject, UIApplicationDelegate, MessagingDele
         didReceive response: UNNotificationResponse
     ) async {
         NotificationCenter.default.post(name: .snailPushReceived, object: nil)
-        await MainActor.run { UIApplication.shared.applicationIconBadgeNumber = 0 }
+        try? await center.setBadgeCount(0)
     }
 
     func application(
@@ -82,6 +83,15 @@ enum SnailFirebase {
 
     static func configure() {
         FirebaseApp.configure()
+        #if DEBUG
+        Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(false)
+        #else
+        Crashlytics.crashlytics().setCrashlyticsCollectionEnabled(true)
+        Crashlytics.crashlytics().setCustomValue(
+            Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "unknown",
+            forKey: "build"
+        )
+        #endif
         #if DEBUG && targetEnvironment(simulator)
         guard let defaultApp = FirebaseApp.app() else {
             fatalError("Firebase default app was not configured")
@@ -100,6 +110,25 @@ enum SnailFirebase {
         #else
         return Auth.auth()
         #endif
+    }
+}
+
+enum SnailLinks {
+    private static var baseURL: URL {
+        let configured = Bundle.main.object(forInfoDictionaryKey: "SnailPublicSiteURL") as? String
+        return URL(string: configured ?? "https://snail-mail-btc.web.app")!
+    }
+
+    static func page(_ path: String = "") -> URL {
+        path.isEmpty ? baseURL : baseURL.appending(path: path)
+    }
+
+    static func friendInvite(handle: String) -> URL? {
+        var components = URLComponents(url: page("friend"), resolvingAgainstBaseURL: false)
+        components?.queryItems = [
+            URLQueryItem(name: "handle", value: handle.replacingOccurrences(of: "@", with: ""))
+        ]
+        return components?.url
     }
 }
 

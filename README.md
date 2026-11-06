@@ -289,6 +289,15 @@ live. Functions use the conservative beta scaling limits documented in
 
 Cloud configuration and deployment are intentional account-level actions and are not performed by this repository automatically.
 
+## Production hardening
+
+The current candidate removes periodic whole-home polling, batches address-book
+profile reads, avoids a transaction on the letter-open path, returns newly sent
+letters without a second home request, records privacy-safe request durations,
+and includes Crashlytics with symbol upload. See `PRODUCTION_READINESS.md` for
+the launch gates, branded-domain plan, performance targets, and remaining
+privacy, reliability, safety, and App Store work.
+
 ## TestFlight readiness
 
 Run the local preflight check with:

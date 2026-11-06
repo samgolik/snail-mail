@@ -54,10 +54,6 @@ private struct AuthenticatedRoot: View {
             if let token = UserDefaults.standard.string(forKey: "snailFCMToken") {
                 await store.registerPushToken(token)
             }
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(60))
-                if !Task.isCancelled { await store.load() }
-            }
         }
         .onChange(of: scenePhase) { _, phase in
             guard phase == .active, store.hasLoaded else { return }
@@ -92,9 +88,9 @@ private struct TermsAcceptanceView: View {
                     Text("snail mail is for thoughtful correspondence. harassment, threats, hate, sexual exploitation, spam, impersonation, and illegal content are not allowed.")
                         .foregroundStyle(.secondary)
                     VStack(alignment: .leading, spacing: 12) {
-                        Link("read the terms of use", destination: URL(string: "https://snail-mail-btc.web.app/terms")!)
-                        Link("read the community guidelines", destination: URL(string: "https://snail-mail-btc.web.app/community")!)
-                        Link("read the privacy policy", destination: URL(string: "https://snail-mail-btc.web.app/privacy")!)
+                        Link("read the terms of use", destination: SnailLinks.page("terms"))
+                        Link("read the community guidelines", destination: SnailLinks.page("community"))
+                        Link("read the privacy policy", destination: SnailLinks.page("privacy"))
                     }
                     Toggle("i am at least 13 and agree to the terms and community guidelines", isOn: $agreed)
                         .tint(.snailGreen)
@@ -556,9 +552,9 @@ private struct AuthView: View {
                     .font(.caption)
                     .tint(.snailGreen)
                 HStack(spacing: 14) {
-                    Link("terms", destination: URL(string: "https://snail-mail-btc.web.app/terms")!)
-                    Link("community", destination: URL(string: "https://snail-mail-btc.web.app/community")!)
-                    Link("privacy", destination: URL(string: "https://snail-mail-btc.web.app/privacy")!)
+                    Link("terms", destination: SnailLinks.page("terms"))
+                    Link("community", destination: SnailLinks.page("community"))
+                    Link("privacy", destination: SnailLinks.page("privacy"))
                 }
                 .font(.caption)
                 .frame(maxWidth: .infinity, alignment: .leading)

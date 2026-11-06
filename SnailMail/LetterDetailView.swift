@@ -50,12 +50,27 @@ struct ProductionLetterDetailView: View {
                     Text("it made it").font(.title.bold())
                     Text("the seal can finally be broken.")
                         .foregroundStyle(.secondary)
-                    Button("open letter") {
-                        Task { await store.open(letter) }
+                    Button {
+                        isLoadingOpenedLetter = true
+                        Task {
+                            await store.open(letter)
+                            isLoadingOpenedLetter = false
+                        }
+                    } label: {
+                        HStack(spacing: 9) {
+                            if isLoadingOpenedLetter {
+                                ProgressView()
+                                    .tint(.white)
+                            } else {
+                                Image(systemName: "envelope.open")
+                            }
+                            Text(isLoadingOpenedLetter ? "breaking the seal…" : "open letter")
+                        }
+                        .frame(minWidth: 176)
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(.snailGreen)
-                    .disabled(store.isWorking)
+                    .disabled(isLoadingOpenedLetter)
                 }
             } else {
                 Image(systemName: "seal.fill")
@@ -86,6 +101,8 @@ struct ProductionLetterDetailView: View {
         .foregroundStyle(Color.berryInk)
         .navigationTitle("letter")
         .navigationBarTitleDisplayMode(.inline)
+        .animation(.easeInOut(duration: 0.2), value: isLoadingOpenedLetter)
+        .animation(.easeInOut(duration: 0.2), value: store.openedBodies[letter.id] != nil)
         .task(id: letter.id) {
             if isReceived && letter.openedAt != nil && store.openedBodies[letter.id] == nil {
                 isLoadingOpenedLetter = true

@@ -26,7 +26,7 @@ Exchange an exact handle, write a letter, and watch it travel between your
 cities at a fictional snail’s pace. The contents stay sealed until the
 server-calculated arrival time—no peeking and no rushing the road.
 
-- private friend-code connections
+- private handle-based connections and invitation links
 - cross-device delayed letters
 - sealed contents until arrival
 - in-app reporting, reversible blocking, connection removal, and permanent account deletion
@@ -42,13 +42,14 @@ Made thoughtfully by beat the clock studios.
 
 Data is linked to the user and used for **App Functionality**:
 
-- Contact Info → Email Address
+- Contact Info → Phone Number
 - User Content → Other User Content (letter bodies)
 - Identifiers → User ID
 - Location → Coarse Location (city-derived coordinates)
 - Other Data → profile name, username, city, friend relationships, blocks,
   safety reports, terms-acceptance records, delivery metadata, and App Attest
   security proofs
+- Diagnostics → Crash Data and Other Diagnostic Data used to diagnose reliability
 
 Firebase App Check processes an App Attest attestation object and assertion object
 to prevent abuse. In Apple’s current questionnaire, disclose this under the
@@ -102,7 +103,7 @@ Capture on the current required iPhone display sizes:
 3. mailbox with one traveling letter
 4. sealed journey detail
 5. arrived letter after opening
-6. friend-code address book
+6. handle-based address book
 
 Do not include simulator chrome, personal email addresses, or placeholder/demo
 copy. Use the same two fictional review accounts throughout the set.

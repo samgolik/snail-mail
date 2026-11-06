@@ -572,8 +572,12 @@ export const loadHome = onCall({region: "us-east1"}, async (request) => {
     return data.senderID === id ? data.recipientID as string : data.senderID as string;
   });
   const profileIDs = [...new Set([...otherIDs, ...blockedIDs, ...correspondentIDs])];
-  const people = await Promise.all(profileIDs.map((otherID: string) =>
-    db.collection("users").doc(otherID).get()));
+  // getAll batches profile lookups into one Firestore RPC instead of one RPC
+  // per friend/correspondent, which keeps home latency stable as an address
+  // book grows.
+  const people = profileIDs.length === 0 ? [] : await db.getAll(
+    ...profileIDs.map((otherID: string) => db.collection("users").doc(otherID)),
+  );
   const peopleByID = new Map(people.filter((item: DocumentSnapshot) => item.exists)
     .map((item: DocumentSnapshot) => [item.id, profileJSON(item.id, item.data()!)]));
   const connections = friendships.docs.map((item: QueryDocumentSnapshot) => {
@@ -691,32 +695,44 @@ export const sendLetter = onCall({region: "us-east1"}, async (request) => {
       letterID: letterRef.id,
       arrivesAt: arrivesAt.toDate().toISOString(),
       senderName: senderData.displayName as string,
+      letter: letterJSON(letterRef.id, {
+        senderID,
+        recipientID,
+        originCity: origin.city,
+        destinationCity: recipientData.city,
+        distanceMiles: miles,
+        snailDays,
+        sentAt,
+        arrivesAt,
+        status: "traveling",
+      }),
     };
   });
 
-  await bestEffortPush(
+  const followUps: Promise<unknown>[] = [bestEffortPush(
     recipientID,
     "a snail is on the way",
     `${result.senderName} sent you snail mail.`,
     "letter_sent",
-  );
+  )];
   if (process.env.FUNCTIONS_EMULATOR !== "true") {
-    try {
-      await getFunctions().taskQueue<{letterID: string; recipientID: string}>(
+    followUps.push(
+      getFunctions().taskQueue<{letterID: string; recipientID: string}>(
         "locations/us-east1/functions/notifyLetterArrival",
       ).enqueue(
         {letterID: result.letterID, recipientID},
         {scheduleTime: new Date(result.arrivesAt)},
-      );
-    } catch (error) {
-      console.error("arrival notification could not be scheduled", {
-        letterID: result.letterID,
-        error,
-      });
-    }
+      ).catch((error) => {
+        console.error("arrival notification could not be scheduled", {
+          letterID: result.letterID,
+          error,
+        });
+      }),
+    );
   }
+  await Promise.all(followUps);
 
-  return result;
+  return {letter: result.letter};
 });
 
 export const notifyLetterArrival = onTaskDispatched(
@@ -752,29 +768,29 @@ export const openLetter = onCall({region: "us-east1"}, async (request) => {
   const letterRef = db.collection("letters").doc(letterID);
   const sealedRef = db.collection("sealedLetters").doc(letterID);
 
-  return db.runTransaction(async (transaction: Transaction) => {
-    const [letter, sealed] = await Promise.all([
-      transaction.get(letterRef),
-      transaction.get(sealedRef),
-    ]);
-    if (!letter.exists || !sealed.exists) {
-      throw new HttpsError("not-found", "letter not found");
-    }
-    const letterData = letter.data()!;
-    if (letterData.recipientID !== userID) {
-      throw new HttpsError("permission-denied", "only the recipient can open this letter");
-    }
-    const arrivesAt = letterData.arrivesAt as Timestamp;
-    if (Timestamp.now().toMillis() < arrivesAt.toMillis()) {
-      throw new HttpsError("failed-precondition", "this letter is still traveling");
-    }
+  // Opening is idempotent, so a transaction only adds an extra Firestore
+  // round trip. Read the public envelope and sealed body concurrently, verify
+  // recipient and server arrival time, then perform one awaited update.
+  const [letter, sealed] = await Promise.all([letterRef.get(), sealedRef.get()]);
+  if (!letter.exists || !sealed.exists) {
+    throw new HttpsError("not-found", "letter not found");
+  }
+  const letterData = letter.data()!;
+  if (letterData.recipientID !== userID) {
+    throw new HttpsError("permission-denied", "only the recipient can open this letter");
+  }
+  const arrivesAt = letterData.arrivesAt as Timestamp;
+  if (Timestamp.now().toMillis() < arrivesAt.toMillis()) {
+    throw new HttpsError("failed-precondition", "this letter is still traveling");
+  }
 
-    transaction.update(letterRef, {
+  if (!letterData.openedAt || letterData.status !== "arrived") {
+    await letterRef.update({
       status: "arrived",
       openedAt: letterData.openedAt ?? FieldValue.serverTimestamp(),
     });
-    return {body: sealed.data()!.body as string};
-  });
+  }
+  return {body: sealed.data()!.body as string};
 });
 
 export const deleteAccount = onCall({region: "us-east1"}, async (request) => {

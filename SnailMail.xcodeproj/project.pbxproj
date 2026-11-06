@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		63C12B79884B3729F00F25B2 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = 3B26277F069521387A119D98 /* FirebaseCrashlytics */; };
 		8C4F0FAC3FE7F10800EE9B12 /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = 7F4BBC32CA113F4A78F0FBC8 /* FirebaseAppCheck */; };
 		A001 /* SnailMailApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = B001 /* SnailMailApp.swift */; };
 		A002 /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = B002 /* Models.swift */; };
@@ -37,7 +38,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		23EE1DB1A3F92E6EED7D2204 /* GoogleService-Info.plist */ = {isa = PBXFileReference; explicitFileType = text.plist; lastKnownFileType = text.plist; name = "GoogleService-Info.plist"; path = "../SnailMail/GoogleService-Info.plist"; sourceTree = "<group>"; };
+		23EE1DB1A3F92E6EED7D2204 /* GoogleService-Info.plist */ = {isa = PBXFileReference; explicitFileType = text.plist; lastKnownFileType = text.plist; name = "GoogleService-Info.plist"; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		B001 /* SnailMailApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnailMailApp.swift; sourceTree = "<group>"; };
 		B002 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		B003 /* DeliveryCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveryCalculator.swift; sourceTree = "<group>"; };
@@ -63,6 +64,7 @@
 				F66CFE26C8474789E2880D04 /* FirebaseAuth in Frameworks */,
 				8C4F0FAC3FE7F10800EE9B12 /* FirebaseAppCheck in Frameworks */,
 				E62A4B3BEB6E724D911C5B67 /* FirebaseMessaging in Frameworks */,
+				63C12B79884B3729F00F25B2 /* FirebaseCrashlytics in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -99,6 +101,7 @@
 				B008 /* LetterDetailView.swift */,
 				B009 /* SettingsView.swift */,
 				F50F42AC016D6E14241A7D30 /* Assets.xcassets */,
+				23EE1DB1A3F92E6EED7D2204 /* GoogleService-Info.plist */,
 			);
 			path = SnailMail;
 			sourceTree = "<group>";
@@ -107,7 +110,6 @@
 			isa = PBXGroup;
 			children = (
 				B010 /* SnailMailTests.swift */,
-				23EE1DB1A3F92E6EED7D2204 /* GoogleService-Info.plist */,
 			);
 			path = SnailMailTests;
 			sourceTree = "<group>";
@@ -131,6 +133,7 @@
 				S001 /* Sources */,
 				F001 /* Frameworks */,
 				R001 /* Resources */,
+				ACDA372F713D6D554DB7BFBE /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -142,6 +145,7 @@
 				4913BA8AD85FC7AFB2DD4019 /* FirebaseAuth */,
 				7F4BBC32CA113F4A78F0FBC8 /* FirebaseAppCheck */,
 				966D8EC254A5D151EE2C42C5 /* FirebaseMessaging */,
+				3B26277F069521387A119D98 /* FirebaseCrashlytics */,
 			);
 			productName = SnailMail;
 			productReference = B011 /* SnailMail.app */;
@@ -227,6 +231,30 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		ACDA372F713D6D554DB7BFBE /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}",
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${PRODUCT_NAME}",
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Info.plist",
+				"$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/GoogleService-Info.plist",
+				"$(TARGET_BUILD_DIR)/$(EXECUTABLE_PATH)",
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${PRODUCT_NAME}.debug.dylib",
+			);
+			outputPaths = (
+			);
+			name = "Upload Crashlytics Symbols";
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		S001 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -269,6 +297,7 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				ONLY_ACTIVE_ARCH = YES;
@@ -284,6 +313,7 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				CLANG_ENABLE_MODULES = YES;
 				CLANG_ENABLE_OBJC_ARC = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				SWIFT_COMPILATION_MODE = wholemodule;
@@ -300,6 +330,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 5;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = ZD28YD8KP6;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_TESTABILITY = YES;
@@ -333,6 +364,7 @@
 				CODE_SIGN_IDENTITY = "Apple Distribution";
 				CODE_SIGN_STYLE = Manual;
 				CURRENT_PROJECT_VERSION = 5;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = ZD28YD8KP6;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = NO;
@@ -360,6 +392,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				OTHER_LDFLAGS = (
@@ -380,6 +413,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				OTHER_LDFLAGS = (
@@ -443,6 +477,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 4D78C99AF0DEF2097460450C /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseCore;
+		};
+		3B26277F069521387A119D98 /* FirebaseCrashlytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4D78C99AF0DEF2097460450C /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCrashlytics;
 		};
 		3BAC272D4C4AA5F0FB138329 /* FirebaseFunctions */ = {
 			isa = XCSwiftPackageProductDependency;

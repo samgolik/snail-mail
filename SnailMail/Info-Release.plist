@@ -40,6 +40,8 @@
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Snail Mail uses your city to estimate how long each letter’s journey should take.</string>
+	<key>SnailPublicSiteURL</key>
+	<string>https://snail-mail-btc.web.app</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>
