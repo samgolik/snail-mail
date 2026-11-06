@@ -29,6 +29,7 @@ check "firebase messaging linked" "grep -q 'FirebaseMessaging in Frameworks' Sna
 check "firebase notification proxy enabled" "test \"$(plutil -extract FirebaseAppDelegateProxyEnabled raw -o - SnailMail/Info-Debug.plist)\" = true && test \"$(plutil -extract FirebaseAppDelegateProxyEnabled raw -o - SnailMail/Info-Release.plist)\" = true"
 check "no unsafe manual auth token handoff" "! grep -q 'SnailFirebase.auth.setAPNSToken' SnailMail/SnailMailApp.swift"
 check "remote notification registration" "grep -q 'registerForRemoteNotifications' SnailMail/SnailMailApp.swift"
+check "phone auth notification forwarding" "grep -q 'canHandleNotification(userInfo)' SnailMail/SnailMailApp.swift"
 check "app check request header" "grep -q 'X-Firebase-AppCheck' SnailMail/MailStore.swift"
 check "production app check enforcement" "grep -q 'app verification failed' firebase/functions/src/index.ts"
 check "app attest production entitlement" "test -f SnailMail/SnailMail.entitlements && grep -q 'com.apple.developer.devicecheck.appattest-environment' SnailMail/SnailMail.entitlements && grep -q '<string>production</string>' SnailMail/SnailMail.entitlements"

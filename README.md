@@ -92,7 +92,9 @@ Store bundle ID and production App Attest entitlement.
 Firebase's App Delegate proxy is enabled so Firebase Auth and Messaging receive
 APNs tokens only after their own internal initialization is complete. The app
 delegate remains responsible for foreground presentation and FCM-token updates,
-while Firebase owns phone-auth silent notifications and APNs forwarding.
+while Firebase owns APNs-token initialization. SwiftUI's adapted app delegate
+explicitly forwards received silent phone-auth notifications to Firebase Auth,
+because those callbacks can bypass Firebase's delegate proxy on physical devices.
 Remote-notification registration starts on demand for phone verification or
 after sign-in, rather than during app launch. This avoids manually calling
 Firebase Auth while its keychain-backed token manager is still being created on

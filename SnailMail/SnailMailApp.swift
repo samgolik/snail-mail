@@ -38,6 +38,25 @@ final class SnailMailAppDelegate: NSObject, UIApplicationDelegate, MessagingDele
         await MainActor.run { UIApplication.shared.applicationIconBadgeNumber = 0 }
     }
 
+    func application(
+        _ application: UIApplication,
+        didReceiveRemoteNotification userInfo: [AnyHashable: Any],
+        fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
+    ) {
+        // SwiftUI's UIApplicationDelegateAdaptor receives Firebase Auth's
+        // silent phone-verification notification even when Firebase's proxy is
+        // enabled. Forward that payload explicitly, but leave APNs token
+        // ownership with Firebase so its token manager cannot be accessed
+        // before initialization (the build 3/4 launch crash).
+        if SnailFirebase.auth.canHandleNotification(userInfo) {
+            completionHandler(.noData)
+            return
+        }
+
+        NotificationCenter.default.post(name: .snailPushReceived, object: nil)
+        completionHandler(.noData)
+    }
+
 }
 
 enum SnailNotifications {
