@@ -23,6 +23,22 @@ final class SnailMailAppDelegate: NSObject, UIApplicationDelegate, MessagingDele
         NotificationCenter.default.post(name: .snailPushToken, object: fcmToken)
     }
 
+    func application(
+        _ application: UIApplication,
+        didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
+    ) {
+        SnailFirebase.receiveAPNSToken(deviceToken)
+    }
+
+    func application(
+        _ application: UIApplication,
+        didFailToRegisterForRemoteNotificationsWithError error: Error
+    ) {
+        #if DEBUG
+        print("[snail-mail][notifications] APNs registration failed: \(error.localizedDescription)")
+        #endif
+    }
+
     func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification
@@ -44,11 +60,8 @@ final class SnailMailAppDelegate: NSObject, UIApplicationDelegate, MessagingDele
         didReceiveRemoteNotification userInfo: [AnyHashable: Any],
         fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
     ) {
-        // SwiftUI's UIApplicationDelegateAdaptor receives Firebase Auth's
-        // silent phone-verification notification even when Firebase's proxy is
-        // enabled. Forward that payload explicitly, but leave APNs token
-        // ownership with Firebase so its token manager cannot be accessed
-        // before initialization (the build 3/4 launch crash).
+        // Firebase's delegate proxy is intentionally disabled. Phone Auth must
+        // see its silent verification payload before app notification handling.
         if SnailFirebase.auth.canHandleNotification(userInfo) {
             completionHandler(.noData)
             return
@@ -80,6 +93,8 @@ enum SnailNotifications {
 
 enum SnailFirebase {
     private static let localAppName = "SnailMailLocal"
+    private static let tokenLock = NSLock()
+    private static var pendingAPNSToken: Data?
 
     static func configure() {
         FirebaseApp.configure()
@@ -99,6 +114,29 @@ enum SnailFirebase {
         FirebaseApp.configure(name: localAppName, options: defaultApp.options)
         auth.useEmulator(withHost: "127.0.0.1", port: 9099)
         #endif
+        flushPendingAPNSToken()
+    }
+
+    static func receiveAPNSToken(_ token: Data) {
+        tokenLock.lock()
+        pendingAPNSToken = token
+        tokenLock.unlock()
+        flushPendingAPNSToken()
+    }
+
+    private static func flushPendingAPNSToken() {
+        guard FirebaseApp.app() != nil else { return }
+        tokenLock.lock()
+        let token = pendingAPNSToken
+        pendingAPNSToken = nil
+        tokenLock.unlock()
+        guard let token else { return }
+
+        // SwiftUI apps must explicitly bridge APNs to both products when the
+        // Firebase app-delegate proxy is disabled. Buffering until Firebase is
+        // configured avoids the early token-manager crash seen in old builds.
+        auth.setAPNSToken(token, type: .unknown)
+        Messaging.messaging().apnsToken = token
     }
 
     static var auth: Auth {

@@ -41,7 +41,7 @@ final class AuthManager: ObservableObject {
         defer { isWorking = false }
         do {
             await SnailNotifications.prepareForPhoneAuth()
-            let verificationID = try await PhoneAuthProvider.provider()
+            let verificationID = try await PhoneAuthProvider.provider(auth: SnailFirebase.auth)
                 .verifyPhoneNumber(phoneNumber, uiDelegate: nil)
             UserDefaults.standard.set(verificationID, forKey: "phoneAuthVerificationID")
             noticeMessage = "verification code sent"

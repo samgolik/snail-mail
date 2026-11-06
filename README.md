@@ -298,6 +298,13 @@ and includes Crashlytics with symbol upload. See `PRODUCTION_READINESS.md` for
 the launch gates, branded-domain plan, performance targets, and remaining
 privacy, reliability, safety, and App Store work.
 
+Phone authentication and push notifications use an explicit SwiftUI app-delegate
+bridge. The Firebase delegate proxy is disabled; the app forwards the APNs token
+to Firebase Auth and Messaging, silent verification notifications to Firebase
+Auth, and reCAPTCHA callback URLs through the SwiftUI scene. The APNs token is
+buffered until Firebase finishes configuring to avoid launch-time token-manager
+access.
+
 ## TestFlight readiness
 
 Run the local preflight check with:
