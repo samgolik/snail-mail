@@ -30,6 +30,7 @@ check "firebase notification proxy enabled" "test \"$(plutil -extract FirebaseAp
 check "no unsafe manual auth token handoff" "! grep -q 'SnailFirebase.auth.setAPNSToken' SnailMail/SnailMailApp.swift"
 check "remote notification registration" "grep -q 'registerForRemoteNotifications' SnailMail/SnailMailApp.swift"
 check "phone auth notification forwarding" "grep -q 'canHandleNotification(userInfo)' SnailMail/SnailMailApp.swift"
+check "push delivery diagnostics" "grep -q 'push delivery result' firebase/functions/src/index.ts && grep -q 'successCount' firebase/functions/src/index.ts && grep -q 'failureCodes' firebase/functions/src/index.ts"
 check "app check request header" "grep -q 'X-Firebase-AppCheck' SnailMail/MailStore.swift"
 check "production app check enforcement" "grep -q 'app verification failed' firebase/functions/src/index.ts"
 check "app attest production entitlement" "test -f SnailMail/SnailMail.entitlements && grep -q 'com.apple.developer.devicecheck.appattest-environment' SnailMail/SnailMail.entitlements && grep -q '<string>production</string>' SnailMail/SnailMail.entitlements"

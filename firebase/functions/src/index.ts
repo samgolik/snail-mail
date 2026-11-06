@@ -50,12 +50,25 @@ async function sendPush(
     .collection("pushTokens").limit(20).get();
   const tokens = snapshot.docs.map((item) => item.data().token as string)
     .filter((token) => typeof token === "string" && token.length > 0);
-  if (tokens.length === 0) return;
+  if (tokens.length === 0) {
+    console.info("push delivery skipped", {event, reason: "no_registered_tokens"});
+    return;
+  }
   const response = await getMessaging().sendEachForMulticast({
     tokens,
     notification: {title, body},
     data: {event},
     apns: {payload: {aps: {sound: "default"}}},
+  });
+  const failureCodes = response.responses
+    .filter((result) => !result.success)
+    .map((result) => result.error?.code ?? "messaging/unknown-error");
+  console.info("push delivery result", {
+    event,
+    tokenCount: tokens.length,
+    successCount: response.successCount,
+    failureCount: response.failureCount,
+    failureCodes: [...new Set(failureCodes)],
   });
   const invalidCodes = new Set([
     "messaging/invalid-registration-token",
