@@ -308,6 +308,10 @@ by the session, including the separately named simulator-emulator app.
 
 ## TestFlight readiness
 
+The current upload candidate is version 1.0, build 6. Build 6 combines the
+working production push configuration from build 5 with the corrected Firebase
+phone-auth delegate path, production diagnostics, and latency improvements.
+
 Run the local preflight check with:
 
 ```sh
