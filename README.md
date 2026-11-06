@@ -193,10 +193,10 @@ Current Apple distribution registration:
 - Callable Functions: all 12 deployed on Node 22 in `us-east1`, with bounded
   beta scaling and one-day cleanup of stale deployment images
 - Firebase Authentication: phone enabled; email/password and anonymous accounts disabled
-- Production push delivery requires an APNs authentication key on Firebase's
-  Cloud Messaging settings for `com.beattheclockstudios.snailmail`. Functions
-  log token counts, success/failure counts, and Firebase error codes for every
-  push attempt without logging tokens or message contents.
+- The Firebase Apple app `com.beattheclockstudios.snailmail` has a team-scoped
+  APNs authentication key configured for both Development and Production.
+  Functions log token counts, success/failure counts, and Firebase error codes
+  for every push attempt without logging tokens or message contents.
 
 The current rules are intentionally closed to direct client access. Production
 reads and writes go through authenticated callable functions so profiles cannot
