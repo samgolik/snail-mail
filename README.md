@@ -95,10 +95,12 @@ delegate remains responsible for foreground presentation and FCM-token updates,
 while Firebase owns APNs-token initialization. SwiftUI's adapted app delegate
 explicitly forwards received silent phone-auth notifications to Firebase Auth,
 because those callbacks can bypass Firebase's delegate proxy on physical devices.
-Remote-notification registration starts on demand for phone verification or
-after sign-in, rather than during app launch. This avoids manually calling
-Firebase Auth while its keychain-backed token manager is still being created on
-iOS 27. The SwiftUI scene still forwards opened URLs as a fallback for phone
+Remote-notification registration now starts quietly during app launch so the
+silent APNs handshake is usually ready before someone taps **text me a code**.
+Registration itself does not display the notification-permission prompt; that
+still appears only after sign-in. The app never calls `Auth.setAPNSToken`
+manually, avoiding Firebase Auth's keychain-backed token-manager race on iOS 27.
+The SwiftUI scene still forwards opened URLs as a fallback for phone
 authentication's reCAPTCHA return path.
 The SwiftUI scene also forwards opened URLs with `onOpenURL`, because reCAPTCHA
 redirects are delivered through the scene lifecycle on modern iOS versions.
@@ -183,7 +185,7 @@ Current Apple distribution registration:
 - Distribution profile: `Snail Mail App Store Connect`
 - TestFlight builds run manually through `.github/workflows/testflight.yml` on
   GitHub's `macos-26` runner so uploads use Apple's required iOS 26 SDK.
-- The current TestFlight candidate is version `1.0` build `5`.
+- The current TestFlight build is version `1.0` build `6`.
 - The workflow uploads through Apple's Build Upload API after exporting the
   signed IPA, avoiding account-state dependencies in Xcode's upload client.
 - Firestore and Functions backend configuration is retained but their unused,
@@ -291,12 +293,16 @@ Cloud configuration and deployment are intentional account-level actions and are
 
 ## Production hardening
 
-The current candidate removes periodic whole-home polling, batches address-book
-profile reads, avoids a transaction on the letter-open path, returns newly sent
-letters without a second home request, records privacy-safe request durations,
-and includes Crashlytics with symbol upload. See `PRODUCTION_READINESS.md` for
-the launch gates, branded-domain plan, performance targets, and remaining
-privacy, reliability, safety, and App Store work.
+Build 6 removes periodic whole-home polling, batches address-book profile reads,
+avoids a transaction on the letter-open path, returns newly sent letters without
+a second home request, records privacy-safe request durations, and includes
+Crashlytics with symbol upload. The next candidate adds a three-step new-user
+welcome, consistent rounded typography, immediate progress feedback for auth,
+friend requests, sending, and opening, a 12-second network timeout, short-lived
+city lookup reuse, early silent-APNs preparation, and off-path push delivery.
+See `PRODUCTION_READINESS.md` for the launch gates, branded-domain plan,
+performance targets, and remaining privacy, reliability, safety, and App Store
+work.
 
 Phone authentication and push notifications use Firebase's delegate proxy for
 safe APNs-token ownership. The SwiftUI app delegate also forwards silent Auth
@@ -308,9 +314,14 @@ by the session, including the separately named simulator-emulator app.
 
 ## TestFlight readiness
 
-The current upload candidate is version 1.0, build 6. Build 6 combines the
+The current TestFlight build is version 1.0, build 6. Build 6 combines the
 working production push configuration from build 5 with the corrected Firebase
 phone-auth delegate path, production diagnostics, and latency improvements.
+
+The onboarding and interaction-polish work described above is implemented and
+locally verified for the next candidate, but has not been uploaded. Its queued
+push worker must be deployed with the reviewed backend release before that app
+candidate is distributed.
 
 Run the local preflight check with:
 

@@ -38,7 +38,7 @@ private struct AuthenticatedRoot: View {
                     ConnectionProblemView()
                 case .loaded:
                     if store.profile == nil {
-                        ProfileSetupView()
+                        NewUserOnboardingView()
                     } else if !store.termsAccepted {
                         TermsAcceptanceView()
                     } else {
@@ -84,7 +84,7 @@ private struct TermsAcceptanceView: View {
                         .font(.system(size: 50, weight: .light))
                         .foregroundStyle(Color.snailGreen)
                     Text("a kind little post office")
-                        .font(.largeTitle.weight(.semibold))
+                        .font(SnailType.display)
                     Text("snail mail is for thoughtful correspondence. harassment, threats, hate, sexual exploitation, spam, impersonation, and illegal content are not allowed.")
                         .foregroundStyle(.secondary)
                     VStack(alignment: .leading, spacing: 12) {
@@ -186,12 +186,153 @@ private struct LaunchView: View {
             VStack(spacing: 18) {
                 PostalSeal()
                 Text("snail mail")
-                    .font(.largeTitle.weight(.semibold))
+                    .font(SnailType.display)
                 ProgressView()
                     .tint(.snailGreen)
             }
             .foregroundStyle(Color.berryInk)
         }
+    }
+}
+
+private struct NewUserOnboardingView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var page = 0
+    @State private var isMakingAddress = false
+
+    private let pages = [
+        OnboardingPage(
+            icon: "heart.text.square.fill",
+            eyebrow: "welcome to slow social",
+            title: "some messages deserve a little journey",
+            detail: "write something thoughtful, seal it up, and let a tiny snail carry it to a friend."
+        ),
+        OnboardingPage(
+            icon: "seal.fill",
+            eyebrow: "no peeking",
+            title: "the letter stays sealed until it arrives",
+            detail: "distance sets the pace. the waiting is part of the magic—and your friend gets a notification when the snail makes it."
+        ),
+        OnboardingPage(
+            icon: "person.2.fill",
+            eyebrow: "friends, not followers",
+            title: "exchange snailing addresses with people you know",
+            detail: "find friends by handle, keep your phone number private, and report or block anyone whenever you need to."
+        )
+    ]
+
+    var body: some View {
+        if isMakingAddress {
+            ProfileSetupView()
+                .transition(.move(edge: .trailing).combined(with: .opacity))
+        } else {
+            ZStack {
+                PastelBackground()
+                VStack(spacing: 0) {
+                    TabView(selection: $page) {
+                        ForEach(Array(pages.enumerated()), id: \.offset) { index, item in
+                            onboardingPage(item, index: index)
+                                .tag(index)
+                        }
+                    }
+                    .tabViewStyle(.page(indexDisplayMode: .always))
+
+                    Button(page == pages.count - 1 ? "make my snailing address" : "keep going") {
+                        withAnimation(reduceMotion ? nil : .spring(response: 0.42, dampingFraction: 0.86)) {
+                            if page == pages.count - 1 {
+                                isMakingAddress = true
+                            } else {
+                                page += 1
+                            }
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .tint(.snailGreen)
+                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal, 24)
+
+                    Button(page == pages.count - 1 ? "back" : "skip the tour") {
+                        withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.2)) {
+                            if page == pages.count - 1 {
+                                page -= 1
+                            } else {
+                                isMakingAddress = true
+                            }
+                        }
+                    }
+                    .font(SnailType.smallAction)
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 12)
+                    .padding(.bottom, 22)
+                }
+            }
+            .foregroundStyle(Color.berryInk)
+            .transition(.opacity)
+        }
+    }
+
+    private func onboardingPage(_ item: OnboardingPage, index: Int) -> some View {
+        VStack(spacing: 24) {
+            Spacer(minLength: 26)
+            ZStack {
+                OnboardingTrail(flip: index.isMultiple(of: 2))
+                    .stroke(
+                        Color.snailGreen.opacity(0.24),
+                        style: StrokeStyle(lineWidth: 8, lineCap: .round, dash: [2, 12])
+                    )
+                    .frame(width: 240, height: 120)
+                Circle()
+                    .fill(Color.card.opacity(0.94))
+                    .frame(width: 132, height: 132)
+                    .overlay {
+                        Image(systemName: item.icon)
+                            .font(.system(size: 52, weight: .medium, design: .rounded))
+                            .foregroundStyle(Color.snailGreen)
+                    }
+                    .overlay { Circle().stroke(Color.sand.opacity(0.9), lineWidth: 1) }
+                    .shadow(color: Color.powderBlue.opacity(0.30), radius: 20, y: 10)
+            }
+            VStack(spacing: 12) {
+                Text(item.eyebrow)
+                    .font(SnailType.eyebrow)
+                    .tracking(1.4)
+                    .foregroundStyle(Color.clay)
+                Text(item.title)
+                    .font(SnailType.display)
+                    .multilineTextAlignment(.center)
+                Text(item.detail)
+                    .font(SnailType.body)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(4)
+            }
+            .padding(.horizontal, 28)
+            Spacer(minLength: 60)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+private struct OnboardingPage {
+    let icon: String
+    let eyebrow: String
+    let title: String
+    let detail: String
+}
+
+private struct OnboardingTrail: Shape {
+    let flip: Bool
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: flip ? rect.maxX : rect.minX, y: rect.maxY * 0.76))
+        path.addCurve(
+            to: CGPoint(x: flip ? rect.minX : rect.maxX, y: rect.minY + 12),
+            control1: CGPoint(x: rect.midX * 1.4, y: rect.maxY),
+            control2: CGPoint(x: rect.midX * 0.6, y: rect.minY)
+        )
+        return path
     }
 }
 
@@ -235,7 +376,7 @@ private struct ProfileSetupView: View {
                         .foregroundStyle(Color.snailGreen)
                     VStack(alignment: .leading, spacing: 8) {
                         Text("set up your home snailbox")
-                            .font(.largeTitle.weight(.semibold))
+                            .font(SnailType.display)
                         Text("choose the snailing address your friends will recognize on every little journey.")
                             .foregroundStyle(.secondary)
                     }
@@ -326,6 +467,8 @@ struct ResolvedCity {
 }
 
 enum CityResolver {
+    @MainActor private static var cachedCurrentCity: (city: ResolvedCity, savedAt: Date)?
+
     static func resolve(_ query: String) async throws -> ResolvedCity {
         let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { throw ProfileLocationError() }
@@ -353,7 +496,12 @@ enum CityResolver {
         )
     }
 
+    @MainActor
     static func currentCity() async throws -> ResolvedCity {
+        if let cachedCurrentCity,
+           Date().timeIntervalSince(cachedCurrentCity.savedAt) < 600 {
+            return cachedCurrentCity.city
+        }
         let request = CurrentLocationRequest()
         let location = try await request.start()
         let placemarks = try await CLGeocoder().reverseGeocodeLocation(location)
@@ -367,13 +515,15 @@ enum CityResolver {
             .filter { !$0.isEmpty }
             .joined(separator: ", ")
         guard !name.isEmpty else { throw ProfileLocationError() }
-        return ResolvedCity(
+        let result = ResolvedCity(
             name: name,
             city: locality,
             region: region ?? "",
             latitude: location.coordinate.latitude,
             longitude: location.coordinate.longitude
         )
+        cachedCurrentCity = (result, .now)
+        return result
     }
 }
 
@@ -507,7 +657,7 @@ private struct AuthView: View {
                         .foregroundStyle(Color.snailGreen)
                     VStack(spacing: 8) {
                         Text("snail mail")
-                            .font(.largeTitle.weight(.semibold))
+                            .font(SnailType.display)
                         Text("messages worth waiting for")
                             .foregroundStyle(.secondary)
                     }
@@ -579,9 +729,14 @@ private struct AuthView: View {
             } label: {
                 Group {
                     if auth.isWorking {
-                        ProgressView().tint(.white)
+                        HStack(spacing: 10) {
+                            ProgressView().tint(.white)
+                            Text(codeSent ? "checking your code…" : "getting your code ready…")
+                                .font(SnailType.smallAction)
+                        }
                     } else {
-                        Text(codeSent ? "enter the post office" : "text me a code").fontWeight(.semibold)
+                        Text(codeSent ? "enter the post office" : "text me a code")
+                            .font(SnailType.button)
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -688,4 +843,14 @@ struct PastelBackground: View {
         )
         .ignoresSafeArea()
     }
+}
+
+enum SnailType {
+    static let display = Font.system(size: 34, weight: .bold, design: .rounded)
+    static let title = Font.system(size: 24, weight: .bold, design: .rounded)
+    static let headline = Font.system(size: 17, weight: .semibold, design: .rounded)
+    static let body = Font.system(size: 17, weight: .regular, design: .rounded)
+    static let button = Font.system(size: 17, weight: .semibold, design: .rounded)
+    static let smallAction = Font.system(size: 15, weight: .semibold, design: .rounded)
+    static let eyebrow = Font.system(size: 13, weight: .bold, design: .rounded)
 }

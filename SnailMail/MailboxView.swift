@@ -40,7 +40,7 @@ struct MailboxView: View {
     private var greeting: some View {
         VStack(alignment: .leading, spacing: 5) {
             Text("hello, \(store.profile?.displayName.lowercased() ?? "friend")")
-                .font(.title2.bold())
+                .font(SnailType.title)
             Text("your tiny snailbox in \(store.profile?.city.lowercased() ?? "the world")")
                 .foregroundStyle(.secondary)
         }
@@ -91,7 +91,7 @@ private struct ProductionLetterRow: View {
                 Text(isReceived
                      ? "from \(store.person(id: letter.senderID)?.displayName.lowercased() ?? "a friend")"
                      : "to \(store.person(id: letter.recipientID)?.displayName.lowercased() ?? "a friend")")
-                    .font(.headline)
+                    .font(SnailType.headline)
                 if letter.hasArrived(at: store.now) {
                     Text(isReceived ? "ready to open" : "delivered").foregroundStyle(.secondary)
                 } else {

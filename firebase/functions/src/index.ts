@@ -96,6 +96,33 @@ async function bestEffortPush(
   }
 }
 
+type PushTask = {
+  userID: string;
+  title: string;
+  body: string;
+  event: string;
+};
+
+async function queuePush(
+  userID: string,
+  title: string,
+  body: string,
+  event: string,
+): Promise<void> {
+  if (process.env.FUNCTIONS_EMULATOR === "true") {
+    await bestEffortPush(userID, title, body, event);
+    return;
+  }
+  try {
+    await getFunctions().taskQueue<PushTask>(
+      "locations/us-east1/functions/deliverPush",
+    ).enqueue({userID, title, body, event});
+  } catch (error) {
+    // A notification must never make the user's primary action fail.
+    console.error("push delivery could not be queued", {event, error});
+  }
+}
+
 type CallableIdentity = {
   auth?: {uid: string; token: {[key: string]: unknown}};
   app?: unknown;
@@ -373,7 +400,7 @@ export const requestFriend = onCall({region: "us-east1"}, async (request) => {
   const recipient = await db.collection("users").doc(recipientID).get();
   if (!recipient.exists) throw new HttpsError("not-found", "that account no longer exists");
   const requester = await db.collection("users").doc(requesterID).get();
-  await bestEffortPush(
+  await queuePush(
     recipientID,
     "new snailing request",
     `${requester.data()?.displayName ?? "someone"} wants to exchange snail mail.`,
@@ -536,7 +563,7 @@ export const respondToFriend = onCall({region: "us-east1"}, async (request) => {
   const other = await db.collection("users").doc(otherID).get();
   if (!other.exists) throw new HttpsError("not-found", "that account no longer exists");
   const accepter = await db.collection("users").doc(id).get();
-  await bestEffortPush(
+  await queuePush(
     otherID,
     "snailing address accepted",
     `${accepter.data()?.displayName ?? "your friend"} is ready for slow mail.`,
@@ -709,7 +736,7 @@ export const sendLetter = onCall({region: "us-east1"}, async (request) => {
     };
   });
 
-  const followUps: Promise<unknown>[] = [bestEffortPush(
+  const followUps: Promise<unknown>[] = [queuePush(
     recipientID,
     "a snail is on the way",
     `${result.senderName} sent you snail mail.`,
@@ -762,6 +789,23 @@ export const notifyLetterArrival = onTaskDispatched(
   },
 );
 
+export const deliverPush = onTaskDispatched(
+  {
+    region: "us-east1",
+    retryConfig: {maxAttempts: 3, minBackoffSeconds: 30},
+    rateLimits: {maxConcurrentDispatches: 2, maxDispatchesPerSecond: 10},
+    minInstances: 0,
+    maxInstances: 2,
+  },
+  async (request) => {
+    const userID = requireText(request.data?.userID, "userID", 128);
+    const title = requireText(request.data?.title, "title", 100);
+    const body = requireText(request.data?.body, "body", 300);
+    const event = requireText(request.data?.event, "event", 64);
+    await sendPush(userID, title, body, event);
+  },
+);
+
 export const openLetter = onCall({region: "us-east1"}, async (request) => {
   const userID = requireUser(request);
   const letterID = requireText(request.data?.letterID, "letterID", 128);
@@ -769,9 +813,9 @@ export const openLetter = onCall({region: "us-east1"}, async (request) => {
   const sealedRef = db.collection("sealedLetters").doc(letterID);
 
   // Opening is idempotent, so a transaction only adds an extra Firestore
-  // round trip. Read the public envelope and sealed body concurrently, verify
-  // recipient and server arrival time, then perform one awaited update.
-  const [letter, sealed] = await Promise.all([letterRef.get(), sealedRef.get()]);
+  // round trip. Batch the public envelope and sealed body into one read RPC,
+  // verify recipient and server arrival time, then perform one awaited update.
+  const [letter, sealed] = await db.getAll(letterRef, sealedRef);
   if (!letter.exists || !sealed.exists) {
     throw new HttpsError("not-found", "letter not found");
   }

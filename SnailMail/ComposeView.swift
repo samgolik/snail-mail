@@ -80,11 +80,16 @@ struct ComposeView: View {
                     }
                 } label: {
                     if store.isWorking {
-                        ProgressView().frame(maxWidth: .infinity)
+                        HStack(spacing: 10) {
+                            ProgressView()
+                            Text("sealing your letter…")
+                                .font(SnailType.smallAction)
+                        }
+                        .frame(maxWidth: .infinity)
                     } else {
                         Label("send by snail", systemImage: "paperplane.fill")
                             .frame(maxWidth: .infinity)
-                            .font(.headline)
+                            .font(SnailType.button)
                             .padding(.vertical, 6)
                     }
                 }

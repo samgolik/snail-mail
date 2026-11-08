@@ -3,7 +3,7 @@
 This is the launch gate for snail mail. A checked item should be backed by a
 repeatable test, production-console evidence, or a shipped build—not optimism.
 
-## fixed in the current candidate
+## shipped in TestFlight build 6
 
 - Letter opening now presents an immediate, intentional seal-breaking state.
 - Auth and App Check credentials are prepared concurrently for callable API requests.
@@ -18,6 +18,27 @@ repeatable test, production-console evidence, or a shipped build—not optimism.
   now discloses crash diagnostics.
 - Public web links have one `SnailPublicSiteURL` configuration point, so changing
   to a branded domain no longer requires editing several screens.
+
+## implemented for the next candidate
+
+- New accounts receive a short, skippable introduction before creating their
+  snailing address; returning accounts never see it.
+- Navigation, tabs, titles, actions, and letter content use a consistent SF
+  Rounded type system without adding a third-party font or font-license risk.
+- Phone verification begins silent APNs registration at launch, and auth buttons
+  explain whether the app is preparing or checking a code.
+- Friend requests and letter sending show immediate, action-specific progress.
+  Callable requests stop with a retryable error after 12 seconds instead of
+  appearing to spin indefinitely.
+- A resolved current city is reused for ten minutes in memory, reducing repeated
+  GPS and reverse-geocoding work without persisting coordinates.
+- `openLetter` fetches the letter metadata and sealed body in one Firestore batch
+  read. Letter, friend, and acceptance pushes are queued outside the interactive
+  request path, with zero warm instances, bounded concurrency, and retry limits.
+
+The iOS and Functions code above is locally verified but not yet uploaded or
+deployed. Deploy the reviewed Functions change before distributing the matching
+app candidate.
 
 ## must pass before public launch
 

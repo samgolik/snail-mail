@@ -793,6 +793,7 @@ private enum CallableAPI {
         #endif
 
         var request = URLRequest(url: baseURL.appending(path: name))
+        request.timeoutInterval = 12
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")

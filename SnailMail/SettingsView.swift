@@ -130,6 +130,8 @@ struct AddressBookView: View {
     @State private var personToReport: SnailProfile?
     @State private var reportReason = ""
     @State private var didSearch = false
+    @State private var isSearching = false
+    @State private var requestingProfileID: String?
 
     var body: some View {
         Form {
@@ -143,7 +145,11 @@ struct AddressBookView: View {
                     Button {
                         search()
                     } label: {
-                        Image(systemName: "magnifyingglass")
+                        if isSearching {
+                            ProgressView()
+                        } else {
+                            Image(systemName: "magnifyingglass")
+                        }
                     }
                     .disabled(!canSearch)
                     .accessibilityLabel("search usernames")
@@ -177,9 +183,18 @@ struct AddressBookView: View {
                         HStack {
                             addressLabel(person)
                             Spacer()
-                            Button("add") { sendRequest(to: person) }
-                                .buttonStyle(.bordered)
-                                .disabled(store.isWorking)
+                            Button { sendRequest(to: person) } label: {
+                                if requestingProfileID == person.id {
+                                    HStack(spacing: 6) {
+                                        ProgressView()
+                                        Text("sending…")
+                                    }
+                                } else {
+                                    Text("add")
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                            .disabled(requestingProfileID != nil)
                         }
                     }
                 }
@@ -331,7 +346,7 @@ struct AddressBookView: View {
     private var canSearch: Bool {
         identifier.trimmingCharacters(in: .whitespacesAndNewlines)
             .replacingOccurrences(of: "@", with: "").count >= 2 &&
-        !store.isWorking && auth.isPhoneVerified
+        !store.isWorking && !isSearching && auth.isPhoneVerified
     }
 
     private func inviteURL(for username: String) -> URL? {
@@ -347,14 +362,18 @@ struct AddressBookView: View {
 
     private func search() {
         guard canSearch else { return }
+        isSearching = true
         Task {
             await store.searchUsers(query: identifier)
             didSearch = true
+            isSearching = false
         }
     }
 
     private func sendRequest(to person: SnailProfile) {
+        requestingProfileID = person.id
         Task {
+            defer { requestingProfileID = nil }
             if await store.requestFriend(identifier: person.username) {
                 identifier = ""
                 didSearch = false
@@ -366,7 +385,7 @@ struct AddressBookView: View {
 
     private func addressLabel(_ profile: SnailProfile) -> some View {
         VStack(alignment: .leading, spacing: 3) {
-            Text(profile.displayName.lowercased()).font(.body.weight(.medium))
+            Text(profile.displayName.lowercased()).font(SnailType.headline)
             Text("\(profile.username.lowercased()) · \(profile.city.lowercased())")
                 .font(.caption)
                 .foregroundStyle(.secondary)

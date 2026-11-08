@@ -18,7 +18,7 @@ struct ProductionLetterDetailView: View {
                     .font(.system(size: 62, weight: .light))
                     .foregroundStyle(Color.snailGreen)
                 Text(letter.hasArrived(at: store.now) ? "delivered" : "still on the way")
-                    .font(.title.bold())
+                    .font(SnailType.title)
                 Text("your letter is \(letter.hasArrived(at: store.now) ? "waiting in" : "traveling toward") \(letter.destinationCity.lowercased()). the seal belongs to its recipient.")
                     .multilineTextAlignment(.center)
                     .foregroundStyle(.secondary)
@@ -36,7 +36,9 @@ struct ProductionLetterDetailView: View {
                     .frame(maxWidth: .infinity, minHeight: 180)
                 } else if let body = store.openedBodies[letter.id] {
                     VStack(alignment: .leading, spacing: 18) {
-                        Text(body).font(.title3)
+                        Text(body)
+                            .font(SnailType.body)
+                            .lineSpacing(5)
                         Divider()
                         Text("from \(store.person(id: letter.senderID)?.displayName.lowercased() ?? "a friend") in \(letter.originCity.lowercased())")
                             .font(.footnote).foregroundStyle(.secondary)
@@ -47,7 +49,7 @@ struct ProductionLetterDetailView: View {
                     .overlay { RoundedRectangle(cornerRadius: 26).stroke(Color.sand.opacity(0.9)) }
                     .shadow(color: Color.powderBlue.opacity(0.22), radius: 14, y: 6)
                 } else {
-                    Text("it made it").font(.title.bold())
+                    Text("it made it").font(SnailType.title)
                     Text("the seal can finally be broken.")
                         .foregroundStyle(.secondary)
                     Button {
@@ -76,7 +78,7 @@ struct ProductionLetterDetailView: View {
                 Image(systemName: "seal.fill")
                     .font(.system(size: 70, weight: .light))
                     .foregroundStyle(Color.snailGreen)
-                Text("still on the way").font(.title.bold())
+                Text("still on the way").font(SnailType.title)
                 Text("this letter is traveling from \(letter.originCity.lowercased()) to \(letter.destinationCity.lowercased()). its contents stay sealed until it arrives.")
                     .multilineTextAlignment(.center)
                     .foregroundStyle(.secondary)

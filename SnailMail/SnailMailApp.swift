@@ -14,6 +14,10 @@ final class SnailMailAppDelegate: NSObject, UIApplicationDelegate, MessagingDele
     ) -> Bool {
         Messaging.messaging().delegate = self
         UNUserNotificationCenter.current().delegate = self
+        // Phone authentication verifies the app with a silent APNs round trip.
+        // Register at launch so the verification button does not begin that
+        // handshake from a cold start. This does not show a permission prompt.
+        application.registerForRemoteNotifications()
         return true
     }
 
@@ -150,6 +154,7 @@ struct SnailMailApp: App {
     init() {
         AppCheck.setAppCheckProviderFactory(SnailAppCheckProviderFactory())
         SnailFirebase.configure()
+        SnailAppearance.configure()
         _auth = StateObject(wrappedValue: AuthManager())
     }
 
@@ -183,6 +188,31 @@ struct SnailMailApp: App {
                     }
                 }
         }
+    }
+}
+
+private enum SnailAppearance {
+    static func configure() {
+        let navigation = UINavigationBarAppearance()
+        navigation.configureWithDefaultBackground()
+        navigation.largeTitleTextAttributes = [
+            .font: roundedFont(size: 34, weight: .bold)
+        ]
+        navigation.titleTextAttributes = [
+            .font: roundedFont(size: 17, weight: .semibold)
+        ]
+        UINavigationBar.appearance().standardAppearance = navigation
+        UINavigationBar.appearance().scrollEdgeAppearance = navigation
+        UINavigationBar.appearance().compactAppearance = navigation
+        UITabBarItem.appearance().setTitleTextAttributes([
+            .font: roundedFont(size: 11, weight: .semibold)
+        ], for: .normal)
+    }
+
+    private static func roundedFont(size: CGFloat, weight: UIFont.Weight) -> UIFont {
+        let base = UIFont.systemFont(ofSize: size, weight: weight)
+        guard let descriptor = base.fontDescriptor.withDesign(.rounded) else { return base }
+        return UIFont(descriptor: descriptor, size: size)
     }
 }
 
