@@ -19,7 +19,9 @@ struct ProductionLetterDetailView: View {
                     .foregroundStyle(Color.snailGreen)
                 Text(letter.hasArrived(at: store.now) ? "delivered" : "still on the way")
                     .font(SnailType.title)
-                Text("your letter is \(letter.hasArrived(at: store.now) ? "waiting in" : "traveling toward") \(letter.destinationCity.lowercased()). the seal belongs to its recipient.")
+                Text(letter.hasArrived(at: store.now)
+                     ? "your letter has arrived in \(letter.destinationCity.lowercased()). your friend can open it whenever they’re ready."
+                     : "your letter is traveling toward \(letter.destinationCity.lowercased()). it will stay sealed until it reaches your friend.")
                     .multilineTextAlignment(.center)
                     .foregroundStyle(.secondary)
             } else if letter.hasArrived(at: store.now) {
@@ -70,8 +72,7 @@ struct ProductionLetterDetailView: View {
                         }
                         .frame(minWidth: 176)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.snailGreen)
+                    .snailPrimaryButtonStyle()
                     .disabled(isLoadingOpenedLetter)
                 }
             } else {

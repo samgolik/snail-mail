@@ -167,8 +167,7 @@ struct AddressBookView: View {
                         Label("invite a friend", systemImage: "paperplane")
                             .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.snailGreen)
+                    .snailPrimaryButtonStyle()
                     Text("share a link by text or any app. they can find your snailing address in one tap.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -217,8 +216,7 @@ struct AddressBookView: View {
                                 Button("accept") {
                                     Task { await store.respond(to: connection, accept: true) }
                                 }
-                                .buttonStyle(.borderedProminent)
-                                .tint(.snailGreen)
+                                .snailPrimaryButtonStyle()
                                 .disabled(store.isWorking)
                                 Button("decline", role: .destructive) {
                                     Task { await store.respond(to: connection, accept: false) }

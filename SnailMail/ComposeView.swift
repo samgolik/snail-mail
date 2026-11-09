@@ -28,6 +28,7 @@ struct ComposeView: View {
                     systemImage: "person.2.badge.plus",
                     description: Text("connect with a friend under you before writing your first letter")
                 )
+                .padding(.top, 24)
             } else {
                 if !auth.isPhoneVerified {
                     Section {
@@ -137,8 +138,7 @@ struct ComposeView: View {
                 Button("allow location") {
                     Task { await requestOriginPermission() }
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(.snailGreen)
+                .snailPrimaryButtonStyle()
             case .denied:
                 Label("location access is off, so sending is paused", systemImage: "location.slash")
                     .foregroundStyle(.red)

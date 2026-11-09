@@ -42,6 +42,7 @@ check "explicit info plists linked" "grep -q 'INFOPLIST_FILE = \"SnailMail/Info-
 check "local networking limited to debug" "test \"$(plutil -extract NSAppTransportSecurity.NSAllowsLocalNetworking raw -o - SnailMail/Info-Debug.plist)\" = true && ! plutil -extract NSAppTransportSecurity raw -o - SnailMail/Info-Release.plist >/dev/null 2>&1"
 check "export compliance declaration" "test \"$(plutil -extract ITSAppUsesNonExemptEncryption raw -o - SnailMail/Info-Debug.plist)\" = false && test \"$(plutil -extract ITSAppUsesNonExemptEncryption raw -o - SnailMail/Info-Release.plist)\" = false"
 check "1024 app icon" "sips -g pixelWidth -g pixelHeight SnailMail/Assets.xcassets/AppIcon.appiconset/AppIcon.png | grep -q '1024'"
+check "accessible primary button contrast" "grep -A5 'func snailPrimaryButtonStyle' SnailMail/RootView.swift | grep -q 'foregroundStyle(.white)'"
 check "backend typecheck" "npm --prefix firebase/functions run check"
 check "zero warm function instances" "grep -q 'minInstances: 0' firebase/functions/src/index.ts"
 check "bounded function scaling" "grep -q 'maxInstances: 2' firebase/functions/src/index.ts"

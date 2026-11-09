@@ -10,6 +10,7 @@ launch recovery; and automated backend coverage.
 The interface uses an adaptive muted sage, powder-blue, cream, and clay palette
 with a friendly rounded type system, rounded paper-like cards, a hand-drawn journey snail, full Dark Mode
 contrast, Reduce Motion support, and lowercase copy throughout.
+Prominent green actions use light labels for consistent readable contrast.
 The asset catalog includes a full-resolution, full-bleed snail-and-envelope app
 icon ready for TestFlight packaging.
 

@@ -101,9 +101,8 @@ private struct TermsAcceptanceView: View {
                     Button("enter the post office") {
                         Task { _ = await store.acceptTerms() }
                     }
-                    .buttonStyle(.borderedProminent)
+                    .snailPrimaryButtonStyle()
                     .controlSize(.large)
-                    .tint(.snailGreen)
                     .frame(maxWidth: .infinity)
                     .disabled(!agreed || store.isWorking)
                     Button("sign out") {
@@ -146,8 +145,7 @@ private struct ConnectionProblemView: View {
                     Button("try again") {
                         Task { await store.load() }
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(.snailGreen)
+                    .snailPrimaryButtonStyle()
                     Button("sign out") {
                         store.resetSession()
                         Task { await auth.signOut() }
@@ -204,7 +202,7 @@ private struct NewUserOnboardingView: View {
     private let pages = [
         OnboardingPage(
             icon: "heart.text.square.fill",
-            eyebrow: "welcome to slow social",
+            eyebrow: "welcome to snail mail",
             title: "some messages deserve a little journey",
             detail: "write something thoughtful, seal it up, and let a tiny snail carry it to a friend."
         ),
@@ -247,9 +245,8 @@ private struct NewUserOnboardingView: View {
                             }
                         }
                     }
-                    .buttonStyle(.borderedProminent)
+                    .snailPrimaryButtonStyle()
                     .controlSize(.large)
-                    .tint(.snailGreen)
                     .frame(maxWidth: .infinity)
                     .padding(.horizontal, 24)
 
@@ -410,9 +407,8 @@ private struct ProfileSetupView: View {
                         }
                         .frame(maxWidth: .infinity)
                     }
-                    .buttonStyle(.borderedProminent)
+                    .snailPrimaryButtonStyle()
                     .controlSize(.large)
-                    .tint(.snailGreen)
                     .disabled(displayName.isEmpty || username.isEmpty || city.isEmpty || region.isEmpty ||
                               store.isWorking || isLocating)
                     Text("this city is where friends send your snails. your live location is used only when you send one.")
@@ -743,8 +739,7 @@ private struct AuthView: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: 24)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(.snailGreen)
+            .snailPrimaryButtonStyle()
             .controlSize(.large)
             .disabled(phoneNumber.isEmpty || auth.isWorking ||
                       (!codeSent && !agreedToCreateAccount) ||
@@ -854,4 +849,12 @@ enum SnailType {
     static let button = Font.system(size: 17, weight: .semibold, design: .rounded)
     static let smallAction = Font.system(size: 15, weight: .semibold, design: .rounded)
     static let eyebrow = Font.system(size: 13, weight: .bold, design: .rounded)
+}
+
+extension View {
+    func snailPrimaryButtonStyle() -> some View {
+        buttonStyle(.borderedProminent)
+            .tint(.snailGreen)
+            .foregroundStyle(.white)
+    }
 }
