@@ -15,7 +15,8 @@ icon ready for TestFlight packaging.
 
 The current beta calls the inbox the **snailbox**. Opening a received letter
 moves it into a visual **snail trail** gallery, while traveling and unopened
-letters keep the snailbox fresh; sent letters join the trail after delivery too.
+letters keep the snailbox fresh. Sent mail remains visible only while it is on
+the way, so the trail is a personal collection of letters the user received.
 The friends tab uses typo-tolerant username search, shows incoming and outgoing
 requests, and creates textable invitation links. The profile city is the home snailbox
 destination. An outgoing snail starts from the sender’s live city-level
@@ -89,17 +90,21 @@ and the Firebase App Check API must remain enabled for `snail-mail-btc`. Never
 share the token or distribute a Debug build. Release continues to use the App
 Store bundle ID and production App Attest entitlement.
 
-Firebase's App Delegate proxy is enabled so Firebase Auth and Messaging receive
-APNs tokens only after their own internal initialization is complete. The app
-delegate remains responsible for foreground presentation and FCM-token updates,
-while Firebase owns APNs-token initialization. SwiftUI's adapted app delegate
-explicitly forwards received silent phone-auth notifications to Firebase Auth,
-because those callbacks can bypass Firebase's delegate proxy on physical devices.
+Firebase's App Delegate proxy is explicitly disabled because SwiftUI wraps the
+adapted delegate and Firebase cannot reliably swizzle that runtime object. The
+app delegate owns the integration: it forwards silent phone-auth notifications,
+passes the APNs token to Messaging, receives FCM token updates, and handles
+foreground and opened notifications. It also passes the APNs device token to
+Auth from the supported delegate callback.
+Firebase itself is configured from `didFinishLaunchingWithOptions`, not the
+SwiftUI `App` initializer, so its UIApplication-dependent Auth managers are
+created before token or notification forwarding. This fixes the lifecycle bug
+behind both the intermittent `notificationNotForwarded` failure and the earlier
+nil token-manager crash.
 Remote-notification registration now starts quietly during app launch so the
 silent APNs handshake is usually ready before someone taps **text me a code**.
 Registration itself does not display the notification-permission prompt; that
-still appears only after sign-in. The app never calls `Auth.setAPNSToken`
-manually, avoiding Firebase Auth's keychain-backed token-manager race on iOS 27.
+still appears only after sign-in.
 The SwiftUI scene still forwards opened URLs as a fallback for phone
 authentication's reCAPTCHA return path.
 The SwiftUI scene also forwards opened URLs with `onOpenURL`, because reCAPTCHA
@@ -132,8 +137,8 @@ never exposed to other users.
 4. Write a letter; location services set its origin and the server seals its body and calculates arrival.
 5. The recipient watches it travel and can open it only after server time passes.
 
-Action errors are cleared when moving between tabs. Archived sent letters never
-call the recipient-only open endpoint, and repeated friend-request responses
+Action errors are cleared when moving between tabs. The snail trail contains
+only received letters the user has opened, and repeated friend-request responses
 quietly refresh instead of leaking stale server errors into unrelated screens.
 
 Run unit tests with **Product → Test** (`⌘U`) or:
@@ -149,6 +154,12 @@ Release builds use real days, capped at 30. Delivery is enforced by server time:
 the mailbox response never includes a letter body, and only the authenticated
 recipient can request the separately stored body after arrival. Changing a
 device clock or modifying the client cannot open a letter early.
+
+New letters travel at a playful 50 miles per snail day, rounded up in six-hour
+steps, with a six-hour minimum and a 30-day maximum. This preserves the whimsical
+wait while keeping regional trips distinct from cross-country mail. Arrival
+timestamps—not rounded day labels—remain the server-enforced source of truth;
+letters created under an earlier algorithm keep their original arrival time.
 
 ## Firebase backend foundation
 
@@ -304,13 +315,14 @@ See `PRODUCTION_READINESS.md` for the launch gates, branded-domain plan,
 performance targets, and remaining privacy, reliability, safety, and App Store
 work.
 
-Phone authentication and push notifications use Firebase's delegate proxy for
-safe APNs-token ownership. The SwiftUI app delegate also forwards silent Auth
-verification notifications explicitly, and the SwiftUI scene forwards reCAPTCHA
-callback URLs. Do not call `Auth.setAPNSToken` manually in this app: Firebase
-Auth 12.19.3 can receive the delegate callback before its internal token manager
-is ready and trap. Phone verification is bound to the same Auth instance used
-by the session, including the separately named simulator-emulator app.
+Phone authentication and push notifications use explicit delegate forwarding,
+not Firebase delegate swizzling. The app passes APNs tokens only after Firebase
+is configured in `didFinishLaunching`, explicitly forwards silent Auth
+notifications, and forwards reCAPTCHA callback URLs through the SwiftUI scene.
+Do not move Firebase configuration back into the SwiftUI `App` initializer;
+doing so can leave Firebase Auth 12.19.3's internal managers uninitialized.
+Phone verification is bound to the same Auth instance used by the session,
+including the separately named simulator-emulator app.
 
 ## TestFlight readiness
 

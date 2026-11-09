@@ -13,7 +13,8 @@ final class AuthManager: ObservableObject {
 
     private var listener: AuthStateDidChangeListenerHandle?
 
-    init() {
+    func start() {
+        guard listener == nil else { return }
         listener = SnailFirebase.auth.addStateDidChangeListener { [weak self] _, user in
             Task { @MainActor in
                 self?.user = user
@@ -246,6 +247,19 @@ struct SnailLetter: Codable, Identifiable, Hashable {
         guard arrivesAt > sentAt else { return 1 }
         return min(max(date.timeIntervalSince(sentAt) / arrivesAt.timeIntervalSince(sentAt), 0), 1)
     }
+
+    var travelTimeDescription: String {
+        let totalHours = max(Int((arrivesAt.timeIntervalSince(sentAt) / 3_600).rounded()), 1)
+        let days = totalHours / 24
+        let hours = totalHours % 24
+        if days == 0 { return "\(hours) snail \(hours == 1 ? "hour" : "hours")" }
+        if hours == 0 { return "\(days) snail \(days == 1 ? "day" : "days")" }
+        return "\(days) \(days == 1 ? "day" : "days"), \(hours) \(hours == 1 ? "hour" : "hours") at snail pace"
+    }
+
+    func belongsInSnailTrail(for userID: String) -> Bool {
+        recipientID == userID && openedAt != nil
+    }
 }
 
 private struct HomeResponse: Decodable {
@@ -356,10 +370,8 @@ final class ProductionStore: ObservableObject {
 
     var archivedLetters: [SnailLetter] {
         guard let id = profile?.id else { return [] }
-        return letters.filter {
-            ($0.recipientID == id && $0.openedAt != nil) ||
-            ($0.senderID == id && $0.hasArrived(at: now))
-        }.sorted { ($0.openedAt ?? $0.arrivesAt) > ($1.openedAt ?? $1.arrivesAt) }
+        return letters.filter { $0.belongsInSnailTrail(for: id) }
+            .sorted { ($0.openedAt ?? $0.arrivesAt) > ($1.openedAt ?? $1.arrivesAt) }
     }
 
     func person(id: String) -> SnailProfile? {

@@ -7,7 +7,7 @@
 	<key>CFBundleDisplayName</key>
 	<string>snail mail</string>
 	<key>FirebaseAppDelegateProxyEnabled</key>
-	<true/>
+	<false/>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

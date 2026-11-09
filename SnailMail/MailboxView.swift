@@ -140,7 +140,7 @@ struct ArchiveView: View {
                     ContentUnavailableView(
                         "no trail yet",
                         systemImage: "sparkles",
-                        description: Text("opened and delivered letters leave their little trail here")
+                        description: Text("letters you open leave their little trail here")
                     )
                     .frame(maxWidth: .infinity)
                     .padding(.top, 56)
@@ -165,10 +165,7 @@ struct ArchiveView: View {
     }
 
     private func archivedTile(_ letter: SnailLetter, index: Int) -> some View {
-        let sent = letter.senderID == store.profile?.id
-        let person = sent
-            ? store.person(id: letter.recipientID)?.displayName.lowercased() ?? "a friend"
-            : store.person(id: letter.senderID)?.displayName.lowercased() ?? "a friend"
+        let person = store.person(id: letter.senderID)?.displayName.lowercased() ?? "a friend"
         return VStack(alignment: .leading, spacing: 10) {
             ZStack {
                 SlimeTrail(seed: index)
@@ -176,7 +173,7 @@ struct ArchiveView: View {
                         Color.snailGreen.opacity(0.28),
                         style: StrokeStyle(lineWidth: 7, lineCap: .round, dash: [2, 9])
                     )
-                Image(systemName: sent ? "envelope.fill" : "envelope.open.fill")
+                Image(systemName: "envelope.open.fill")
                     .font(.system(size: 35, weight: .light))
                     .foregroundStyle(Color.snailGreen)
                     .padding(16)
@@ -184,7 +181,7 @@ struct ArchiveView: View {
                     .shadow(color: Color.powderBlue.opacity(0.28), radius: 8, y: 4)
             }
             .frame(height: 104)
-            Text(sent ? "to \(person)" : "from \(person)")
+            Text("from \(person)")
                 .font(.subheadline.weight(.semibold))
                 .lineLimit(1)
             Text((letter.openedAt ?? letter.arrivesAt).formatted(date: .abbreviated, time: .omitted).lowercased())

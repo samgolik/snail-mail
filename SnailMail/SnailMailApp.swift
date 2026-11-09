@@ -12,6 +12,11 @@ final class SnailMailAppDelegate: NSObject, UIApplicationDelegate, MessagingDele
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
+        // Firebase products that depend on UIApplication must be configured in
+        // this lifecycle callback, not SwiftUI App.init(). In App.init() their
+        // Auth notification/token managers can remain nil on newer iOS releases.
+        AppCheck.setAppCheckProviderFactory(SnailAppCheckProviderFactory())
+        SnailFirebase.configure()
         Messaging.messaging().delegate = self
         UNUserNotificationCenter.current().delegate = self
         // Phone authentication verifies the app with a silent APNs round trip.
@@ -25,6 +30,22 @@ final class SnailMailAppDelegate: NSObject, UIApplicationDelegate, MessagingDele
         guard let fcmToken, !fcmToken.isEmpty else { return }
         UserDefaults.standard.set(fcmToken, forKey: "snailFCMToken")
         NotificationCenter.default.post(name: .snailPushToken, object: fcmToken)
+    }
+
+    func application(
+        _ application: UIApplication,
+        didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
+    ) {
+        // Firebase was configured in didFinishLaunching, so both products are
+        // initialized before this delegate callback hands off the token.
+        SnailNotifications.receiveAPNSToken(deviceToken)
+    }
+
+    func application(
+        _ application: UIApplication,
+        didFailToRegisterForRemoteNotificationsWithError error: Error
+    ) {
+        SnailNotifications.remoteRegistrationFailed(error)
     }
 
     func userNotificationCenter(
@@ -63,10 +84,19 @@ final class SnailMailAppDelegate: NSObject, UIApplicationDelegate, MessagingDele
 }
 
 enum SnailNotifications {
+    static func receiveAPNSToken(_ token: Data) {
+        SnailFirebase.auth.setAPNSToken(token, type: .unknown)
+        Messaging.messaging().apnsToken = token
+    }
+
+    static func remoteRegistrationFailed(_ error: Error) {
+        #if DEBUG
+        print("[snail-mail][notifications] APNs registration failed: \(error.localizedDescription)")
+        #endif
+    }
+
     static func prepareForPhoneAuth() async {
         await MainActor.run { UIApplication.shared.registerForRemoteNotifications() }
-        // Firebase Auth waits for the APNs token when necessary. Yielding here
-        // gives an already-available token a chance to reach its token manager.
         await Task.yield()
     }
 
@@ -149,13 +179,10 @@ struct SnailMailApp: App {
     @UIApplicationDelegateAdaptor(SnailMailAppDelegate.self) private var appDelegate
     @StateObject private var store = MailStore()
     @StateObject private var production = ProductionStore()
-    @StateObject private var auth: AuthManager
+    @StateObject private var auth = AuthManager()
 
     init() {
-        AppCheck.setAppCheckProviderFactory(SnailAppCheckProviderFactory())
-        SnailFirebase.configure()
         SnailAppearance.configure()
-        _auth = StateObject(wrappedValue: AuthManager())
     }
 
     var body: some Scene {

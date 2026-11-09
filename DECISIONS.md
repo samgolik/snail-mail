@@ -123,11 +123,13 @@ operations runbook.
 ### keep delivery time server-controlled and capped
 
 - **Decision:** Delivery is calculated by the backend from approximate city
-  coordinates, at 15 miles per snail day, with a one-day minimum and 30-day cap.
+  coordinates, at 50 miles per snail day, rounded up in six-hour steps, with a
+  six-hour minimum and 30-day cap.
 - **Why:** The delay is the product. Server calculation prevents clients from
-  opening letters early, while the cap keeps the mechanic usable.
-- **Question for Sam:** After real usage, should the cap remain 30 days, become
-  shorter for early beta, or turn into a playful non-linear distance curve?
+  opening letters early, while hour-level regional trips and a cap keep the
+  mechanic usable. The former 15-mile/day rule flattened every trip over 450
+  miles into the same 30-day result.
+- **Revisit when:** Real usage provides enough data to tune the pace or cap.
 
 ### send privacy-safe event notifications
 
@@ -137,11 +139,12 @@ operations runbook.
 - **Why:** These are meaningful asynchronous events. A task per letter avoids a
   continuously running polling service and keeps scale-to-zero cost controls.
 
-### keep the snailbox fresh with a server-backed archive
+### keep the snailbox fresh with a server-backed received trail
 
 - **Decision:** `openedAt` is returned with letter metadata. Unopened arrivals
-  stay in the snailbox; opened arrivals move into Archive. The sealed body is
-  fetched again when an archived letter is viewed on another device.
+  stay in the snailbox; opened received letters move into Snail Trail. Delivered
+  sent letters do not appear there. The sealed body is fetched again when a
+  trail letter is viewed on another device.
 - **Why:** Local-only archive state would disagree across devices and resurrect
   opened letters after reinstalling the app.
 

@@ -87,7 +87,7 @@ struct ProductionLetterDetailView: View {
                 JourneyRouteView(letter: letter, now: store.now)
                     .frame(height: 62)
                     .padding(.horizontal, 8)
-                Text("\(letter.distanceMiles) miles · about \(letter.snailDays) snail \(letter.snailDays == 1 ? "day" : "days")")
+                Text("\(letter.distanceMiles) miles · about \(letter.travelTimeDescription)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

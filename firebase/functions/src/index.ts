@@ -35,8 +35,10 @@ initializeApp();
 
 const db = getFirestore();
 const MAX_BODY_LENGTH = 500;
-const MILES_PER_SNAIL_DAY = 15;
-const MAX_SNAIL_DAYS = 30;
+const MILES_PER_SNAIL_DAY = 50;
+const MIN_SNAIL_HOURS = 6;
+const MAX_SNAIL_HOURS = 30 * 24;
+const SNAIL_HOUR_INCREMENT = 6;
 const CURRENT_TERMS_VERSION = "2026-10-30";
 
 async function sendPush(
@@ -249,6 +251,12 @@ function distanceMiles(origin: Coordinates, destination: Coordinates): number {
   return earthRadiusMiles * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+function snailTravelHours(miles: number): number {
+  const rawHours = Math.max(miles, 0) / MILES_PER_SNAIL_DAY * 24;
+  const roundedHours = Math.ceil(rawHours / SNAIL_HOUR_INCREMENT) * SNAIL_HOUR_INCREMENT;
+  return Math.min(Math.max(roundedHours, MIN_SNAIL_HOURS), MAX_SNAIL_HOURS);
+}
+
 function editDistance(left: string, right: string): number {
   const previous = Array.from({length: right.length + 1}, (_, index) => index);
   for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
@@ -290,6 +298,7 @@ function letterJSON(id: string, data: DocumentData) {
     destinationCity: data.destinationCity,
     distanceMiles: data.distanceMiles,
     snailDays: data.snailDays,
+    snailHours: data.snailHours ?? data.snailDays * 24,
     sentAt: (data.sentAt as Timestamp).toDate().toISOString(),
     arrivesAt: (data.arrivesAt as Timestamp).toDate().toISOString(),
     status: data.status,
@@ -698,12 +707,10 @@ export const sendLetter = onCall({region: "us-east1"}, async (request) => {
       ...coordinates(senderData),
     };
     const miles = Math.round(distanceMiles(origin, coordinates(recipientData)));
-    const snailDays = Math.min(
-      Math.max(Math.ceil(miles / MILES_PER_SNAIL_DAY), 1),
-      MAX_SNAIL_DAYS,
-    );
+    const snailHours = snailTravelHours(miles);
+    const snailDays = Math.ceil(snailHours / 24);
     const sentAt = Timestamp.now();
-    const arrivesAt = Timestamp.fromMillis(sentAt.toMillis() + snailDays * 86_400_000);
+    const arrivesAt = Timestamp.fromMillis(sentAt.toMillis() + snailHours * 3_600_000);
 
     transaction.create(letterRef, {
       senderID,
@@ -711,6 +718,7 @@ export const sendLetter = onCall({region: "us-east1"}, async (request) => {
       originCity: origin.city,
       destinationCity: recipientData.city,
       distanceMiles: miles,
+      snailHours,
       snailDays,
       sentAt,
       arrivesAt,
@@ -728,6 +736,7 @@ export const sendLetter = onCall({region: "us-east1"}, async (request) => {
         originCity: origin.city,
         destinationCity: recipientData.city,
         distanceMiles: miles,
+        snailHours,
         snailDays,
         sentAt,
         arrivesAt,
