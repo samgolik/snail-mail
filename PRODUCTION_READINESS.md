@@ -19,7 +19,7 @@ repeatable test, production-console evidence, or a shipped build—not optimism.
 - Public web links have one `SnailPublicSiteURL` configuration point, so changing
   to a branded domain no longer requires editing several screens.
 
-## implemented for the next candidate
+## implemented for App Store candidate build 7
 
 - New accounts receive a short, skippable introduction before creating their
   snailing address; returning accounts never see it.
@@ -36,9 +36,9 @@ repeatable test, production-console evidence, or a shipped build—not optimism.
   read. Letter, friend, and acceptance pushes are queued outside the interactive
   request path, with zero warm instances, bounded concurrency, and retry limits.
 
-The iOS and Functions code above is locally verified but not yet uploaded or
-deployed. Deploy the reviewed Functions change before distributing the matching
-app candidate.
+The iOS and Functions code above passed the local automated checks. Build 7 and
+the matching Functions release are promoted together so the client never
+depends on an undeployed callable contract.
 
 ## must pass before public launch
 

@@ -2,7 +2,7 @@
 
 ## Listing
 
-- Name: **snail mail**
+- Name: **Snail Mail: Slow Messages**
 - Subtitle: **messages worth waiting for**
 - Primary category: **Social Networking**
 - Secondary category: **Lifestyle**

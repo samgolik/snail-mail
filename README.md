@@ -197,15 +197,16 @@ Current Apple distribution registration:
 - Distribution profile: `Snail Mail App Store Connect`
 - TestFlight builds run manually through `.github/workflows/testflight.yml` on
   GitHub's `macos-26` runner so uploads use Apple's required iOS 26 SDK.
-- The current TestFlight build is version `1.0` build `6`.
+- The current public TestFlight build is version `1.0` build `6`; build `7` is
+  the App Store production candidate.
 - The workflow uploads through Apple's Build Upload API after exporting the
   signed IPA, avoiding account-state dependencies in Xcode's upload client.
 - Firestore and Functions backend configuration is retained but their unused,
   heavyweight iOS SDK products are intentionally not linked for the first beta
 - Firestore rules and mailbox indexes: deployed
 - Privacy/support Hosting site: deployed at `https://snail-mail-btc.web.app`
-- Callable Functions: all 12 deployed on Node 22 in `us-east1`, with bounded
-  beta scaling and one-day cleanup of stale deployment images
+- Callable Functions: 16 reviewed functions on Node 22 in `us-east1`, with
+  bounded beta scaling and one-day cleanup of stale deployment images
 - Firebase Authentication: phone enabled; email/password and anonymous accounts disabled
 - The Firebase Apple app `com.beattheclockstudios.snailmail` has a team-scoped
   APNs authentication key configured for both Development and Production.
@@ -327,14 +328,13 @@ including the separately named simulator-emulator app.
 
 ## TestFlight readiness
 
-The current TestFlight build is version 1.0, build 6. Build 6 combines the
+The current public TestFlight build is version 1.0, build 6. Build 6 combines the
 working production push configuration from build 5 with the corrected Firebase
 phone-auth delegate path, production diagnostics, and latency improvements.
 
-The onboarding and interaction-polish work described above is implemented and
-locally verified for the next candidate, but has not been uploaded. Its queued
-push worker must be deployed with the reviewed backend release before that app
-candidate is distributed.
+Build 7 is the production candidate. It includes the onboarding and
+interaction-polish work described above and must be distributed with the
+matching queued-push backend release.
 
 Run the local preflight check with:
 

@@ -87,11 +87,11 @@ const justinProfile = await call("saveProfile", justin.token, {
   latitude: 39.9612, longitude: -82.9988,
 });
 await call("requestFriend", sam.token, {
-  friendCode: justinProfile.profile.friendCode,
+  friendIdentifier: justinProfile.profile.username,
 }, 400);
 await call("acceptTerms", sam.token, {version: "2026-10-30"});
 await call("acceptTerms", justin.token, {version: "2026-10-30"});
-await call("requestFriend", sam.token, {friendCode: justinProfile.profile.friendCode});
+await call("requestFriend", sam.token, {friendIdentifier: justinProfile.profile.username});
 const pendingHome = await call("loadHome", justin.token, {});
 assert.equal(pendingHome.termsAccepted, true, "current terms acceptance should be returned");
 const incoming = pendingHome.connections.find((item) => item.isIncoming);
@@ -117,7 +117,7 @@ await call("sendLetter", sam.token, {
   recipientID: justin.id, body: "A blocked letter must not leave.",
 }, 403);
 await call("unblockUser", justin.token, {targetID: sam.id});
-await call("requestFriend", sam.token, {friendCode: justinProfile.profile.friendCode});
+await call("requestFriend", sam.token, {friendIdentifier: justinProfile.profile.username});
 const reconnectedHome = await call("loadHome", justin.token, {});
 const secondRequest = reconnectedHome.connections.find((item) => item.isIncoming);
 assert.ok(secondRequest, "friend request should work after unblock");
