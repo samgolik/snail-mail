@@ -19,7 +19,7 @@ repeatable test, production-console evidence, or a shipped build—not optimism.
 - Public web links have one `SnailPublicSiteURL` configuration point, so changing
   to a branded domain no longer requires editing several screens.
 
-## implemented for App Store candidate build 7
+## implemented for App Store candidate version 1.1 build 7
 
 - New accounts receive a short, skippable introduction before creating their
   snailing address; returning accounts never see it.

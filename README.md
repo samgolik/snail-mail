@@ -197,8 +197,8 @@ Current Apple distribution registration:
 - Distribution profile: `Snail Mail App Store Connect`
 - TestFlight builds run manually through `.github/workflows/testflight.yml` on
   GitHub's `macos-26` runner so uploads use Apple's required iOS 26 SDK.
-- The current public TestFlight build is version `1.0` build `6`; build `7` is
-  the App Store production candidate.
+- The current public TestFlight build is version `1.0` build `6`; version `1.1`
+  build `7` is the App Store production candidate.
 - The workflow uploads through Apple's Build Upload API after exporting the
   signed IPA, avoiding account-state dependencies in Xcode's upload client.
 - Firestore and Functions backend configuration is retained but their unused,
@@ -332,7 +332,7 @@ The current public TestFlight build is version 1.0, build 6. Build 6 combines th
 working production push configuration from build 5 with the corrected Firebase
 phone-auth delegate path, production diagnostics, and latency improvements.
 
-Build 7 is the production candidate. It includes the onboarding and
+Version 1.1 build 7 is the production candidate. It includes the onboarding and
 interaction-polish work described above and must be distributed with the
 matching queued-push backend release.
 
