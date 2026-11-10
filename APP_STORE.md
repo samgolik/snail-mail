@@ -38,6 +38,20 @@ Made thoughtfully by beat the clock studios.
 
 `letters,mail,friends,delayed,messaging,penpal,slow,private`
 
+## Screenshots
+
+The production screenshot set is tracked in `AppStoreScreenshots/`. Upload the
+five 1206 × 2622 PNG files in numeric order:
+
+1. **messages worth waiting for** — populated snailbox
+2. **watch every letter make its journey** — sealed traveling letter
+3. **write something worth opening** — compose experience
+4. **friends, not followers** — handle-based address book
+5. **keep the letters that mattered** — snail trail gallery
+
+The images use real version 1.1 build 7 UI and locally seeded fictional demo
+content. `contact-sheet.jpg` is for review only and should not be uploaded.
+
 ## App Privacy answers
 
 Data is linked to the user and used for **App Functionality**:
