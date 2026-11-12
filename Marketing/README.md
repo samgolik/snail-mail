@@ -23,8 +23,10 @@ shown in every final asset comes from the approved screenshots in
 ## TikTok carousel
 
 `TikTokCarousel/` contains six ready-to-post 1080 × 1920 RGB PNG slides. Upload
-them in numeric order as a TikTok photo carousel. They use conservative top,
-side, and bottom safe areas so TikTok controls do not obscure the core message.
+them in numeric order as a TikTok photo carousel. The design uses only real app
+UI, crisp type, the product palette, and deterministic geometric marks—no
+generated illustration. Conservative safe areas prevent TikTok controls from
+obscuring the core message.
 
 Regenerate them with:
 
