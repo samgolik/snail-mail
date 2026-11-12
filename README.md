@@ -195,6 +195,7 @@ Current Apple distribution registration:
 - App Store name: `Snail Mail: Slow Messages`
 - App Store Connect app ID: `6829490432`
 - Public App Store listing: `https://apps.apple.com/app/id6829490432`
+- App Store search creatives and reproducible source files: `Marketing/`
 - Distribution profile: `Snail Mail App Store Connect`
 - TestFlight builds run manually through `.github/workflows/testflight.yml` on
   GitHub's `macos-26` runner so uploads use Apple's required iOS 26 SDK.

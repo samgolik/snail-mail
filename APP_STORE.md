@@ -36,7 +36,14 @@ Made thoughtfully by beat the clock studios.
 
 ## Keywords
 
+Current 1.1 keywords:
+
 `letters,mail,friends,delayed,messaging,penpal,slow,private`
+
+Planned 1.2 keywords (removes terms already indexed through the name, subtitle,
+and category):
+
+`letters,friends,delayed,penpal,private,thoughtful,connection,postcard,correspondence,asynchronous`
 
 ## Screenshots
 
